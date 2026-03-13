@@ -17,10 +17,10 @@ function App() {
     if (!question) return;
 
     const response = await fetch(
-   	  fetch("https://sportsfan360-ai-agent-1.onrender.com/ask?question=" + question)
-    );
+  "https://sportsfan360-ai-agent-1.onrender.com/ask?question=" + question
+);
 
-    const data = await response.json();
+const data = await response.json();
 
     setResult(data);
 
