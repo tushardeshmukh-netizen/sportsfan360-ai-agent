@@ -16,10 +16,10 @@ function App() {
 
     if (!question) return;
 
-    const response = await fetch(
-  "https://sportsfan360-ai-agent-1.onrender.com/ask?question=" + question
-);
+const API_URL = "https://sportsfan360-ai-agent-1.onrender.com";
+//const API_URL = "http://127.0.0.1:8000";
 
+const response = await fetch(`${API_URL}/ask?question=${question}`);
 const data = await response.json();
 
     setResult(data);
