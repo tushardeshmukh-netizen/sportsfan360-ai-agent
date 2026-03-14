@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 
@@ -7,46 +7,140 @@ import WicketsChart from "./components/WicketsChart";
 
 function App() {
 
+  /* ===============================
+     API SERVER TOGGLE
+     =============================== */
+
+  // ===== LOCAL SERVER =====
+  //const API_URL = "http://127.0.0.1:8000";
+
+  // ===== PRODUCTION SERVER (Render) =====
+   const API_URL = "https://sportsfan360-ai-agent-1.onrender.com";
+
+
+  const SHOW_CHARTS = false;   // charts hidden for now
+
   const [question, setQuestion] = useState("");
-  const [result, setResult] = useState(null);
-  const [showJSON, setShowJSON] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [chartTitle, setChartTitle] = useState("");
   const [chartType, setChartType] = useState("runs");
+  const [loading, setLoading] = useState(false);
+
+  const chatEndRef = useRef();
+
+  const suggestions = [
+    "Who has most IPL runs",
+    "Top wicket takers IPL",
+    "Which team has most IPL titles",
+    "Highest IPL score",
+    "Compare Kohli vs Rohit IPL runs",
+    "Why is IPL popular"
+  ];
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
 
-  const askAI = async () => {
+  /* ===============================
+     CLEAR CHAT
+     =============================== */
 
-    if (!question) return;
+  const clearChat = () => {
+    setMessages([]);
+    setChartData([]);
+    setChartTitle("");
+  };
+
+
+  /* ===============================
+     FORMAT ANSWERS
+     =============================== */
+
+  const formatAnswer = (data, question) => {
+
+    let text = "";
+
+    if (question.toLowerCase().includes("compare") && data.chart_data?.length >= 2) {
+
+      const p1 = data.chart_data[0];
+      const p2 = data.chart_data[1];
+
+      text += `Comparison: ${p1.player} vs ${p2.player}\n\n`;
+
+      text += `${p1.player} — ${p1.value} runs\n`;
+      text += `${p2.player} — ${p2.value} runs\n\n`;
+
+      if (p1.value > p2.value) {
+        text += `${p1.player} leads by ${p1.value - p2.value} runs in IPL history.`;
+      } else {
+        text += `${p2.player} leads by ${p2.value - p1.value} runs in IPL history.`;
+      }
+
+      return text;
+    }
+
+    if (data.chart_data && data.chart_data.length > 0) {
+
+      text += data.chart_title + "\n\n";
+
+      data.chart_data.slice(0,10).forEach((p, i) => {
+        text += `${i+1}. ${p.player} — ${p.value}\n`;
+      });
+
+      if (data.answer) {
+        text += `\n${data.answer}`;
+      }
+
+      return text;
+    }
+
+    return data.answer || "No answer available.";
+  };
+
+
+  /* ===============================
+     ASK AI
+     =============================== */
+
+  const askAI = async (q = question) => {
+
+    if (!q.trim()) return;
+
+    setLoading(true);
+
+    const newMessages = [
+      ...messages,
+      { role: "user", text: q }
+    ];
+
+    setMessages(newMessages);
+    setQuestion("");
 
     try {
 
-      // LOCAL SERVER
-      //const API_URL = "http://127.0.0.1:8000";
-
-      // PRODUCTION SERVER
-      const API_URL = "https://sportsfan360-ai-agent-1.onrender.com";
-
       const response = await fetch(
-        `${API_URL}/ask?question=${encodeURIComponent(question)}`
+        `${API_URL}/ask?question=${encodeURIComponent(q)}`
       );
 
       const data = await response.json();
 
       console.log("API RESPONSE:", data);
 
-      // FIX: Normalize backend responses
-      if (data.top_wicket_takers && !data.chart_data) {
+      const answerText = formatAnswer(data, q);
 
-        data.chart_data = data.top_wicket_takers;
+      setMessages([
+        ...newMessages,
+        { role: "ai", text: answerText }
+      ]);
 
-        data.chart_title = "Top IPL Wicket Takers";
+      if (data.chart_data) {
 
-      }
+        setChartData(data.chart_data);
+        setChartTitle(data.chart_title);
 
-      setResult(data);
-
-      if (data.chart_title) {
-
-        if (data.chart_title.toLowerCase().includes("wicket")) {
+        if (data.chart_title?.toLowerCase().includes("wicket")) {
           setChartType("wickets");
         } else {
           setChartType("runs");
@@ -56,198 +150,114 @@ function App() {
 
     } catch (error) {
 
-      console.error(error);
-
-      setResult({
-        answer: "Server error. Check backend."
-      });
+      setMessages([
+        ...newMessages,
+        { role: "ai", text: "Server error. Unable to reach AI agent." }
+      ]);
 
     }
+
+    setLoading(false);
 
   };
 
 
-  const clearSearch = () => {
-
-    setQuestion("");
-    setResult(null);
-    setShowJSON(false);
-
-  };
-
-
-  const renderResult = () => {
-
-    if (!result) return null;
-
-
-    if (result.winner) {
-
-      return (
-        <div className="card">
-
-          <h3>🏆 IPL {result.season} Winner</h3>
-          <p className="big">{result.winner}</p>
-
-        </div>
-      );
-
-    }
-
-
-    if (result.chart_data) {
-
-      return (
-
-        <div className="card">
-
-          <h3>{result.chart_title}</h3>
-
-          {result.chart_data.map((p, i) => (
-
-            <p key={i}>
-              {i + 1}. {p.player} — {p.value}
-            </p>
-
-          ))}
-
-          {result.answer && (
-            <p className="insight">💡 {result.answer}</p>
-          )}
-
-        </div>
-
-      );
-
-    }
-
-
-    if (result.answer) {
-
-      return (
-
-        <div className="card">
-
-          {result.chart_title && <h3>{result.chart_title}</h3>}
-
-          <p>{result.answer}</p>
-
-        </div>
-
-      );
-
-    }
-
-    return <p>No result</p>;
-
-  };
-
-
-  const chartData =
-    result?.chart_data ||
-    result?.top_wicket_takers ||
-    [];
-
+  /* ===============================
+     UI
+     =============================== */
 
   return (
 
     <div className="app">
 
+      {/* HEADER */}
+
       <header className="header">
 
-        <img src={logo} className="logo" alt="logo" />
+        <img src={logo} className="logo" alt="logo"/>
 
         <div className="title">
-
           <h1>SportsFan360</h1>
-          <p>AI IPL Analytics Dashboard</p>
-
+          <p>AI Cricket Analyst</p>
         </div>
+
+        <button className="clearChat" onClick={clearChat}>
+          Clear
+        </button>
 
       </header>
 
 
+      {/* CHAT PANEL */}
+
+      <div className="chatPanel">
+
+        {messages.map((m,i)=>(
+          <div key={i} className={`message ${m.role}`}>
+            <pre>{m.text}</pre>
+          </div>
+        ))}
+
+        {loading && (
+          <div className="message ai">
+            AI is analyzing IPL statistics...
+          </div>
+        )}
+
+        <div ref={chatEndRef}></div>
+
+      </div>
+
+
+      {/* SEARCH */}
+
       <div className="search">
 
         <input
-          placeholder="Ask anything about IPL..."
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") askAI();
+          placeholder="Ask the AI cricket analyst..."
+          onChange={(e)=>setQuestion(e.target.value)}
+          onKeyDown={(e)=>{
+            if(e.key==="Enter") askAI();
           }}
         />
 
-        <button onClick={askAI}>
+        <button onClick={()=>askAI()}>
           Ask
         </button>
 
-        <button onClick={clearSearch} className="clearBtn">
-          Clear
-        </button>
+      </div>
+
+
+      {/* SUGGESTIONS */}
+
+      <div className="suggestions">
+
+        {suggestions.map((s,i)=>(
+          <button key={i} onClick={()=>askAI(s)}>
+            {s}
+          </button>
+        ))}
 
       </div>
 
 
-      {result && (
+      {/* CHARTS (hidden but not removed) */}
 
-        <div className="result">
-
-          <h2>Result</h2>
-
-          {renderResult()}
-
-          <div className="jsonToggle">
-
-            <button onClick={() => setShowJSON(!showJSON)}>
-              {showJSON ? "Hide JSON" : "Show JSON"}
-            </button>
-
-            {showJSON && (
-
-              <pre>
-                {JSON.stringify(result, null, 2)}
-              </pre>
-
-            )}
-
-          </div>
-
-        </div>
-
-      )}
-
-
-      <div className="examples">
-
-        <p>Try asking:</p>
-
-        <ul>
-          <li>Who won IPL 2022</li>
-          <li>Which team has most IPL titles</li>
-          <li>Top run scorers</li>
-          <li>Most wickets</li>
-          <li>Highest score</li>
-          <li>Compare Kohli vs Rohit IPL runs</li>
-        </ul>
-
-      </div>
-
-
-      {chartData.length > 0 && (
+      {SHOW_CHARTS && chartData.length>0 && (
 
         <div className="analytics">
 
-          <h2>{result.chart_title || "Match Analytics"}</h2>
+          <h2>{chartTitle}</h2>
 
           <div className="chartBox">
 
-            {chartType === "runs" && (
-              <RunsChart data={chartData} />
+            {chartType==="runs" && (
+              <RunsChart data={chartData}/>
             )}
 
-            {chartType === "wickets" && (
-              <WicketsChart data={chartData} />
+            {chartType==="wickets" && (
+              <WicketsChart data={chartData}/>
             )}
 
           </div>
