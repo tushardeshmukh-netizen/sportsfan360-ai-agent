@@ -33,6 +33,15 @@ function App() {
 
       console.log("API RESPONSE:", data);
 
+      // FIX: Normalize backend responses
+      if (data.top_wicket_takers && !data.chart_data) {
+
+        data.chart_data = data.top_wicket_takers;
+
+        data.chart_title = "Top IPL Wicket Takers";
+
+      }
+
       setResult(data);
 
       if (data.chart_title) {
@@ -134,7 +143,10 @@ function App() {
   };
 
 
-  const chartData = result?.chart_data || [];
+  const chartData =
+    result?.chart_data ||
+    result?.top_wicket_takers ||
+    [];
 
 
   return (
