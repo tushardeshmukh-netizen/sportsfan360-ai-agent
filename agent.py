@@ -4,13 +4,17 @@ import zipfile
 import io
 import os
 import re
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
 
-DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
+from stats_engine import *
+from intent_router import detect_intent
+from memory_store import save_context,get_context
+from knowledge_base import get_player_info
 
-CRICAPI_KEY=os.getenv("CRICAPI_KEY")
+DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
 
 app=FastAPI()
 
@@ -30,7 +34,7 @@ runs_cache={}
 wickets_cache={}
 titles_cache={}
 highest_score_cache={}
-player_index={}
+sixes_cache={}
 season_latest_match={}
 
 # ---------------- DATASET LOADER ----------------
@@ -42,6 +46,7 @@ def load_dataset():
     global wickets_cache
     global titles_cache
     global highest_score_cache
+    global sixes_cache
 
     if dataset_loaded:
         return
@@ -51,6 +56,7 @@ def load_dataset():
 
     batsman_runs={}
     bowler_wickets={}
+    batsman_sixes={}
     highest={"runs":0,"player":None,"match":None}
 
     for file in zip_file.namelist():
@@ -89,8 +95,8 @@ def load_dataset():
                             batsman_runs[batter]=batsman_runs.get(batter,0)+runs
                             match_runs[batter]=match_runs.get(batter,0)+runs
 
-                            for p in batter.lower().split():
-                                player_index.setdefault(p,set()).add(batter)
+                            if runs==6:
+                                batsman_sixes[batter]=batsman_sixes.get(batter,0)+1
 
                         wickets=d.get("wickets",[])
 
@@ -122,177 +128,11 @@ def load_dataset():
     wickets_cache=bowler_wickets
     titles_cache=titles
     highest_score_cache=highest
+    sixes_cache=batsman_sixes
+
+    set_caches(runs_cache,wickets_cache,titles_cache,highest_score_cache,sixes_cache)
 
     dataset_loaded=True
-
-
-# ---------------- CRICINFO SCRAPER ----------------
-
-def get_latest_ipl_champion():
-
-    try:
-
-        url="https://www.espncricinfo.com/series/indian-premier-league-2024-1410320"
-        html=requests.get(url,timeout=10).text
-
-        if "Kolkata Knight Riders" in html:
-            champion="Kolkata Knight Riders"
-        else:
-            champion="Latest champion unavailable"
-
-        return {
-        "chart_title":"",
-        "chart_data":[],
-        "answer":f"Latest IPL champion: {champion}"
-        }
-
-    except:
-        return {
-        "chart_title":"",
-        "chart_data":[],
-        "answer":"Unable to fetch latest IPL champion."
-        }
-
-
-# ---------------- CRICAPI TOOL ----------------
-
-def get_player_profile(player):
-
-    if not CRICAPI_KEY:
-        return None
-
-    try:
-
-        url=f"https://api.cricapi.com/v1/players?apikey={CRICAPI_KEY}&offset=0&search={player}"
-
-        res=requests.get(url).json()
-
-        if res.get("data"):
-
-            p=res["data"][0]
-
-            return {
-            "chart_title":"",
-            "chart_data":[],
-            "answer":f"{p['name']} - {p.get('country','')} cricket player."
-            }
-
-    except:
-        pass
-
-    return None
-
-
-# ---------------- LOCAL TOOLS ----------------
-
-def get_top_runs():
-
-    data=sorted(runs_cache.items(),key=lambda x:x[1],reverse=True)[:10]
-
-    return {
-    "chart_title":"Top IPL Run Scorers",
-    "chart_data":[{"player":p,"value":v} for p,v in data],
-    "answer":f"{data[0][0]} leads IPL run scoring."
-    }
-
-
-def get_top_wickets():
-
-    data=sorted(wickets_cache.items(),key=lambda x:x[1],reverse=True)[:10]
-
-    return {
-    "chart_title":"Top IPL Wicket Takers",
-    "chart_data":[{"player":p,"value":v} for p,v in data],
-    "answer":f"{data[0][0]} has taken the most IPL wickets."
-    }
-
-
-def get_team_titles():
-
-    data=sorted(titles_cache.items(),key=lambda x:x[1],reverse=True)
-
-    if not data:
-        return {
-        "chart_title":"Most IPL Titles",
-        "chart_data":[],
-        "answer":"Title data unavailable."
-        }
-
-    return {
-    "chart_title":"Most IPL Titles",
-    "chart_data":[{"player":t,"value":c} for t,c in data],
-    "answer":f"{data[0][0]} has won the most IPL titles."
-    }
-
-
-def get_highest_score():
-
-    return {
-    "chart_title":"Highest IPL Score",
-    "chart_data":[
-    {"player":highest_score_cache["player"],"value":highest_score_cache["runs"]}
-    ],
-    "answer":f"{highest_score_cache['player']} scored {highest_score_cache['runs']} runs in {highest_score_cache['match']}."
-    }
-
-
-def detect_players(question):
-
-    tokens=re.findall(r"[a-z]+",question.lower())
-
-    found=set()
-
-    for t in tokens:
-        if t in player_index:
-            found.update(player_index[t])
-
-    return list(found)
-
-
-def compare_players(players):
-
-    p1,p2=players[:2]
-
-    r1=runs_cache.get(p1,0)
-    r2=runs_cache.get(p2,0)
-
-    leader=p1 if r1>r2 else p2
-
-    return {
-    "chart_title":f"{p1} vs {p2} IPL Runs",
-    "chart_data":[
-    {"player":p1,"value":r1},
-    {"player":p2,"value":r2}
-    ],
-    "answer":f"{leader} has scored more IPL runs."
-    }
-
-
-# ---------------- TOOL ROUTER ----------------
-
-def choose_tool(question):
-
-    q=question.lower()
-
-    if "title" in q:
-        return "titles"
-
-    if "latest champion" in q or "winner 2024" in q:
-        return "champion"
-
-    if "wicket" in q:
-        return "wickets"
-
-    if "run" in q:
-        return "runs"
-
-    if "highest" in q:
-        return "highest"
-
-    if "compare" in q:
-        return "compare"
-
-    return "knowledge"
 
 
 # ---------------- LLM ----------------
@@ -304,17 +144,17 @@ def knowledge_answer(question):
         res=groq.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
-        {"role":"system","content":"You are an IPL cricket expert."},
+        {"role":"system","content":"You are an IPL cricket analyst. Answer briefly."},
         {"role":"user","content":question}
         ],
-        temperature=0.3
+        temperature=0
         )
 
         answer=res.choices[0].message.content
 
     except:
 
-        answer="IPL is popular due to star players, fast T20 matches, massive fan engagement, and global broadcast reach."
+        answer="Unable to answer."
 
     return {
     "chart_title":"",
@@ -329,32 +169,22 @@ def run_agent(question):
 
     load_dataset()
 
-    intent=choose_tool(question)
-
-    players=detect_players(question)
+    intent=detect_intent(question)
 
     if intent=="runs":
-        return get_top_runs()
+        return top_runs()
 
     if intent=="wickets":
-        return get_top_wickets()
+        return top_wickets()
 
     if intent=="titles":
-        return get_team_titles()
+        return team_titles()
 
     if intent=="highest":
-        return get_highest_score()
+        return highest_score()
 
-    if intent=="champion":
-        return get_latest_ipl_champion()
-
-    if intent=="compare" and len(players)>=2:
-        return compare_players(players)
-
-    if players:
-        profile=get_player_profile(players[0])
-        if profile:
-            return profile
+    if intent=="sixes":
+        return top_sixes()
 
     return knowledge_answer(question)
 
@@ -362,7 +192,6 @@ def run_agent(question):
 @app.get("/")
 def home():
     return {"message":"SportsFan360 AI running"}
-
 
 @app.get("/ask")
 def ask(question:str):
