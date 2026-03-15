@@ -4,12 +4,7 @@ import logo from "./assets/logo.png";
 
 function App(){
 
-// switch for local testing
-const USE_LOCAL=false
-
-const API_URL=USE_LOCAL
-? "http://localhost:8000"
-: "https://sportsfan360-ai-agent-1.onrender.com"
+const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
 const [question,setQuestion]=useState("")
 const [messages,setMessages]=useState([])
@@ -23,15 +18,16 @@ const suggestions=[
 "Which team has most IPL titles",
 "Highest IPL score",
 "Compare Kohli vs Rohit",
-"Kohli strike rate IPL",
-"Rohit Sharma average IPL",
-"Which team has best win percentage",
 "Why is IPL popular"
 ]
 
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
+
+const clearChat=()=>{
+setMessages([])
+}
 
 const askAI=async(q=question)=>{
 
@@ -91,18 +87,22 @@ return(
 <p>AI Cricket Analyst</p>
 </div>
 
+<button className="clearChat" onClick={clearChat}>
+Clear Chat
+</button>
+
 </header>
 
 <div className="chatPanel">
 
 {messages.map((m,i)=>(
 <div key={i} className={`message ${m.role}`}>
-<pre>{m.text}</pre>
+<div className="messageText">{m.text}</div>
 </div>
 ))}
 
 {loading && (
-<div className="message ai">
+<div className="message ai typing">
 Analyzing cricket data...
 </div>
 )}
