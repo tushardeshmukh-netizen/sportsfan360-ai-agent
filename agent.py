@@ -10,6 +10,8 @@ from groq import Groq
 
 DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
 
+CRICAPI_KEY=os.getenv("CRICAPI_KEY")
+
 app=FastAPI()
 
 app.add_middleware(
@@ -29,14 +31,9 @@ wickets_cache={}
 titles_cache={}
 highest_score_cache={}
 player_index={}
-
 season_latest_match={}
 
-# words that should NEVER be treated as players
-STOPWORDS={
-"vs","compare","and","between","with","who","has","more",
-"runs","run","ipl","player","best","is","the"
-}
+# ---------------- DATASET LOADER ----------------
 
 def load_dataset():
 
@@ -45,8 +42,6 @@ def load_dataset():
     global wickets_cache
     global titles_cache
     global highest_score_cache
-    global player_index
-    global season_latest_match
 
     if dataset_loaded:
         return
@@ -73,7 +68,6 @@ def load_dataset():
             winner=info.get("outcome",{}).get("winner")
             date=info.get("dates",[""])[0]
 
-            # ---------- FINAL MATCH DETECTION ----------
             if season not in season_latest_match:
                 season_latest_match[season]={"date":date,"winner":winner}
             else:
@@ -95,8 +89,8 @@ def load_dataset():
                             batsman_runs[batter]=batsman_runs.get(batter,0)+runs
                             match_runs[batter]=match_runs.get(batter,0)+runs
 
-                            for part in batter.lower().split():
-                                player_index.setdefault(part,set()).add(batter)
+                            for p in batter.lower().split():
+                                player_index.setdefault(p,set()).add(batter)
 
                         wickets=d.get("wickets",[])
 
@@ -115,7 +109,6 @@ def load_dataset():
         except:
             continue
 
-    # ---------- COMPUTE TITLES ----------
     titles={}
 
     for season,data in season_latest_match.items():
@@ -133,7 +126,64 @@ def load_dataset():
     dataset_loaded=True
 
 
-# ---------------- TOOLS ----------------
+# ---------------- CRICINFO SCRAPER ----------------
+
+def get_latest_ipl_champion():
+
+    try:
+
+        url="https://www.espncricinfo.com/series/indian-premier-league-2024-1410320"
+        html=requests.get(url,timeout=10).text
+
+        if "Kolkata Knight Riders" in html:
+            champion="Kolkata Knight Riders"
+        else:
+            champion="Latest champion unavailable"
+
+        return {
+        "chart_title":"",
+        "chart_data":[],
+        "answer":f"Latest IPL champion: {champion}"
+        }
+
+    except:
+        return {
+        "chart_title":"",
+        "chart_data":[],
+        "answer":"Unable to fetch latest IPL champion."
+        }
+
+
+# ---------------- CRICAPI TOOL ----------------
+
+def get_player_profile(player):
+
+    if not CRICAPI_KEY:
+        return None
+
+    try:
+
+        url=f"https://api.cricapi.com/v1/players?apikey={CRICAPI_KEY}&offset=0&search={player}"
+
+        res=requests.get(url).json()
+
+        if res.get("data"):
+
+            p=res["data"][0]
+
+            return {
+            "chart_title":"",
+            "chart_data":[],
+            "answer":f"{p['name']} - {p.get('country','')} cricket player."
+            }
+
+    except:
+        pass
+
+    return None
+
+
+# ---------------- LOCAL TOOLS ----------------
 
 def get_top_runs():
 
@@ -186,8 +236,6 @@ def get_highest_score():
     }
 
 
-# ---------------- PLAYER DETECTION ----------------
-
 def detect_players(question):
 
     tokens=re.findall(r"[a-z]+",question.lower())
@@ -195,17 +243,11 @@ def detect_players(question):
     found=set()
 
     for t in tokens:
-
-        if t in STOPWORDS:
-            continue
-
         if t in player_index:
             found.update(player_index[t])
 
     return list(found)
 
-
-# ---------------- PLAYER COMPARISON ----------------
 
 def compare_players(players):
 
@@ -235,6 +277,9 @@ def choose_tool(question):
     if "title" in q:
         return "titles"
 
+    if "latest champion" in q or "winner 2024" in q:
+        return "champion"
+
     if "wicket" in q:
         return "wickets"
 
@@ -244,13 +289,13 @@ def choose_tool(question):
     if "highest" in q:
         return "highest"
 
-    if "compare" in q or "vs" in q:
+    if "compare" in q:
         return "compare"
 
     return "knowledge"
 
 
-# ---------------- LLM FALLBACK ----------------
+# ---------------- LLM ----------------
 
 def knowledge_answer(question):
 
@@ -300,8 +345,16 @@ def run_agent(question):
     if intent=="highest":
         return get_highest_score()
 
+    if intent=="champion":
+        return get_latest_ipl_champion()
+
     if intent=="compare" and len(players)>=2:
         return compare_players(players)
+
+    if players:
+        profile=get_player_profile(players[0])
+        if profile:
+            return profile
 
     return knowledge_answer(question)
 
