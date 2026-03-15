@@ -31,7 +31,7 @@ setMessages([])
 
 const askAI=async(q=question)=>{
 
-if(!q.trim())return
+if(!q.trim()) return
 
 setLoading(true)
 
@@ -80,11 +80,15 @@ return(
 
 <header className="header">
 
+<div className="brand">
+
 <img src={logo} className="logo" alt="logo"/>
 
 <div className="title">
 <h1>SportsFan360</h1>
 <p>AI Cricket Analyst</p>
+</div>
+
 </div>
 
 <button className="clearChat" onClick={clearChat}>
@@ -93,7 +97,16 @@ Clear Chat
 
 </header>
 
+<main className="chatArea">
+
 <div className="chatPanel">
+
+{messages.length===0 && (
+<div className="welcome">
+<h2>Ask anything about IPL cricket</h2>
+<p>Player stats, team performance, comparisons and more.</p>
+</div>
+)}
 
 {messages.map((m,i)=>(
 <div key={i} className={`message ${m.role}`}>
@@ -103,13 +116,15 @@ Clear Chat
 
 {loading && (
 <div className="message ai typing">
-Analyzing cricket data...
+SportsFan360 AI analyzing cricket data...
 </div>
 )}
 
 <div ref={chatEndRef}></div>
 
 </div>
+
+<div className="inputArea">
 
 <div className="search">
 
@@ -135,6 +150,10 @@ Ask
 ))}
 
 </div>
+
+</div>
+
+</main>
 
 <footer className="footer">
 © {new Date().getFullYear()} SportsFan360
