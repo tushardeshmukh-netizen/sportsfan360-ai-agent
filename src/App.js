@@ -1,212 +1,356 @@
-import React,{useState,useRef,useEffect} from "react";
-import "./App.css";
-import logo from "./assets/logo.png";
-
-function App(){
-
-const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
-
-const [question,setQuestion]=useState("")
-const [messages,setMessages]=useState([])
-const [loading,setLoading]=useState(false)
-
-const chatEndRef=useRef()
-
-const suggestions=[
-"Most IPL runs",
-"Most IPL wickets",
-"Most IPL sixes",
-"Which team has most IPL titles",
-"Highest IPL score",
-"Compare Kohli vs Rohit",
-"Why is IPL popular"
-]
-
-useEffect(()=>{
-chatEndRef.current?.scrollIntoView({behavior:"smooth"})
-},[messages])
-
-const clearChat=()=>{
-setMessages([])
+body{
+margin:0;
+background:radial-gradient(circle at top,#0b1224,#020617);
+color:white;
+font-family:Inter,Arial,Helvetica,sans-serif;
 }
 
-const askAI=async(q=question)=>{
+/* MAIN APP */
 
-if(!q.trim()) return
-
-setLoading(true)
-
-const newMessages=[...messages,{role:"user",text:q}]
-setMessages(newMessages)
-setQuestion("")
-
-try{
-
-const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
-const data=await res.json()
-
-let text=data.answer || ""
-
-setMessages([...newMessages,{
-role:"ai",
-text:text,
-data:data
-}])
-
-}catch{
-
-setMessages([...newMessages,{
-role:"ai",
-text:"Server error"
-}])
-
+.app{
+max-width:1300px;
+margin:auto;
+padding:30px 20px;
+display:flex;
+flex-direction:column;
+min-height:100vh;
 }
 
-setLoading(false)
+/* HEADER */
 
+.header{
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-bottom:25px;
 }
 
-return(
-
-<div className="app">
-
-<header className="header">
-
-<div className="brand">
-
-<img src={logo} className="logo" alt="logo"/>
-
-<div className="title">
-<h1>SportsFan360</h1>
-<p>AI Cricket Analyst</p>
-</div>
-
-</div>
-
-<button className="clearChat" onClick={clearChat}>
-Clear Chat
-</button>
-
-</header>
-
-<div className="mainLayout">
-
-{/* LEFT CHAT */}
-
-<main className="chatPanel">
-
-{messages.length===0 && (
-<div className="welcome">
-<h2>Ask anything about IPL</h2>
-<p>Runs • Wickets • Records • Comparisons</p>
-</div>
-)}
-
-{messages.map((m,i)=>(
-<div key={i} className={`message ${m.role}`}>
-
-<div className="messageText">{m.text}</div>
-
-{m.data?.chart_data?.length>0 && (
-
-<div className="chart">
-
-{m.data.chart_data.map((p,j)=>(
-<div key={j} className="chartRow">
-
-<span className="player">{p.player}</span>
-
-<div className="barWrap">
-<div
-className="bar"
-style={{width:(p.value/300)*100+"%"}}
-></div>
-</div>
-
-<span className="value">{p.value}</span>
-
-</div>
-))}
-
-</div>
-
-)}
-
-</div>
-))}
-
-{loading && <div className="message ai typing">Analyzing IPL data...</div>}
-
-<div ref={chatEndRef}></div>
-
-</main>
-
-
-{/* RIGHT SIDE PANEL */}
-
-<aside className="sidePanel">
-
-<h3>Quick Stats</h3>
-
-<div className="statBox">
-<span>Most IPL Runs</span>
-<strong>Virat Kohli</strong>
-</div>
-
-<div className="statBox">
-<span>Most IPL Wickets</span>
-<strong>YS Chahal</strong>
-</div>
-
-<div className="statBox">
-<span>Most IPL Titles</span>
-<strong>Mumbai Indians</strong>
-</div>
-
-</aside>
-
-</div>
-
-
-{/* INPUT AREA */}
-
-<div className="inputArea">
-
-<div className="search">
-
-<input
-value={question}
-placeholder="Ask SportsFan360..."
-onChange={(e)=>setQuestion(e.target.value)}
-onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
-/>
-
-<button onClick={()=>askAI()}>
-Ask
-</button>
-
-</div>
-
-<div className="suggestions">
-
-{suggestions.map((s,i)=>(
-<button key={i} onClick={()=>askAI(s)}>
-{s}
-</button>
-))}
-
-</div>
-
-</div>
-
-<footer className="footer">
-© {new Date().getFullYear()} SportsFan360
-</footer>
-
-</div>
-
-)
-
+.brand{
+display:flex;
+align-items:center;
+gap:16px;
 }
 
-export default App
+.logo{
+width:70px;
+}
+
+.title h1{
+margin:0;
+font-size:28px;
+font-weight:700;
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.title p{
+margin:2px 0 0 0;
+color:#94a3b8;
+font-size:14px;
+}
+
+/* CLEAR CHAT */
+
+.clearChat{
+background:#111827;
+border:1px solid #334155;
+padding:8px 14px;
+border-radius:8px;
+color:white;
+cursor:pointer;
+transition:.2s;
+}
+
+.clearChat:hover{
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+border:none;
+}
+
+/* MAIN LAYOUT */
+
+.mainLayout{
+display:grid;
+grid-template-columns:2fr 1fr;
+gap:20px;
+flex:1;
+}
+
+/* CHAT PANEL */
+
+.chatPanel{
+background:rgba(15,23,42,0.6);
+backdrop-filter:blur(10px);
+border:1px solid #1e293b;
+border-radius:14px;
+padding:25px;
+overflow-y:auto;
+max-height:520px;
+box-shadow:0 10px 40px rgba(0,0,0,0.4);
+}
+
+/* WELCOME */
+
+.welcome{
+text-align:center;
+margin-top:60px;
+color:#94a3b8;
+}
+
+.welcome h2{
+color:white;
+font-size:24px;
+margin-bottom:10px;
+}
+
+/* MESSAGE BUBBLES */
+
+.message{
+margin-bottom:16px;
+padding:14px 18px;
+border-radius:12px;
+max-width:75%;
+line-height:1.6;
+animation:fadeIn .25s ease;
+}
+
+.message.user{
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+margin-left:auto;
+}
+
+.message.ai{
+background:#1e293b;
+border:1px solid #334155;
+}
+
+.messageText{
+white-space:pre-wrap;
+}
+
+/* TYPING */
+
+.typing{
+font-style:italic;
+opacity:.7;
+}
+
+/* CHART AREA */
+
+.chart{
+margin-top:10px;
+}
+
+.chartRow{
+display:flex;
+align-items:center;
+gap:10px;
+margin-top:8px;
+}
+
+.player{
+width:120px;
+font-size:13px;
+color:#cbd5f5;
+}
+
+.barWrap{
+flex:1;
+background:#0f172a;
+border-radius:10px;
+overflow:hidden;
+}
+
+.bar{
+height:10px;
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+border-radius:10px;
+}
+
+.value{
+width:40px;
+font-size:13px;
+text-align:right;
+}
+
+/* SIDE PANEL */
+
+.sidePanel{
+background:rgba(15,23,42,0.6);
+backdrop-filter:blur(10px);
+border:1px solid #1e293b;
+border-radius:14px;
+padding:20px;
+}
+
+.sidePanel h3{
+margin-top:0;
+font-size:16px;
+color:#94a3b8;
+}
+
+/* STAT BOX */
+
+.statBox{
+margin-top:15px;
+padding:12px;
+background:#0f172a;
+border:1px solid #1e293b;
+border-radius:10px;
+}
+
+.statBox span{
+display:block;
+font-size:12px;
+color:#94a3b8;
+}
+
+.statBox strong{
+font-size:16px;
+}
+
+/* INPUT AREA */
+
+.inputArea{
+margin-top:20px;
+}
+
+/* SEARCH */
+
+.search{
+display:flex;
+gap:10px;
+}
+
+.search input{
+flex:1;
+padding:16px;
+font-size:15px;
+background:#111827;
+border:1px solid #334155;
+color:white;
+border-radius:10px;
+outline:none;
+}
+
+.search input:focus{
+border-color:#FE2165;
+box-shadow:0 0 0 2px rgba(254,33,101,0.2);
+}
+
+.search button{
+padding:16px 26px;
+border:none;
+border-radius:10px;
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+color:white;
+font-weight:600;
+cursor:pointer;
+transition:.2s;
+}
+
+.search button:hover{
+transform:translateY(-1px);
+box-shadow:0 6px 20px rgba(253,110,12,0.4);
+}
+
+/* SUGGESTIONS */
+
+.suggestions{
+margin-top:12px;
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.suggestions button{
+background:#111827;
+border:1px solid #334155;
+padding:8px 14px;
+border-radius:20px;
+color:#cbd5f5;
+cursor:pointer;
+font-size:13px;
+transition:.2s;
+}
+
+.suggestions button:hover{
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+border:none;
+color:white;
+}
+
+/* FOOTER */
+
+.footer{
+text-align:center;
+margin-top:20px;
+font-size:13px;
+color:#94a3b8;
+}
+
+/* SCROLLBAR */
+
+.chatPanel::-webkit-scrollbar{
+width:6px;
+}
+
+.chatPanel::-webkit-scrollbar-thumb{
+background:linear-gradient(#FE2165,#FD6E0C);
+border-radius:10px;
+}
+
+/* ANIMATION */
+
+@keyframes fadeIn{
+from{
+opacity:0;
+transform:translateY(8px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+/* MOBILE */
+
+@media (max-width:900px){
+
+.mainLayout{
+grid-template-columns:1fr;
+}
+
+.chatPanel{
+max-height:400px;
+}
+
+.logo{
+width:55px;
+}
+
+.title h1{
+font-size:22px;
+}
+
+.message{
+max-width:90%;
+}
+
+.search{
+flex-direction:column;
+}
+
+.search button{
+width:100%;
+}
+
+.suggestions{
+flex-direction:column;
+}
+
+.suggestions button{
+width:100%;
+}
+
+}
