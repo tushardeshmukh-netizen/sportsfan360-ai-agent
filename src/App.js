@@ -18,11 +18,14 @@ const [loading,setLoading]=useState(false)
 const chatEndRef=useRef()
 
 const suggestions=[
-"Who has most IPL runs",
+"Who scored most IPL runs",
 "Top wicket takers IPL",
 "Which team has most IPL titles",
 "Highest IPL score",
-"Compare Kohli vs Rohit IPL runs",
+"Compare Kohli vs Rohit",
+"Kohli strike rate IPL",
+"Rohit Sharma average IPL",
+"Which team has best win percentage",
 "Why is IPL popular"
 ]
 
