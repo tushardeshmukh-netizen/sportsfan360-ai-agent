@@ -30,9 +30,15 @@ titles_cache={}
 highest_score_cache={}
 player_index={}
 
+season_latest_match={}
+
 def load_dataset():
 
-    global dataset_loaded,runs_cache,wickets_cache,titles_cache,highest_score_cache
+    global dataset_loaded
+    global runs_cache
+    global wickets_cache
+    global titles_cache
+    global highest_score_cache
 
     if dataset_loaded:
         return
@@ -42,7 +48,6 @@ def load_dataset():
 
     batsman_runs={}
     bowler_wickets={}
-    titles={}
     highest={"runs":0,"player":None,"match":None}
 
     for file in zip_file.namelist():
@@ -56,14 +61,16 @@ def load_dataset():
             info=match.get("info",{})
 
             teams=info.get("teams",[None,None])
-            season=info.get("season")
+            season=str(info.get("season"))
             winner=info.get("outcome",{}).get("winner")
+            date=info.get("dates",[""])[0]
 
-            event=info.get("event",{})
-            match_number=str(event.get("match_number","")).lower()
-
-            if "final" in match_number and winner:
-                titles[winner]=titles.get(winner,0)+1
+            # ---------- FINAL MATCH DETECTION ----------
+            if season not in season_latest_match:
+                season_latest_match[season]={"date":date,"winner":winner}
+            else:
+                if date>season_latest_match[season]["date"]:
+                    season_latest_match[season]={"date":date,"winner":winner}
 
             match_runs={}
 
@@ -89,6 +96,7 @@ def load_dataset():
                             bowler_wickets[bowler]=bowler_wickets.get(bowler,0)+len(wickets)
 
             for p,r in match_runs.items():
+
                 if r>highest["runs"]:
                     highest={
                     "runs":r,
@@ -99,6 +107,16 @@ def load_dataset():
         except:
             continue
 
+    # ---------- COMPUTE TITLES ----------
+    titles={}
+
+    for season,data in season_latest_match.items():
+
+        winner=data["winner"]
+
+        if winner:
+            titles[winner]=titles.get(winner,0)+1
+
     runs_cache=batsman_runs
     wickets_cache=bowler_wickets
     titles_cache=titles
@@ -107,7 +125,7 @@ def load_dataset():
     dataset_loaded=True
 
 
-# ---------- TOOLS ----------
+# ---------------- TOOLS ----------------
 
 def get_top_runs():
 
@@ -133,14 +151,14 @@ def get_top_wickets():
 
 def get_team_titles():
 
-    if not titles_cache:
+    data=sorted(titles_cache.items(),key=lambda x:x[1],reverse=True)
+
+    if not data:
         return {
         "chart_title":"Most IPL Titles",
         "chart_data":[],
-        "answer":"IPL title data loading. Please try again."
+        "answer":"Title data unavailable."
         }
-
-    data=sorted(titles_cache.items(),key=lambda x:x[1],reverse=True)
 
     return {
     "chart_title":"Most IPL Titles",
@@ -192,59 +210,31 @@ def compare_players(players):
     }
 
 
-# ---------- TOOL ROUTER ----------
+# ---------------- TOOL ROUTER ----------------
 
 def choose_tool(question):
 
-    try:
+    q=question.lower()
 
-        res=groq.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{
-        "role":"user",
-        "content":f"""
-Choose best tool.
+    if "title" in q:
+        return "titles"
 
-TOOLS:
-top_runs
-top_wickets
-team_titles
-highest_score
-compare_players
-knowledge
+    if "wicket" in q:
+        return "wickets"
 
-Return JSON:
-{{"tool":"tool_name"}}
+    if "run" in q:
+        return "runs"
 
-Question: {question}
-"""
-        }],
-        temperature=0
-        )
+    if "highest" in q:
+        return "highest"
 
-        text=res.choices[0].message.content.strip()
+    if "compare" in q:
+        return "compare"
 
-        data=json.loads(text)
-
-        return data.get("tool","knowledge")
-
-    except:
-
-        q=question.lower()
-
-        if "title" in q:
-            return "team_titles"
-
-        if "wicket" in q:
-            return "top_wickets"
-
-        if "run" in q:
-            return "top_runs"
-
-        return "knowledge"
+    return "knowledge"
 
 
-# ---------- LLM FALLBACK ----------
+# ---------------- LLM ----------------
 
 def knowledge_answer(question):
 
@@ -263,7 +253,7 @@ def knowledge_answer(question):
 
     except:
 
-        answer="IPL is popular because it combines world-class players, fast T20 matches, intense rivalries, and massive fan engagement."
+        answer="IPL is popular due to star players, fast T20 matches, massive fan engagement, and global broadcast reach."
 
     return {
     "chart_title":"",
@@ -272,29 +262,29 @@ def knowledge_answer(question):
     }
 
 
-# ---------- AGENT ----------
+# ---------------- AGENT ----------------
 
 def run_agent(question):
 
     load_dataset()
 
-    tool=choose_tool(question)
+    intent=choose_tool(question)
 
     players=detect_players(question)
 
-    if tool=="top_runs":
+    if intent=="runs":
         return get_top_runs()
 
-    if tool=="top_wickets":
+    if intent=="wickets":
         return get_top_wickets()
 
-    if tool=="team_titles":
+    if intent=="titles":
         return get_team_titles()
 
-    if tool=="highest_score":
+    if intent=="highest":
         return get_highest_score()
 
-    if tool=="compare_players" and len(players)>=2:
+    if intent=="compare" and len(players)>=2:
         return compare_players(players)
 
     return knowledge_answer(question)
