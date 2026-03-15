@@ -9,6 +9,9 @@ body{
   max-width:1000px;
   margin:auto;
   padding:40px;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
 }
 
 /* HEADER */
@@ -50,7 +53,6 @@ body{
 
 .clearChat:hover{
   background:linear-gradient(90deg,#FE2165,#FD6E0C);
-  color:white;
 }
 
 /* CHAT PANEL */
@@ -60,7 +62,7 @@ body{
   border:1px solid #1e293b;
   border-radius:12px;
   padding:20px;
-  height:350px;
+  height:380px;
   overflow-y:auto;
   margin-bottom:20px;
 }
@@ -76,15 +78,11 @@ body{
   line-height:1.5;
 }
 
-/* USER MESSAGE */
-
 .message.user{
   background:linear-gradient(90deg,#FE2165,#FD6E0C);
   color:white;
   margin-left:auto;
 }
-
-/* AI MESSAGE */
 
 .message.ai{
   background:#1e293b;
@@ -123,8 +121,6 @@ body{
   border-color:#FE2165;
 }
 
-/* ASK BUTTON */
-
 .search button{
   padding:14px 25px;
   border:none;
@@ -162,22 +158,6 @@ body{
 
 .suggestions button:hover{
   background:linear-gradient(90deg,#FE2165,#FD6E0C);
-}
-
-/* THINKING PANEL */
-
-.thinking{
-  margin-top:15px;
-  background:#020617;
-  padding:15px;
-  border-radius:10px;
-  border:1px solid #1e293b;
-}
-
-.reasonStep{
-  color:#FD6E0C;
-  font-size:13px;
-  margin-bottom:5px;
 }
 
 /* STAT CARDS */
@@ -230,6 +210,16 @@ body{
   padding:20px;
 }
 
+/* FOOTER */
+
+.footer{
+  margin-top:auto;
+  padding-top:30px;
+  text-align:center;
+  color:#94a3b8;
+  font-size:14px;
+}
+
 /* SCROLLBAR */
 
 .chatPanel::-webkit-scrollbar{
@@ -239,4 +229,52 @@ body{
 .chatPanel::-webkit-scrollbar-thumb{
   background:linear-gradient(#FE2165,#FD6E0C);
   border-radius:10px;
+}
+
+/* ===============================
+   MOBILE RESPONSIVE
+   =============================== */
+
+@media (max-width:768px){
+
+.app{
+  padding:20px;
+}
+
+.header{
+  flex-wrap:wrap;
+}
+
+.logo{
+  width:70px;
+}
+
+.title h1{
+  font-size:22px;
+}
+
+.chatPanel{
+  height:300px;
+}
+
+.search{
+  flex-direction:column;
+}
+
+.search button{
+  width:100%;
+}
+
+.suggestions{
+  flex-direction:column;
+}
+
+.suggestions button{
+  width:100%;
+}
+
+.message{
+  max-width:90%;
+}
+
 }
