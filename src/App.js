@@ -9,25 +9,21 @@ const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 const [question,setQuestion]=useState("")
 const [messages,setMessages]=useState([])
 const [loading,setLoading]=useState(false)
+const [showJSON,setShowJSON]=useState(false)
 
 const chatEndRef=useRef()
 
 const suggestions=[
-"Who scored most IPL runs",
-"Top wicket takers IPL",
+"Most IPL runs",
+"Most IPL wickets",
+"Most IPL sixes",
 "Which team has most IPL titles",
-"Highest IPL score",
-"Compare Kohli vs Rohit",
-"Why is IPL popular"
+"Highest IPL score"
 ]
 
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
-
-const clearChat=()=>{
-setMessages([])
-}
 
 const askAI=async(q=question)=>{
 
@@ -44,25 +40,7 @@ try{
 const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
 const data=await res.json()
 
-let text=""
-
-if(data.chart_data && data.chart_data.length>0){
-
-text+=data.chart_title+"\n\n"
-
-data.chart_data.forEach((p,i)=>{
-text+=`${i+1}. ${p.player} — ${p.value}\n`
-})
-
-if(data.answer){
-text+="\n"+data.answer
-}
-
-}else{
-text=data.answer
-}
-
-setMessages([...newMessages,{role:"ai",text:text}])
+setMessages([...newMessages,{role:"ai",text:data.answer,data:data}])
 
 }catch{
 
@@ -91,46 +69,51 @@ return(
 
 </div>
 
-<button className="clearChat" onClick={clearChat}>
-Clear Chat
-</button>
-
 </header>
 
-<main className="chatArea">
-
-<div className="chatPanel">
+<main className="chatPanel">
 
 {messages.length===0 && (
 <div className="welcome">
-<h2>Ask anything about IPL cricket</h2>
-<p>Player stats, team performance, comparisons and more.</p>
+<h2>Ask anything about IPL</h2>
 </div>
 )}
 
 {messages.map((m,i)=>(
 <div key={i} className={`message ${m.role}`}>
-<div className="messageText">{m.text}</div>
+
+<div>{m.text}</div>
+
+{m.data?.chart_data?.length>0 && (
+
+<div className="chart">
+
+{m.data.chart_data.map((p,j)=>(
+<div key={j} className="chartRow">
+<span>{p.player}</span>
+<div className="bar" style={{width:(p.value/100)*20+"%"}}></div>
+<span>{p.value}</span>
 </div>
 ))}
 
-{loading && (
-<div className="message ai typing">
-SportsFan360 AI analyzing cricket data...
 </div>
+
 )}
+
+</div>
+))}
+
+{loading && <div className="message ai">Analyzing IPL data...</div>}
 
 <div ref={chatEndRef}></div>
 
-</div>
+</main>
 
-<div className="inputArea">
-
-<div className="search">
+<div className="inputBox">
 
 <input
 value={question}
-placeholder="Ask SportsFan360 AI..."
+placeholder="Ask SportsFan360..."
 onChange={(e)=>setQuestion(e.target.value)}
 onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 />
@@ -140,24 +123,6 @@ Ask
 </button>
 
 </div>
-
-<div className="suggestions">
-
-{suggestions.map((s,i)=>(
-<button key={i} onClick={()=>askAI(s)}>
-{s}
-</button>
-))}
-
-</div>
-
-</div>
-
-</main>
-
-<footer className="footer">
-© {new Date().getFullYear()} SportsFan360
-</footer>
 
 </div>
 
