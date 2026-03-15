@@ -1,10 +1,15 @@
-import React, { useState, useRef, useEffect } from "react";
+import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 
-function App() {
+function App(){
 
-const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
+// switch for local testing
+const USE_LOCAL=false
+
+const API_URL=USE_LOCAL
+? "http://localhost:8000"
+: "https://sportsfan360-ai-agent-1.onrender.com"
 
 const [question,setQuestion]=useState("")
 const [messages,setMessages]=useState([])
@@ -25,26 +30,19 @@ useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
 
-const clearChat=()=>{
-setMessages([])
-}
-
 const askAI=async(q=question)=>{
 
-if(!q.trim()) return
+if(!q.trim())return
 
 setLoading(true)
 
 const newMessages=[...messages,{role:"user",text:q}]
-
 setMessages(newMessages)
-
 setQuestion("")
 
 try{
 
 const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
-
 const data=await res.json()
 
 let text=""
@@ -62,16 +60,14 @@ text+="\n"+data.answer
 }
 
 }else{
-
 text=data.answer
-
 }
 
 setMessages([...newMessages,{role:"ai",text:text}])
 
 }catch{
 
-setMessages([...newMessages,{role:"ai",text:"Server error."}])
+setMessages([...newMessages,{role:"ai",text:"Server error"}])
 
 }
 
@@ -92,10 +88,6 @@ return(
 <p>AI Cricket Analyst</p>
 </div>
 
-<button className="clearChat" onClick={clearChat}>
-Clear
-</button>
-
 </header>
 
 <div className="chatPanel">
@@ -108,7 +100,7 @@ Clear
 
 {loading && (
 <div className="message ai">
-Analyzing cricket statistics...
+Analyzing cricket data...
 </div>
 )}
 
@@ -142,7 +134,7 @@ Ask
 </div>
 
 <footer className="footer">
-© {new Date().getFullYear()} SportsFan360 · AI Cricket Analytics
+© {new Date().getFullYear()} SportsFan360
 </footer>
 
 </div>
