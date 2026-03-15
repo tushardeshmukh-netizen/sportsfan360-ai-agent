@@ -9,7 +9,6 @@ const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 const [question,setQuestion]=useState("")
 const [messages,setMessages]=useState([])
 const [loading,setLoading]=useState(false)
-const [showJSON,setShowJSON]=useState(false)
 
 const chatEndRef=useRef()
 
@@ -18,12 +17,18 @@ const suggestions=[
 "Most IPL wickets",
 "Most IPL sixes",
 "Which team has most IPL titles",
-"Highest IPL score"
+"Highest IPL score",
+"Compare Kohli vs Rohit",
+"Why is IPL popular"
 ]
 
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
+
+const clearChat=()=>{
+setMessages([])
+}
 
 const askAI=async(q=question)=>{
 
@@ -40,11 +45,20 @@ try{
 const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
 const data=await res.json()
 
-setMessages([...newMessages,{role:"ai",text:data.answer,data:data}])
+let text=data.answer || ""
+
+setMessages([...newMessages,{
+role:"ai",
+text:text,
+data:data
+}])
 
 }catch{
 
-setMessages([...newMessages,{role:"ai",text:"Server error"}])
+setMessages([...newMessages,{
+role:"ai",
+text:"Server error"
+}])
 
 }
 
@@ -69,20 +83,29 @@ return(
 
 </div>
 
+<button className="clearChat" onClick={clearChat}>
+Clear Chat
+</button>
+
 </header>
+
+<div className="mainLayout">
+
+{/* LEFT CHAT */}
 
 <main className="chatPanel">
 
 {messages.length===0 && (
 <div className="welcome">
 <h2>Ask anything about IPL</h2>
+<p>Runs • Wickets • Records • Comparisons</p>
 </div>
 )}
 
 {messages.map((m,i)=>(
 <div key={i} className={`message ${m.role}`}>
 
-<div>{m.text}</div>
+<div className="messageText">{m.text}</div>
 
 {m.data?.chart_data?.length>0 && (
 
@@ -90,9 +113,18 @@ return(
 
 {m.data.chart_data.map((p,j)=>(
 <div key={j} className="chartRow">
-<span>{p.player}</span>
-<div className="bar" style={{width:(p.value/100)*20+"%"}}></div>
-<span>{p.value}</span>
+
+<span className="player">{p.player}</span>
+
+<div className="barWrap">
+<div
+className="bar"
+style={{width:(p.value/300)*100+"%"}}
+></div>
+</div>
+
+<span className="value">{p.value}</span>
+
 </div>
 ))}
 
@@ -103,13 +135,44 @@ return(
 </div>
 ))}
 
-{loading && <div className="message ai">Analyzing IPL data...</div>}
+{loading && <div className="message ai typing">Analyzing IPL data...</div>}
 
 <div ref={chatEndRef}></div>
 
 </main>
 
-<div className="inputBox">
+
+{/* RIGHT SIDE PANEL */}
+
+<aside className="sidePanel">
+
+<h3>Quick Stats</h3>
+
+<div className="statBox">
+<span>Most IPL Runs</span>
+<strong>Virat Kohli</strong>
+</div>
+
+<div className="statBox">
+<span>Most IPL Wickets</span>
+<strong>YS Chahal</strong>
+</div>
+
+<div className="statBox">
+<span>Most IPL Titles</span>
+<strong>Mumbai Indians</strong>
+</div>
+
+</aside>
+
+</div>
+
+
+{/* INPUT AREA */}
+
+<div className="inputArea">
+
+<div className="search">
 
 <input
 value={question}
@@ -123,6 +186,22 @@ Ask
 </button>
 
 </div>
+
+<div className="suggestions">
+
+{suggestions.map((s,i)=>(
+<button key={i} onClick={()=>askAI(s)}>
+{s}
+</button>
+))}
+
+</div>
+
+</div>
+
+<footer className="footer">
+© {new Date().getFullYear()} SportsFan360
+</footer>
 
 </div>
 
