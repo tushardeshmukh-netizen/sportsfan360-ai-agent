@@ -32,6 +32,12 @@ player_index={}
 
 season_latest_match={}
 
+# words that should NEVER be treated as players
+STOPWORDS={
+"vs","compare","and","between","with","who","has","more",
+"runs","run","ipl","player","best","is","the"
+}
+
 def load_dataset():
 
     global dataset_loaded
@@ -39,6 +45,8 @@ def load_dataset():
     global wickets_cache
     global titles_cache
     global highest_score_cache
+    global player_index
+    global season_latest_match
 
     if dataset_loaded:
         return
@@ -87,8 +95,8 @@ def load_dataset():
                             batsman_runs[batter]=batsman_runs.get(batter,0)+runs
                             match_runs[batter]=match_runs.get(batter,0)+runs
 
-                            for p in batter.lower().split():
-                                player_index.setdefault(p,set()).add(batter)
+                            for part in batter.lower().split():
+                                player_index.setdefault(part,set()).add(batter)
 
                         wickets=d.get("wickets",[])
 
@@ -178,6 +186,8 @@ def get_highest_score():
     }
 
 
+# ---------------- PLAYER DETECTION ----------------
+
 def detect_players(question):
 
     tokens=re.findall(r"[a-z]+",question.lower())
@@ -185,11 +195,17 @@ def detect_players(question):
     found=set()
 
     for t in tokens:
+
+        if t in STOPWORDS:
+            continue
+
         if t in player_index:
             found.update(player_index[t])
 
     return list(found)
 
+
+# ---------------- PLAYER COMPARISON ----------------
 
 def compare_players(players):
 
@@ -228,13 +244,13 @@ def choose_tool(question):
     if "highest" in q:
         return "highest"
 
-    if "compare" in q:
+    if "compare" in q or "vs" in q:
         return "compare"
 
     return "knowledge"
 
 
-# ---------------- LLM ----------------
+# ---------------- LLM FALLBACK ----------------
 
 def knowledge_answer(question):
 
