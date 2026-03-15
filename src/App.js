@@ -12,10 +12,10 @@ function App() {
      =============================== */
 
   // ===== LOCAL SERVER =====
-  //const API_URL = "http://127.0.0.1:8000";
+  const API_URL = "http://127.0.0.1:8000";
 
   // ===== PRODUCTION SERVER (Render) =====
-   const API_URL = "https://sportsfan360-ai-agent-1.onrender.com";
+   //const API_URL = "https://sportsfan360-ai-agent-1.onrender.com";
 
 
   const SHOW_CHARTS = false;   // charts hidden for now
