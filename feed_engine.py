@@ -1,73 +1,51 @@
-import random
 import requests
+import os
+import random
 
-CRIC_API="https://api.cricapi.com/v1/cricScore"
+NEWS_API_KEY = os.getenv("e9483687581d4fb39447352f50c42dbb")
 
-
-TRENDING_QUESTIONS=[
-
-"Highest IPL score",
-"Most IPL runs",
-"Most IPL wickets",
-"Which team has most IPL titles",
-"Most IPL sixes",
-"Fastest IPL century",
-"Best IPL bowling figures",
-"Who scored most IPL hundreds",
-"Highest IPL team total",
-"Lowest IPL team score"
-
-]
+NEWS_URL = "https://newsapi.org/v2/everything"
 
 
-AI_INSIGHTS=[
+def get_feed():
 
-"Teams defending totals win slightly more night games.",
-"Spinners dominate middle overs in IPL matches.",
-"Powerplay strike rates strongly predict match outcomes.",
-"Death over economy is the biggest factor in close IPL games.",
-"Chasing teams benefit significantly from dew in night matches.",
-"Teams scoring 180+ win most IPL matches historically.",
-"Batsmen targeting weak fifth bowlers increase scoring rate.",
-"Left-right batting combinations disturb bowling rhythm."
+    try:
 
-]
+        params = {
+            "q": "IPL OR cricket",
+            "language": "en",
+            "sortBy": "publishedAt",
+            "pageSize": 6,
+            "apiKey": NEWS_API_KEY
+        }
 
+        res = requests.get(NEWS_URL, params=params)
+        data = res.json()
 
-STAT_HIGHLIGHTS=[
+        cards = []
 
-"Virat Kohli is the all-time leading IPL run scorer.",
-"Chris Gayle holds the highest individual IPL score: 175.",
-"YS Chahal has taken the most IPL wickets.",
-"Mumbai Indians have won the most IPL titles.",
-"MS Dhoni has played the most IPL matches.",
-"Alzarri Joseph recorded best bowling figures: 6/12.",
-"RCB holds the highest team total: 263.",
-"RCB also holds the lowest team total: 49."
+        for article in data["articles"][:6]:
 
-]
+            cards.append({
+                "type": "news",
+                "title": article["title"],
+                "text": article["description"] or "Latest cricket news update",
+                "image": article["urlToImage"],
+                "link": article["url"]
+            })
 
+        return {"cards": cards}
 
-def generate_feed():
+    except Exception as e:
 
-    cards=[]
-
-    cards.append({
-        "type":"question",
-        "title":"Trending Question",
-        "text":random.choice(TRENDING_QUESTIONS)
-    })
-
-    cards.append({
-        "type":"insight",
-        "title":"AI Insight",
-        "text":random.choice(AI_INSIGHTS)
-    })
-
-    cards.append({
-        "type":"stat",
-        "title":"Stat Highlight",
-        "text":random.choice(STAT_HIGHLIGHTS)
-    })
-
-    return {"cards":cards}
+        return {
+            "cards": [
+                {
+                    "type": "news",
+                    "title": "IPL Season Updates",
+                    "text": "Live cricket insights and match analysis",
+                    "image": "https://upload.wikimedia.org/wikipedia/en/2/2e/Indian_Premier_League_Logo.svg",
+                    "link": "https://www.iplt20.com"
+                }
+            ]
+        }
