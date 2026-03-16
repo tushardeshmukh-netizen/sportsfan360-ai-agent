@@ -1,6 +1,15 @@
-import React,{useState,useRef,useEffect,useState as useStateAlias} from "react";
+import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
+
+/* rotating stats moved outside component to avoid React hook warning */
+const statsPool=[
+{label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
+{label:"Most IPL Wickets",value:"YS Chahal",num:"229"},
+{label:"Most IPL Titles",value:"Mumbai Indians",num:"5"},
+{label:"Most IPL Sixes",value:"Chris Gayle",num:"357"},
+{label:"Highest IPL Score",value:"Chris Gayle",num:"175"},
+]
 
 function App(){
 
@@ -12,17 +21,9 @@ const [loading,setLoading]=useState(false)
 
 const chatEndRef=useRef()
 
-/* rotating stats */
-const statsPool=[
-{label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
-{label:"Most IPL Wickets",value:"YS Chahal",num:"229"},
-{label:"Most IPL Titles",value:"Mumbai Indians",num:"5"},
-{label:"Most IPL Sixes",value:"Chris Gayle",num:"357"},
-{label:"Highest IPL Score",value:"Chris Gayle",num:"175"},
-]
-
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
+/* rotate stats every 8 seconds */
 useEffect(()=>{
 const interval=setInterval(()=>{
 const shuffled=[...statsPool].sort(()=>0.5-Math.random())
