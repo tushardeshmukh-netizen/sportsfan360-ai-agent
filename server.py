@@ -1,6 +1,7 @@
 from flask import Flask,jsonify,request
 from flask_cors import CORS
 import random
+import os
 
 from feed_engine import generate_feed
 from stats_engine import answer_question
@@ -146,4 +147,10 @@ def trivia():
 # ---------------- SERVER ----------------
 
 if __name__=="__main__":
-    app.run(port=8000)
+
+    port=int(os.environ.get("PORT",8000))
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
