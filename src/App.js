@@ -2,9 +2,6 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 
-
-/* EXPANDED QUICK STATS */
-
 const statsPool=[
 
 {label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
@@ -27,15 +24,11 @@ const statsPool=[
 
 ]
 
-
 function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
-/* FEED DEFAULT */
-
 const [activeTab,setActiveTab]=useState("feed")
-
 const [feed,setFeed]=useState(null)
 
 const [question,setQuestion]=useState("")
@@ -45,9 +38,6 @@ const [loading,setLoading]=useState(false)
 const chatEndRef=useRef()
 
 const [stats,setStats]=useState(statsPool.slice(0,3))
-
-
-/* ROTATING QUICK STATS */
 
 useEffect(()=>{
 
@@ -62,9 +52,6 @@ return ()=>clearInterval(interval)
 
 },[])
 
-
-/* LOAD FEED */
-
 useEffect(()=>{
 
 if(activeTab==="feed"){
@@ -78,7 +65,6 @@ fetch(`${API_URL}/feed`)
 
 },[activeTab])
 
-
 const suggestions=[
 "Most IPL runs",
 "Most IPL wickets",
@@ -89,18 +75,13 @@ const suggestions=[
 "Why is IPL popular"
 ]
 
-
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
 
-
 const clearChat=()=>{
 setMessages([])
 }
-
-
-/* ASK AI */
 
 const askAI=async(q=question)=>{
 
@@ -136,7 +117,6 @@ setLoading(false)
 
 }
 
-
 return(
 
 <div className="app">
@@ -156,9 +136,6 @@ return(
 
 </header>
 
-
-{/* TABS */}
-
 <div className="tabs">
 
 <button
@@ -177,9 +154,6 @@ AskSportsFan360
 
 </div>
 
-
-{/* FEED TAB */}
-
 {activeTab==="feed" && (
 
 <div className="feed">
@@ -194,26 +168,31 @@ AskSportsFan360
 
 {feed.cards.map((c,i)=>(
 
-<div key={i} className="feedCard">
+<a
+key={i}
+href={c.link}
+target="_blank"
+rel="noreferrer"
+className="feedCard"
+>
+
+{c.image && (
+<img
+src={c.image}
+className="feedImage"
+alt="news"
+/>
+)}
+
+<div className="feedContent">
 
 <h3>{c.title}</h3>
 
 <p>{c.text}</p>
 
-{c.type==="question" && (
-
-<button
-onClick={()=>{
-setActiveTab("ask")
-askAI(c.text)
-}}
->
-Ask this →
-</button>
-
-)}
-
 </div>
+
+</a>
 
 ))}
 
@@ -225,14 +204,9 @@ Ask this →
 
 )}
 
-
-{/* ASK TAB */}
-
 {activeTab==="ask" && (
 
 <>
-
-{/* CLEAR CHAT BUTTON MOVED HERE */}
 
 <div style={{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}}>
 
@@ -241,7 +215,6 @@ Clear Chat
 </button>
 
 </div>
-
 
 <div className="quickStats">
 
@@ -260,7 +233,6 @@ Clear Chat
 
 </div>
 
-
 <main className="chatPanel">
 
 {messages.length===0 && (
@@ -272,34 +244,7 @@ Clear Chat
 
 {messages.map((m,i)=>(
 <div key={i} className={`message ${m.role}`}>
-
 <div className="messageText">{m.text}</div>
-
-{m.data?.chart_data?.length>0 && (
-
-<div className="chart">
-
-{m.data.chart_data.map((p,j)=>(
-<div key={j} className="chartRow">
-
-<span className="player">{p.player}</span>
-
-<div className="barWrap">
-<div
-className="bar"
-style={{width:(p.value/300)*100+"%"}}
-></div>
-</div>
-
-<span className="value">{p.value}</span>
-
-</div>
-))}
-
-</div>
-
-)}
-
 </div>
 ))}
 
@@ -308,7 +253,6 @@ style={{width:(p.value/300)*100+"%"}}
 <div ref={chatEndRef}></div>
 
 </main>
-
 
 <div className="bottomPanel">
 

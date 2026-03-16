@@ -3,3 +3,7 @@ uvicorn
 requests
 groq
 beautifulsoup4
+flask
+flask-cors
+requests
+feedparser
