@@ -2,7 +2,6 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 
-/* rotating stats moved outside component to avoid React hook warning */
 const statsPool=[
 {label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
 {label:"Most IPL Wickets",value:"YS Chahal",num:"229"},
@@ -15,6 +14,9 @@ function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
+const [activeTab,setActiveTab]=useState("ask")
+const [feed,setFeed]=useState(null)
+
 const [question,setQuestion]=useState("")
 const [messages,setMessages]=useState([])
 const [loading,setLoading]=useState(false)
@@ -23,13 +25,20 @@ const chatEndRef=useRef()
 
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
-/* rotate stats every 8 seconds */
 useEffect(()=>{
 const interval=setInterval(()=>{
 const shuffled=[...statsPool].sort(()=>0.5-Math.random())
 setStats(shuffled.slice(0,3))
 },8000)
 return ()=>clearInterval(interval)
+},[])
+
+useEffect(()=>{
+
+fetch(`${API_URL}/feed`)
+.then(res=>res.json())
+.then(data=>setFeed(data))
+
 },[])
 
 const suggestions=[
@@ -108,7 +117,74 @@ Clear Chat
 </header>
 
 
-{/* FLOATING QUICK STATS */}
+<div className="tabs">
+
+<button
+className={activeTab==="feed"?"tab active":"tab"}
+onClick={()=>setActiveTab("feed")}
+>
+Feed
+</button>
+
+<button
+className={activeTab==="ask"?"tab active":"tab"}
+onClick={()=>setActiveTab("ask")}
+>
+AskSportsFan360
+</button>
+
+</div>
+
+
+{activeTab==="feed" && (
+
+<div className="feed">
+
+<h2>Sports Insights</h2>
+
+{!feed && <p>Loading feed...</p>}
+
+{feed && (
+
+<div className="feedCards">
+
+{feed.cards.map((c,i)=>(
+
+<div key={i} className="feedCard">
+
+<h3>{c.title}</h3>
+
+<p>{c.text}</p>
+
+{c.type==="question" && (
+
+<button onClick={()=>{
+setActiveTab("ask")
+askAI(c.text)
+}}>
+
+Ask this →
+
+</button>
+
+)}
+
+</div>
+
+))}
+
+</div>
+
+)}
+
+</div>
+
+)}
+
+
+{activeTab==="ask" && (
+
+<>
 
 <div className="quickStats">
 
@@ -127,8 +203,6 @@ Clear Chat
 
 </div>
 
-
-{/* CHAT AREA */}
 
 <main className="chatPanel">
 
@@ -179,8 +253,6 @@ style={{width:(p.value/300)*100+"%"}}
 </main>
 
 
-{/* BOTTOM PANEL */}
-
 <div className="bottomPanel">
 
 <div className="suggestions">
@@ -209,6 +281,10 @@ Ask
 </div>
 
 </div>
+
+</>
+
+)}
 
 </div>
 

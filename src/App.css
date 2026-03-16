@@ -236,3 +236,42 @@ width:6px;
 background:linear-gradient(#FE2165,#FD6E0C);
 border-radius:10px;
 }
+.tabs{
+display:flex;
+gap:10px;
+padding:10px 20px;
+border-bottom:1px solid #1e293b;
+}
+
+.tab{
+background:#111827;
+border:1px solid #334155;
+padding:8px 16px;
+border-radius:8px;
+color:#94a3b8;
+cursor:pointer;
+}
+
+.tab.active{
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+border:none;
+color:white;
+}
+
+.feed{
+padding:30px;
+}
+
+.feedCards{
+display:flex;
+gap:20px;
+margin-top:20px;
+}
+
+.feedCard{
+flex:1;
+background:#0f172a;
+border:1px solid #1e293b;
+border-radius:10px;
+padding:20px;
+}
