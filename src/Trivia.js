@@ -227,7 +227,6 @@ Play Again
 </div>
 
 );
-
 }
 
 export default Trivia;

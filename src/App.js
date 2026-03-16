@@ -40,6 +40,8 @@ const chatEndRef=useRef()
 
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
+/* ROTATING STATS */
+
 useEffect(()=>{
 
 const interval=setInterval(()=>{
@@ -52,6 +54,8 @@ setStats(shuffled.slice(0,3))
 return ()=>clearInterval(interval)
 
 },[])
+
+/* LOAD NEWS FEED */
 
 useEffect(()=>{
 
@@ -83,6 +87,8 @@ chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 const clearChat=()=>{
 setMessages([])
 }
+
+/* ASK AI */
 
 const askAI=async(q=question)=>{
 
@@ -136,6 +142,8 @@ return(
 
 </header>
 
+{/* NAV TABS */}
+
 <div className="tabs">
 
 <button
@@ -161,7 +169,8 @@ onClick={()=>setActiveTab("trivia")}
 
 </div>
 
-{/* HOME TAB */}
+
+{/* ================= HOME ================= */}
 
 {activeTab==="home" && (
 
@@ -246,11 +255,12 @@ alt="news"
 
 )}
 
-{/* ASK TAB */}
+
+{/* ================= ASK ================= */}
 
 {activeTab==="ask" && (
 
-<>
+<div className="askPage">
 
 <div style={{display:"flex",justifyContent:"flex-end"}}>
 
@@ -329,13 +339,18 @@ Ask
 
 </div>
 
-</>
+</div>
 
 )}
 
-{/* TRIVIA TAB */}
 
-{activeTab==="trivia" && <Trivia />}
+{/* ================= TRIVIA ================= */}
+
+{activeTab==="trivia" && (
+
+<Trivia />
+
+)}
 
 </div>
 
