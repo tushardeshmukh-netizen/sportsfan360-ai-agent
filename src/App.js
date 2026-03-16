@@ -280,8 +280,10 @@ Clear Chat
 
 {messages.length===0 && (
 <div className="welcome">
-<h2>Ask anything about Cricket</h2>
-<p>Runs • Wickets • Records • Comparisons</p>
+<h2>Ask anything about IPL</h2>
+<p>
+Teams • Players • Records • Runs • Wickets • Comparisons
+</p>
 </div>
 )}
 
