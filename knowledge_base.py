@@ -1,23 +1,3 @@
-<<<<<<< HEAD
-players={
-
-"Chris Gayle":{
-"country":"West Indies",
-"role":"Batsman",
-"nickname":"Universe Boss"
-},
-
-"Virat Kohli":{
-"country":"India",
-"role":"Batsman",
-"team":"Royal Challengers Bangalore"
-},
-
-"Rohit Sharma":{
-"country":"India",
-"role":"Batsman",
-"team":"Mumbai Indians"
-=======
 player_db={
 
 "virat kohli":{
@@ -36,17 +16,11 @@ player_db={
 "role":"Wicketkeeper",
 "team":"Chennai Super Kings",
 "fact":"One of the most successful IPL captains."
->>>>>>> agent-v4
 }
 
 }
 
 
-<<<<<<< HEAD
-def get_player_info(name):
-
-    return players.get(name)
-=======
 def get_player_info(question):
 
     q=question.lower()
@@ -64,4 +38,3 @@ def get_player_info(question):
             }
 
     return None
->>>>>>> agent-v4
