@@ -444,3 +444,150 @@ font-size:13px;
 color:#94a3b8;
 line-height:1.4;
 }
+
+/* ============================= */
+/* IPL TRIVIA */
+/* ============================= */
+
+.trivia{
+padding:30px;
+display:flex;
+justify-content:center;
+align-items:flex-start;
+}
+
+.quizStart{
+background:#0f172a;
+border:1px solid #1e293b;
+border-radius:12px;
+padding:40px;
+text-align:center;
+max-width:500px;
+}
+
+.quizStart h2{
+margin-top:0;
+font-size:26px;
+}
+
+.quizStart p{
+color:#94a3b8;
+margin-bottom:20px;
+}
+
+.startQuiz{
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+border:none;
+padding:12px 24px;
+border-radius:8px;
+color:white;
+font-size:16px;
+cursor:pointer;
+}
+
+.startQuiz:hover{
+opacity:.9;
+}
+
+/* QUIZ CARD */
+
+.quizCard{
+background:#0f172a;
+border:1px solid #1e293b;
+border-radius:12px;
+padding:30px;
+max-width:600px;
+width:100%;
+}
+
+.quizCard h3{
+margin-top:0;
+}
+
+.quizQuestion{
+font-size:18px;
+margin:15px 0 20px;
+}
+
+/* OPTIONS */
+
+.quizOptions{
+display:flex;
+flex-direction:column;
+gap:12px;
+}
+
+.quizOption{
+background:#111827;
+border:1px solid #334155;
+padding:12px;
+border-radius:8px;
+color:white;
+cursor:pointer;
+text-align:left;
+transition:.2s;
+}
+
+.quizOption:hover{
+background:#1e293b;
+}
+
+/* CORRECT / WRONG */
+
+.quizOption.correct{
+background:#065f46;
+border-color:#10b981;
+}
+
+.quizOption.wrong{
+background:#7f1d1d;
+border-color:#ef4444;
+}
+
+/* NEXT BUTTON */
+
+.nextBtn{
+margin-top:20px;
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+border:none;
+padding:12px 20px;
+border-radius:8px;
+color:white;
+cursor:pointer;
+}
+
+/* RESULT SCREEN */
+
+.quizResult{
+background:#0f172a;
+border:1px solid #1e293b;
+border-radius:12px;
+padding:40px;
+text-align:center;
+max-width:500px;
+}
+
+.quizResult h2{
+margin-top:0;
+}
+
+.quizResult h3{
+font-size:24px;
+margin:20px 0;
+}
+
+/* PROGRESS BAR */
+
+.progressBar{
+height:8px;
+background:#1e293b;
+border-radius:10px;
+margin-bottom:20px;
+overflow:hidden;
+}
+
+.progressBar div{
+height:100%;
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+transition:width .4s ease;
+}

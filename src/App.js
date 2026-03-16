@@ -1,6 +1,7 @@
 import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
+import Trivia from "./Trivia";
 
 const statsPool=[
 
@@ -100,8 +101,7 @@ const data=await res.json()
 
 setMessages([...newMessages,{
 role:"ai",
-text:data.answer,
-data:data
+text:data.answer
 }])
 
 }catch{
@@ -152,14 +152,20 @@ onClick={()=>setActiveTab("ask")}
 🤖 AskSportsFan360
 </button>
 
+<button
+className={activeTab==="trivia"?"tab active":"tab"}
+onClick={()=>setActiveTab("trivia")}
+>
+🏏 IPL Trivia
+</button>
+
 </div>
 
+{/* HOME TAB */}
 
 {activeTab==="home" && (
 
 <div className="home">
-
-{/* HERO SECTION */}
 
 <div className="hero">
 
@@ -170,9 +176,6 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 </p>
 
 </div>
-
-
-{/* QUICK STATS */}
 
 <div className="sectionTitle">
 🔥 Cricket Quick Stats
@@ -194,9 +197,6 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 ))}
 
 </div>
-
-
-{/* NEWS SECTION */}
 
 <div className="sectionTitle">
 📰 Latest Cricket News
@@ -246,12 +246,13 @@ alt="news"
 
 )}
 
+{/* ASK TAB */}
 
 {activeTab==="ask" && (
 
 <>
 
-<div style={{display:"flex",justifyContent:"flex-end",marginBottom:"0px"}}>
+<div style={{display:"flex",justifyContent:"flex-end"}}>
 
 <button className="clearChat" onClick={clearChat}>
 Clear Chat
@@ -331,6 +332,10 @@ Ask
 </>
 
 )}
+
+{/* TRIVIA TAB */}
+
+{activeTab==="trivia" && <Trivia />}
 
 </div>
 
