@@ -1,22 +1,12 @@
-<<<<<<< HEAD
-conversation_memory={}
+memory=[]
 
-def save_context(user_id,intent):
+def save_context(q,a):
 
-    conversation_memory[user_id]=intent
+    memory.append({
+    "question":q,
+    "answer":a
+    })
 
+def get_context():
 
-def get_context(user_id):
-
-=======
-conversation_memory={}
-
-def save_context(user_id,intent):
-
-    conversation_memory[user_id]=intent
-
-
-def get_context(user_id):
-
->>>>>>> 7a1f20c (UI update)
-    return conversation_memory.get(user_id)
+    return memory[-3:]  

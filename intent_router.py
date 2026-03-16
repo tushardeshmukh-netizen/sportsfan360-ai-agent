@@ -1,48 +1,28 @@
-<<<<<<< HEAD
-def detect_intent(question):
+import re
 
-    q=question.lower()
+def detect_intent(q):
 
-    if "six" in q:
-        return "sixes"
+    q=q.lower()
+
+    if "run" in q and "most" in q:
+        return "runs"
 
     if "wicket" in q:
         return "wickets"
 
-    if "run" in q:
-        return "runs"
-
-    if "title" in q:
-        return "titles"
-
-    if "highest" in q:
-        return "highest"
-
-    if "compare" in q:
-        return "compare"
-
-=======
-def detect_intent(question):
-
-    q=question.lower()
-
     if "six" in q:
         return "sixes"
 
-    if "wicket" in q:
-        return "wickets"
-
-    if "run" in q:
-        return "runs"
-
     if "title" in q:
         return "titles"
 
-    if "highest" in q:
+    if "highest score" in q:
         return "highest"
 
-    if "compare" in q:
-        return "compare"
+    if "points table" in q or "standings" in q:
+        return "points_table"
 
->>>>>>> 7a1f20c (UI update)
+    if "live match" in q or "today match" in q:
+        return "live_matches"
+
     return "knowledge"

@@ -1,54 +1,40 @@
-<<<<<<< HEAD
-players={
+player_db={
 
-"Chris Gayle":{
-"country":"West Indies",
+"virat kohli":{
 "role":"Batsman",
-"nickname":"Universe Boss"
+"team":"Royal Challengers Bangalore",
+"fact":"Highest run scorer in IPL history."
 },
 
-"Virat Kohli":{
-"country":"India",
+"rohit sharma":{
 "role":"Batsman",
-"team":"Royal Challengers Bangalore"
+"team":"Mumbai Indians",
+"fact":"Five IPL titles as captain."
 },
 
-"Rohit Sharma":{
-"country":"India",
-"role":"Batsman",
-"team":"Mumbai Indians"
+"ms dhoni":{
+"role":"Wicketkeeper",
+"team":"Chennai Super Kings",
+"fact":"One of the most successful IPL captains."
 }
 
 }
 
 
-def get_player_info(name):
+def get_player_info(question):
 
-=======
-players={
+    q=question.lower()
 
-"Chris Gayle":{
-"country":"West Indies",
-"role":"Batsman",
-"nickname":"Universe Boss"
-},
+    for name in player_db:
 
-"Virat Kohli":{
-"country":"India",
-"role":"Batsman",
-"team":"Royal Challengers Bangalore"
-},
+        if name in q:
 
-"Rohit Sharma":{
-"country":"India",
-"role":"Batsman",
-"team":"Mumbai Indians"
-}
+            p=player_db[name]
 
-}
+            return {
+            "chart_title":"",
+            "chart_data":[],
+            "answer":f"{name.title()} is a {p['role']} who plays for {p['team']}. {p['fact']}"
+            }
 
-
-def get_player_info(name):
-
->>>>>>> 7a1f20c (UI update)
-    return players.get(name)
+    return None
