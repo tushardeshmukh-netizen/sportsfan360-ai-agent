@@ -154,10 +154,6 @@ return(
 
 </div>
 
-<button className="clearChat" onClick={clearChat}>
-Clear Chat
-</button>
-
 </header>
 
 
@@ -235,6 +231,17 @@ Ask this →
 {activeTab==="ask" && (
 
 <>
+
+{/* CLEAR CHAT BUTTON MOVED HERE */}
+
+<div style={{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}}>
+
+<button className="clearChat" onClick={clearChat}>
+Clear Chat
+</button>
+
+</div>
+
 
 <div className="quickStats">
 
