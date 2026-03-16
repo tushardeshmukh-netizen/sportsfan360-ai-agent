@@ -208,7 +208,7 @@ alt="news"
 
 <>
 
-<div style={{display:"flex",justifyContent:"flex-end",marginBottom:"10px"}}>
+<div style={{display:"flex",justifyContent:"flex-end",marginBottom:"0px"}}>
 
 <button className="clearChat" onClick={clearChat}>
 Clear Chat
