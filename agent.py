@@ -13,6 +13,9 @@ from stats_engine import *
 from intent_router import detect_intent
 from memory_store import save_context,get_context
 from knowledge_base import get_player_info
+from cricinfo_scraper import get_ipl_points_table
+from cricket_api import get_live_matches
+from feed_engine import get_feed
 
 DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
 
@@ -37,6 +40,7 @@ highest_score_cache={}
 sixes_cache={}
 season_latest_match={}
 
+
 # ---------------- DATASET LOADER ----------------
 
 def load_dataset():
@@ -50,6 +54,8 @@ def load_dataset():
 
     if dataset_loaded:
         return
+
+    print("Loading IPL dataset...")
 
     r=requests.get(DATA_URL,timeout=120)
     zip_file=zipfile.ZipFile(io.BytesIO(r.content))
@@ -103,11 +109,11 @@ def load_dataset():
                         if wickets and bowler:
                             bowler_wickets[bowler]=bowler_wickets.get(bowler,0)+len(wickets)
 
-            for p,r in match_runs.items():
+            for p,runs in match_runs.items():
 
-                if r>highest["runs"]:
+                if runs>highest["runs"]:
                     highest={
-                    "runs":r,
+                    "runs":runs,
                     "player":p,
                     "match":f"{teams[0]} vs {teams[1]} ({season})"
                     }
@@ -134,6 +140,8 @@ def load_dataset():
 
     dataset_loaded=True
 
+    print("Dataset Loaded")
+
 
 # ---------------- LLM ----------------
 
@@ -144,7 +152,7 @@ def knowledge_answer(question):
         res=groq.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
-        {"role":"system","content":"You are an IPL cricket analyst. Answer briefly."},
+        {"role":"system","content":"You are an IPL cricket analyst."},
         {"role":"user","content":question}
         ],
         temperature=0
@@ -172,28 +180,83 @@ def run_agent(question):
     intent=detect_intent(question)
 
     if intent=="runs":
-        return top_runs()
+        result=top_runs()
 
-    if intent=="wickets":
-        return top_wickets()
+    elif intent=="wickets":
+        result=top_wickets()
 
-    if intent=="titles":
-        return team_titles()
+    elif intent=="titles":
+        result=team_titles()
 
-    if intent=="highest":
-        return highest_score()
+    elif intent=="highest":
+        result=highest_score()
 
-    if intent=="sixes":
-        return top_sixes()
+    elif intent=="sixes":
+        result=top_sixes()
 
-    return knowledge_answer(question)
+    elif intent=="player_info":
 
+        kb=get_player_info(question)
+
+        if kb:
+            result=kb
+        else:
+            result=knowledge_answer(question)
+
+    elif intent=="points_table":
+
+        table=get_ipl_points_table()
+
+        chart=[{
+        "player":t["team"],
+        "value":int(t["points"])
+        } for t in table]
+
+        result={
+        "chart_title":"IPL Points Table",
+        "chart_data":chart,
+        "answer":"Latest IPL points table from Cricinfo."
+        }
+
+    elif intent=="live_matches":
+
+        matches=get_live_matches()
+
+        text="\n".join([f"{m['teams']} : {m['status']}" for m in matches])
+
+        result={
+        "chart_title":"",
+        "chart_data":[],
+        "answer":text
+        }
+
+    else:
+
+        result=knowledge_answer(question)
+
+    save_context(question,result["answer"])
+
+    return result
+
+
+
+
+
+# ---------------- API ----------------
 
 @app.get("/")
 def home():
     return {"message":"SportsFan360 AI running"}
 
+
 @app.get("/ask")
 def ask(question:str):
-    return run_agent(question)
-#update 
+    result = run_agent(question)
+    return result
+
+
+from feed_engine import get_feed
+
+@app.get("/feed")
+def feed():
+    return get_feed()
