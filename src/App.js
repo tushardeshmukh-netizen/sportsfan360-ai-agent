@@ -28,7 +28,7 @@ function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
-const [activeTab,setActiveTab]=useState("feed")
+const [activeTab,setActiveTab]=useState("home")
 const [feed,setFeed]=useState(null)
 
 const [question,setQuestion]=useState("")
@@ -54,7 +54,7 @@ return ()=>clearInterval(interval)
 
 useEffect(()=>{
 
-if(activeTab==="feed"){
+if(activeTab==="home"){
 
 fetch(`${API_URL}/feed`)
 .then(res=>res.json())
@@ -139,28 +139,70 @@ return(
 <div className="tabs">
 
 <button
-className={activeTab==="feed"?"tab active":"tab"}
-onClick={()=>setActiveTab("feed")}
+className={activeTab==="home"?"tab active":"tab"}
+onClick={()=>setActiveTab("home")}
 >
-Feed
+🏠 Home
 </button>
 
 <button
 className={activeTab==="ask"?"tab active":"tab"}
 onClick={()=>setActiveTab("ask")}
 >
-AskSportsFan360
+🤖 AskSportsFan360
 </button>
 
 </div>
 
-{activeTab==="feed" && (
 
-<div className="feed">
+{activeTab==="home" && (
 
-<h2>Sports Insights</h2>
+<div className="home">
 
-{!feed && <p>Loading feed...</p>}
+{/* HERO SECTION */}
+
+<div className="hero">
+
+<h2>Cricket Intelligence Hub</h2>
+
+<p>
+Live insights, player trends, match analysis and AI powered cricket knowledge.
+</p>
+
+</div>
+
+
+{/* QUICK STATS */}
+
+<div className="sectionTitle">
+🔥 Cricket Quick Stats
+</div>
+
+<div className="quickStats">
+
+{stats.map((s,i)=>(
+<div key={i} className="statCard">
+
+<span className="statLabel">{s.label}</span>
+
+<div className="statRow">
+<strong>{s.value}</strong>
+<span className="statNum">{s.num}</span>
+</div>
+
+</div>
+))}
+
+</div>
+
+
+{/* NEWS SECTION */}
+
+<div className="sectionTitle">
+📰 Latest Cricket News
+</div>
+
+{!feed && <p style={{padding:"20px"}}>Loading news...</p>}
 
 {feed && (
 
@@ -204,6 +246,7 @@ alt="news"
 
 )}
 
+
 {activeTab==="ask" && (
 
 <>
@@ -237,7 +280,7 @@ Clear Chat
 
 {messages.length===0 && (
 <div className="welcome">
-<h2>Ask anything about IPL</h2>
+<h2>Ask anything about Cricket</h2>
 <p>Runs • Wickets • Records • Comparisons</p>
 </div>
 )}
@@ -248,7 +291,7 @@ Clear Chat
 </div>
 ))}
 
-{loading && <div className="message ai typing">Analyzing IPL data...</div>}
+{loading && <div className="message ai typing">Analyzing cricket data...</div>}
 
 <div ref={chatEndRef}></div>
 
