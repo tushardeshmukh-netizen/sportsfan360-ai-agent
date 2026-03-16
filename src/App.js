@@ -2,19 +2,40 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 
+
+/* EXPANDED QUICK STATS */
+
 const statsPool=[
+
 {label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
 {label:"Most IPL Wickets",value:"YS Chahal",num:"229"},
 {label:"Most IPL Titles",value:"Mumbai Indians",num:"5"},
 {label:"Most IPL Sixes",value:"Chris Gayle",num:"357"},
 {label:"Highest IPL Score",value:"Chris Gayle",num:"175"},
+
+{label:"Most IPL Hundreds",value:"Virat Kohli",num:"7"},
+{label:"Most IPL Matches",value:"MS Dhoni",num:"250+"},
+{label:"Best Bowling Figures",value:"Alzarri Joseph",num:"6/12"},
+{label:"Fastest IPL Fifty",value:"KL Rahul",num:"14 balls"},
+{label:"Fastest IPL Century",value:"Chris Gayle",num:"30 balls"},
+
+{label:"Most Dot Balls",value:"Bhuvneshwar Kumar",num:"1500+"},
+{label:"Most Hat-tricks",value:"Amit Mishra",num:"3"},
+{label:"Most Catches",value:"Suresh Raina",num:"109"},
+{label:"Highest Team Total",value:"RCB",num:"263"},
+{label:"Lowest Team Total",value:"RCB",num:"49"}
+
 ]
+
 
 function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
-const [activeTab,setActiveTab]=useState("ask")
+/* FEED DEFAULT */
+
+const [activeTab,setActiveTab]=useState("feed")
+
 const [feed,setFeed]=useState(null)
 
 const [question,setQuestion]=useState("")
@@ -25,21 +46,38 @@ const chatEndRef=useRef()
 
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
-useEffect(()=>{
-const interval=setInterval(()=>{
-const shuffled=[...statsPool].sort(()=>0.5-Math.random())
-setStats(shuffled.slice(0,3))
-},8000)
-return ()=>clearInterval(interval)
-},[])
+
+/* ROTATING QUICK STATS */
 
 useEffect(()=>{
+
+const interval=setInterval(()=>{
+
+const shuffled=[...statsPool].sort(()=>0.5-Math.random())
+setStats(shuffled.slice(0,3))
+
+},8000)
+
+return ()=>clearInterval(interval)
+
+},[])
+
+
+/* LOAD FEED */
+
+useEffect(()=>{
+
+if(activeTab==="feed"){
 
 fetch(`${API_URL}/feed`)
 .then(res=>res.json())
 .then(data=>setFeed(data))
+.catch(()=>setFeed(null))
 
-},[])
+}
+
+},[activeTab])
+
 
 const suggestions=[
 "Most IPL runs",
@@ -51,13 +89,18 @@ const suggestions=[
 "Why is IPL popular"
 ]
 
+
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
 
+
 const clearChat=()=>{
 setMessages([])
 }
+
+
+/* ASK AI */
 
 const askAI=async(q=question)=>{
 
@@ -93,6 +136,7 @@ setLoading(false)
 
 }
 
+
 return(
 
 <div className="app">
@@ -117,6 +161,8 @@ Clear Chat
 </header>
 
 
+{/* TABS */}
+
 <div className="tabs">
 
 <button
@@ -135,6 +181,8 @@ AskSportsFan360
 
 </div>
 
+
+{/* FEED TAB */}
 
 {activeTab==="feed" && (
 
@@ -158,13 +206,13 @@ AskSportsFan360
 
 {c.type==="question" && (
 
-<button onClick={()=>{
+<button
+onClick={()=>{
 setActiveTab("ask")
 askAI(c.text)
-}}>
-
+}}
+>
 Ask this →
-
 </button>
 
 )}
@@ -181,6 +229,8 @@ Ask this →
 
 )}
 
+
+{/* ASK TAB */}
 
 {activeTab==="ask" && (
 
