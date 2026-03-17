@@ -229,30 +229,56 @@ def compare_players(p1,p2):
 # ---------------- APIs ----------------
 
 # ---------------- DYNAMIC TRIVIA ENGINE ----------------
-
-# ---------------- DYNAMIC TRIVIA ENGINE (FIXED NO REPEAT) ----------------
-
 def generate_trivia_questions():
 
     load_dataset()
 
-    questions=[]
-    players=list(all_players)
+    import re
 
+    # 🔥 CLEAN PLAYERS HERE (NO JUNK IDS)
+    def is_valid_player(name):
+        if not isinstance(name,str):
+            return False
+
+        name=name.strip()
+
+        # remove ids like 8d4d9c311
+        if re.match(r'^[a-f0-9]{6,}$', name.lower()):
+            return False
+
+        # remove short junk
+        if len(name)<4:
+            return False
+
+        # must contain space (real names)
+        if " " not in name:
+            return False
+
+        return True
+
+    players=[p for p in all_players if is_valid_player(p)]
+
+    # 🔥 fallback safety
     if len(players)<10:
-        return {"error":"Not enough data"}
+        players=[
+            "Virat Kohli","MS Dhoni","Rohit Sharma","Chris Gayle",
+            "AB de Villiers","KL Rahul","Jasprit Bumrah","Yuzvendra Chahal",
+            "Hardik Pandya","Andre Russell","Ravindra Jadeja","David Warner"
+        ]
+
+    questions=[]
 
     # ---- BUILD DATA POOLS ----
     runs_sorted=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)
     wickets_sorted=sorted(wickets_cache.items(), key=lambda x:x[1], reverse=True)
     sixes_sorted=sorted(sixes_cache.items(), key=lambda x:x[1], reverse=True)
 
-    def generate_wrong_answers(correct, pool):
+    def generate_wrong_answers(correct):
         wrong=[]
         attempts=0
 
-        while len(wrong)<3 and attempts<20:
-            p=random.choice(pool)
+        while len(wrong)<3 and attempts<50:
+            p=random.choice(players)
             if p!=correct and p not in wrong:
                 wrong.append(p)
             attempts+=1
@@ -264,15 +290,17 @@ def generate_trivia_questions():
         if len(stat_list)<5:
             return None
 
-        # pick random index → NOT always top
         idx=random.randint(0, min(30,len(stat_list)-1))
 
         player,value=stat_list[idx]
 
-        # dynamic question
+        # 🔥 ensure correct is valid
+        if not is_valid_player(player):
+            return None
+
         q=f"Which player has around {value} {label} in IPL?"
 
-        wrong=generate_wrong_answers(player, players)
+        wrong=generate_wrong_answers(player)
 
         options=wrong+[player]
         random.shuffle(options)
@@ -293,37 +321,41 @@ def generate_trivia_questions():
     if q2: questions.append(q2)
     if q3: questions.append(q3)
 
-    # ---- PLAYER COMPARISON (SMART) ----
+    # ---- PLAYER COMPARISON ----
     if len(runs_sorted)>10:
-        p1=random.choice(runs_sorted[:20])[0]
-        p2=random.choice(runs_sorted[:20])[0]
+        valid_top=[p for p,_ in runs_sorted[:30] if is_valid_player(p)]
 
-        if p1!=p2:
-            correct = p1 if runs_cache[p1]>runs_cache[p2] else p2
+        if len(valid_top)>=2:
+            p1=random.choice(valid_top)
+            p2=random.choice(valid_top)
 
-            options=[p1,p2]
-            while len(options)<4:
-                x=random.choice(players)
-                if x not in options:
-                    options.append(x)
+            if p1!=p2:
+                correct = p1 if runs_cache.get(p1,0)>runs_cache.get(p2,0) else p2
 
-            random.shuffle(options)
+                options=[p1,p2]
 
-            questions.append({
-                "q": f"Who has scored more IPL runs?",
-                "options": options,
-                "answer": correct
-            })
+                while len(options)<4:
+                    x=random.choice(players)
+                    if x not in options:
+                        options.append(x)
 
-    # ---- PURE DATA-DRIVEN RANDOM FACT ----
+                random.shuffle(options)
+
+                questions.append({
+                    "q": "Who has scored more IPL runs?",
+                    "options": options,
+                    "answer": correct
+                })
+
+    # ---- EXTRA QUESTIONS ----
     for _ in range(6):
 
         stat_type=random.choice(["runs","wickets","sixes"])
 
-        if stat_type=="runs" and runs_sorted:
+        if stat_type=="runs":
             stat_list=runs_sorted
             label="runs"
-        elif stat_type=="wickets" and wickets_sorted:
+        elif stat_type=="wickets":
             stat_list=wickets_sorted
             label="wickets"
         else:
@@ -338,7 +370,6 @@ def generate_trivia_questions():
     random.shuffle(questions)
 
     return questions[:10]
-
 
 @app.get("/trivia")
 def get_trivia():
