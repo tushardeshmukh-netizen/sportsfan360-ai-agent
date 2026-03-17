@@ -228,6 +228,88 @@ def compare_players(p1,p2):
 
 # ---------------- APIs ----------------
 
+# ---------------- DYNAMIC TRIVIA ENGINE ----------------
+
+def generate_trivia_questions():
+
+    load_dataset()
+
+    questions=[]
+
+    players=list(all_players)
+    random.shuffle(players)
+
+    # 1. Most runs
+    if runs_cache:
+        top_player=max(runs_cache,key=runs_cache.get)
+        options=random.sample(players,3)
+        if top_player not in options:
+            options[0]=top_player
+        random.shuffle(options)
+
+        questions.append({
+            "q":"Who has scored the most IPL runs?",
+            "options":options,
+            "answer":top_player
+        })
+
+    # 2. Most wickets
+    if wickets_cache:
+        top_bowler=max(wickets_cache,key=wickets_cache.get)
+        options=random.sample(players,3)
+        if top_bowler not in options:
+            options[0]=top_bowler
+        random.shuffle(options)
+
+        questions.append({
+            "q":"Who has taken the most IPL wickets?",
+            "options":options,
+            "answer":top_bowler
+        })
+
+    # 3. Most sixes
+    if sixes_cache:
+        top_sixes=max(sixes_cache,key=sixes_cache.get)
+        options=random.sample(players,3)
+        if top_sixes not in options:
+            options[0]=top_sixes
+        random.shuffle(options)
+
+        questions.append({
+            "q":"Who has hit the most IPL sixes?",
+            "options":options,
+            "answer":top_sixes
+        })
+
+    # 4–10 RANDOM QUESTIONS
+    for i in range(7):
+
+        correct=random.choice(players)
+        options=random.sample(players,3)
+
+        if correct not in options:
+            options[0]=correct
+
+        random.shuffle(options)
+
+        questions.append({
+            "q":f"Which player is part of IPL records dataset? ({i+1})",
+            "options":options,
+            "answer":correct
+        })
+
+    return questions[:10]
+
+
+
+@app.get("/trivia")
+def get_trivia():
+    return {
+        "questions": generate_trivia_questions()
+    }
+    
+
+
 @app.get("/")
 def home():
     return {"message":"API running"}
