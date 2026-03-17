@@ -44,10 +44,7 @@ fetch(`${API_URL}/player-list`)
 .then(r=>r.json())
 .then(d=>{
 let list = d?.players || [];
-
-/* 🔥 ensure sorting */
 list = list.sort((a,b)=>a.localeCompare(b));
-
 setPlayers(list);
 setLoadingPlayers(false);
 })
@@ -70,16 +67,12 @@ return ()=>document.removeEventListener("click",handler);
 /* ================= FILTER ================= */
 const filtered1=useMemo(()=>{
 if(!search1) return [];
-return players
-.filter(p=>p.toLowerCase().includes(search1.toLowerCase()))
-.slice(0,15);
+return players.filter(p=>p.toLowerCase().includes(search1.toLowerCase())).slice(0,15);
 },[search1,players]);
 
 const filtered2=useMemo(()=>{
 if(!search2) return [];
-return players
-.filter(p=>p.toLowerCase().includes(search2.toLowerCase()))
-.slice(0,15);
+return players.filter(p=>p.toLowerCase().includes(search2.toLowerCase())).slice(0,15);
 },[search2,players]);
 
 /* ================= FETCH ================= */
@@ -110,7 +103,6 @@ console.error(e);
 setLoading(false);
 };
 
-/* ================= SAFE VALUE ================= */
 const safe=(v)=> (v===undefined || v===null ? 0 : v);
 
 /* ================= RADAR ================= */
@@ -118,8 +110,8 @@ const radarData = result ? [
 {stat:"Runs",p1:safe(result.stats1.runs),p2:safe(result.stats2.runs)},
 {stat:"Wickets",p1:safe(result.stats1.wickets),p2:safe(result.stats2.wickets)},
 {stat:"Sixes",p1:safe(result.stats1.sixes),p2:safe(result.stats2.sixes)},
-{stat:"SR",p1:safe(result.stats1.strike_rate),p2:safe(result.stats2.strike_rate)},
-{stat:"Avg",p1:safe(result.stats1.average),p2:safe(result.stats2.average)}
+{stat:"Strike Rate",p1:safe(result.stats1.strike_rate),p2:safe(result.stats2.strike_rate)},
+{stat:"Average",p1:safe(result.stats1.average),p2:safe(result.stats2.average)}
 ] : [];
 
 /* ================= PIE ================= */
@@ -218,7 +210,6 @@ setShow2(false);
 
 </div>
 
-{/* 🔥 CENTER BUTTON FIX */}
 <div style={{textAlign:"center"}}>
 <button className="compareBtn" onClick={startBattle} disabled={!p1 || !p2}>
 Compare Players
@@ -227,7 +218,7 @@ Compare Players
 
 {loading && <p className="loadingText">Analyzing performance...</p>}
 
-{/* ================= RESULT ================= */}
+/* ================= RESULT ================= */
 {result && result.stats1 && result.stats2 && (
 
 <div className="resultCard">
@@ -240,7 +231,6 @@ Compare Players
 
 {/* 🔥 STATS GRID */}
 <div className="statsGrid">
-
 {["runs","wickets","sixes","fours","strike_rate","average","matches"].map((k,i)=>(
 <div key={i} className={getClass(safe(result.stats1[k]),safe(result.stats2[k]))}>
 <div className="statTitle">{k.toUpperCase()}</div>
@@ -249,10 +239,16 @@ Compare Players
 </div>
 </div>
 ))}
-
 </div>
 
-{/* 🔥 RADAR WITH LABELS */}
+{/* ================= EXPLANATION ================= */}
+<div className="insightBox">
+📊 Radar Chart shows overall dominance. Bigger area = stronger player across metrics.<br/>
+🥧 Pie Charts show scoring zones (Off, Leg, Straight). Helps understand batting style.<br/>
+⚡ Strike Rate = scoring speed, Average = consistency.
+</div>
+
+{/* RADAR */}
 <ResponsiveContainer width="100%" height={320}>
 <RadarChart data={radarData}>
 <PolarGrid/>
@@ -265,7 +261,7 @@ Compare Players
 </RadarChart>
 </ResponsiveContainer>
 
-{/* 🔥 PIE WITH TOOLTIP */}
+{/* PIE */}
 <div className="pieContainer">
 
 <PieChart width={220} height={220}>
@@ -290,7 +286,24 @@ Compare Players
 
 </div>
 
-{/* 🔥 WINNER FIX */}
+{/* ================= WAGON WHEEL ================= */}
+<div className="wagonContainer">
+<div className="wagonLine red" style={{height:shot1.off,transform:"rotate(20deg)"}}></div>
+<div className="wagonLine red" style={{height:shot1.leg,transform:"rotate(-40deg)"}}></div>
+<div className="wagonLine red" style={{height:shot1.straight,transform:"rotate(90deg)"}}></div>
+</div>
+
+{/* ================= PITCH MAP ================= */}
+<div className="pitchMap">
+{Array.from({length:20}).map((_,i)=>(
+<div key={i} className="pitchDot" style={{
+top:Math.random()*200,
+left:Math.random()*300
+}}></div>
+))}
+</div>
+
+{/* WINNER */}
 <div style={{textAlign:"center",marginTop:"20px"}}>
 <div className="winnerBox glow">
 🏆 Winner: {result.winner}
@@ -302,9 +315,7 @@ Compare Players
 )}
 
 </div>
-
 );
-
 }
 
 export default PlayerBattle;

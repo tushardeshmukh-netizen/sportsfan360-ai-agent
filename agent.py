@@ -104,7 +104,7 @@ def resolve_player(name):
     # 🔥 exact match
     if name in runs_cache:
         return name
-
+l 
     key=name.lower().replace(".", "").strip()
 
     if key in name_map:
