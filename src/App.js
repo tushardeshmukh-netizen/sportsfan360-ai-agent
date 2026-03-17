@@ -4,7 +4,9 @@ import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
 import PlayerBattle from "./PlayerBattle"; // ⭐ NEW
 
-
+window.onerror = function(message, source, lineno, colno, error){
+  console.error("GLOBAL ERROR:", message, error);
+};
 // 🔥 ADD THIS (ERROR BOUNDARY)
 class ErrorBoundary extends React.Component {
   constructor(props){
