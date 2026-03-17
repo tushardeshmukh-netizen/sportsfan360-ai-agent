@@ -17,7 +17,7 @@ useEffect(()=>{
 fetch(`${API_URL}/player-list`)
 .then(r=>r.json())
 .then(d=>setPlayers(d.players||[]));
-},[]);
+},[API_URL]);
 
 const filtered1=useMemo(()=>players.filter(p=>p.toLowerCase().includes(search1.toLowerCase())).slice(0,10),[search1,players]);
 const filtered2=useMemo(()=>players.filter(p=>p.toLowerCase().includes(search2.toLowerCase())).slice(0,10),[search2,players]);
