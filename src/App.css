@@ -925,3 +925,39 @@ text-align:center;
 background:#222;
 color:#fff;
 }
+
+.dropdown{
+position:relative;
+width:220px;
+}
+
+.dropdownList{
+position:absolute;
+top:40px;
+left:0;
+right:0;
+background:#111;
+border:1px solid #333;
+max-height:200px;
+overflow:auto;
+z-index:10;
+border-radius:6px;
+}
+
+.dropdownList div{
+padding:10px;
+cursor:pointer;
+border-bottom:1px solid #222;
+}
+
+.dropdownList div:hover{
+background:#ff4d4d;
+color:white;
+}
+
+.vs{
+display:flex;
+align-items:center;
+font-weight:bold;
+padding:0 10px;
+}
