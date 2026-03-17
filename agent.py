@@ -234,108 +234,107 @@ def compare_players(p1,p2):
 
 def generate_trivia_questions():
 
-    questions=[]
+    load_dataset()
 
+    questions=[]
     players=list(all_players)
 
-    if not players or len(players)<20:
-        players=[
-            "Virat Kohli","MS Dhoni","Rohit Sharma","Chris Gayle",
-            "AB de Villiers","KL Rahul","Jasprit Bumrah","Yuzvendra Chahal",
-            "Hardik Pandya","Andre Russell","Ravindra Jadeja","David Warner",
-            "Suresh Raina","Shikhar Dhawan","Sunil Narine","Glenn Maxwell",
-            "Kieron Pollard","Faf du Plessis","Dinesh Karthik","Ruturaj Gaikwad"
-        ]
+    if len(players)<10:
+        return {"error":"Not enough data"}
 
-    random.shuffle(players)
+    # ---- BUILD DATA POOLS ----
+    runs_sorted=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)
+    wickets_sorted=sorted(wickets_cache.items(), key=lambda x:x[1], reverse=True)
+    sixes_sorted=sorted(sixes_cache.items(), key=lambda x:x[1], reverse=True)
 
-    # ---- SORTED POOLS ----
-    top_runs=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)[:20]
-    mid_runs=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)[20:60]
+    def generate_wrong_answers(correct, pool):
+        wrong=[]
+        attempts=0
 
-    top_wickets=sorted(wickets_cache.items(), key=lambda x:x[1], reverse=True)[:20]
-    top_sixes=sorted(sixes_cache.items(), key=lambda x:x[1], reverse=True)[:20]
+        while len(wrong)<3 and attempts<20:
+            p=random.choice(pool)
+            if p!=correct and p not in wrong:
+                wrong.append(p)
+            attempts+=1
 
-    def get_options(correct, pool):
-        opts=set([correct])
-        while len(opts)<4:
-            opts.add(random.choice(pool))
-        opts=list(opts)
-        random.shuffle(opts)
-        return opts
+        return wrong
 
-    # ---------------- QUESTION TYPES ----------------
+    def create_question_from_stat(stat_list, label):
 
-    # 1 RANDOM TOP RUNNER (not always #1)
-    if top_runs:
-        correct=random.choice(top_runs[:10])[0]
-        options=get_options(correct, players)
-        questions.append({
-            "q":"Which player is among the top IPL run scorers?",
-            "options":options,
-            "answer":correct
-        })
+        if len(stat_list)<5:
+            return None
 
-    # 2 MID PLAYER QUESTION
-    if mid_runs:
-        correct=random.choice(mid_runs)[0]
-        options=get_options(correct, players)
-        questions.append({
-            "q":"Which of these players has a moderate IPL run record?",
-            "options":options,
-            "answer":correct
-        })
+        # pick random index → NOT always top
+        idx=random.randint(0, min(30,len(stat_list)-1))
 
-    # 3 TOP WICKET (random from top, not fixed)
-    if top_wickets:
-        correct=random.choice(top_wickets[:10])[0]
-        options=get_options(correct, players)
-        questions.append({
-            "q":"Which player is known for taking many IPL wickets?",
-            "options":options,
-            "answer":correct
-        })
+        player,value=stat_list[idx]
 
-    # 4 SIXES POWER HITTER
-    if top_sixes:
-        correct=random.choice(top_sixes[:10])[0]
-        options=get_options(correct, players)
-        questions.append({
-            "q":"Who is a known power hitter in IPL?",
-            "options":options,
-            "answer":correct
-        })
+        # dynamic question
+        q=f"Which player has around {value} {label} in IPL?"
 
-    # 5 HIGHEST SCORE MATCH
-    if highest_score_cache.get("player"):
-        correct=highest_score_cache["player"]
-        options=get_options(correct, players)
-        questions.append({
-            "q":"Who holds one of the highest individual scores in IPL matches?",
-            "options":options,
-            "answer":correct
-        })
+        wrong=generate_wrong_answers(player, players)
 
-    # 6–10 PURE RANDOMIZED CONTEXT QUESTIONS
-    question_templates=[
-        "Which of these players has played in the IPL?",
-        "Identify a known IPL player.",
-        "Which name belongs to an IPL cricketer?",
-        "Who among these is part of IPL history?",
-        "Pick the correct IPL player."
-    ]
+        options=wrong+[player]
+        random.shuffle(options)
 
-    for i in range(5):
-        correct=random.choice(players)
-        options=get_options(correct, players)
+        return {
+            "q": q,
+            "options": options,
+            "answer": player
+        }
 
-        questions.append({
-            "q":random.choice(question_templates),
-            "options":options,
-            "answer":correct
-        })
+    # ---- GENERATE QUESTIONS ----
 
-    # FINAL SHUFFLE (VERY IMPORTANT)
+    q1=create_question_from_stat(runs_sorted, "runs")
+    q2=create_question_from_stat(wickets_sorted, "wickets")
+    q3=create_question_from_stat(sixes_sorted, "sixes")
+
+    if q1: questions.append(q1)
+    if q2: questions.append(q2)
+    if q3: questions.append(q3)
+
+    # ---- PLAYER COMPARISON (SMART) ----
+    if len(runs_sorted)>10:
+        p1=random.choice(runs_sorted[:20])[0]
+        p2=random.choice(runs_sorted[:20])[0]
+
+        if p1!=p2:
+            correct = p1 if runs_cache[p1]>runs_cache[p2] else p2
+
+            options=[p1,p2]
+            while len(options)<4:
+                x=random.choice(players)
+                if x not in options:
+                    options.append(x)
+
+            random.shuffle(options)
+
+            questions.append({
+                "q": f"Who has scored more IPL runs?",
+                "options": options,
+                "answer": correct
+            })
+
+    # ---- PURE DATA-DRIVEN RANDOM FACT ----
+    for _ in range(6):
+
+        stat_type=random.choice(["runs","wickets","sixes"])
+
+        if stat_type=="runs" and runs_sorted:
+            stat_list=runs_sorted
+            label="runs"
+        elif stat_type=="wickets" and wickets_sorted:
+            stat_list=wickets_sorted
+            label="wickets"
+        else:
+            stat_list=sixes_sorted
+            label="sixes"
+
+        q=create_question_from_stat(stat_list,label)
+
+        if q:
+            questions.append(q)
+
     random.shuffle(questions)
 
     return questions[:10]
