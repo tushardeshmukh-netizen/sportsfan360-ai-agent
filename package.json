@@ -40,4 +40,12 @@
       "last 1 safari version"
     ]
   }
+  id="fixeslint"
+"eslintConfig": {
+  "extends": ["react-app"],
+  "rules": {
+    "react-hooks/exhaustive-deps": "off",
+    "no-unused-vars": "off"
+  }
+}
 }
