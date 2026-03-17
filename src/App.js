@@ -2,6 +2,7 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
+import PlayerBattle from "./PlayerBattle"; // ✅ ADD THIS
 
 const statsPool=[
 
@@ -59,7 +60,7 @@ fetch(`${API_URL}/feed`)
 }
 },[activeTab])
 
-/* CHAT SCROLL */
+/* SCROLL */
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
@@ -68,7 +69,6 @@ const clearChat=()=>{
 setMessages([])
 }
 
-/* SUGGESTIONS */
 const suggestions=[
 "Most IPL runs",
 "Most IPL wickets",
@@ -79,7 +79,7 @@ const suggestions=[
 "Why is IPL popular"
 ]
 
-/* ASK AI */
+/* ASK */
 const askAI=async(q=question)=>{
 
 if(!q.trim()) return
@@ -144,9 +144,8 @@ return(
 
 </div>
 
-{/* ================= HOME ================= */}
+{/* HOME */}
 {activeTab==="home" && (
-
 <div className="home">
 
 <div className="hero">
@@ -176,35 +175,27 @@ return(
 <div className="feedCards">
 {feed.cards.map((c,i)=>(
 <a key={i} href={c.link} target="_blank" rel="noreferrer" className="feedCard">
-
 {c.image && <img src={c.image} className="feedImage" alt="news"/>}
-
 <div className="feedContent">
 <h3>{c.title}</h3>
 <p>{c.text}</p>
 </div>
-
 </a>
 ))}
 </div>
 )}
 
 </div>
-
 )}
 
-{/* ================= ASK ================= */}
+{/* ASK */}
 {activeTab==="ask" && (
-
 <div className="askPage">
 
 <div style={{display:"flex",justifyContent:"flex-end"}}>
-<button className="clearChat" onClick={clearChat}>
-Clear Chat
-</button>
+<button className="clearChat" onClick={clearChat}>Clear Chat</button>
 </div>
 
-{/* STATS */}
 <div className="quickStats">
 {stats.map((s,i)=>(
 <div key={i} className="statCard">
@@ -240,16 +231,12 @@ Clear Chat
 
 <div className="bottomPanel">
 
-{/* SUGGESTIONS */}
 <div className="suggestions">
 {suggestions.map((s,i)=>(
-<button key={i} onClick={()=>askAI(s)}>
-{s}
-</button>
+<button key={i} onClick={()=>askAI(s)}>{s}</button>
 ))}
 </div>
 
-{/* INPUT */}
 <div className="inputBox">
 <input
 value={question}
@@ -257,30 +244,21 @@ placeholder="Ask SportsFan360..."
 onChange={(e)=>setQuestion(e.target.value)}
 onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 />
-
-<button onClick={()=>askAI()}>
-Ask
-</button>
+<button onClick={()=>askAI()}>Ask</button>
 </div>
 
 </div>
 
 </div>
-
 )}
 
-{/* ================= TRIVIA ================= */}
+{/* TRIVIA */}
 {activeTab==="trivia" && <Trivia />}
 
-{/* ================= BATTLE ================= */}
-{activeTab==="battle" && (
-<div style={{padding:"20px"}}>
-⚔️ Coming soon: Player Battle
-</div>
-)}
+{/* ✅ PLAYER BATTLE LIVE */}
+{activeTab==="battle" && <PlayerBattle API_URL={API_URL} />}
 
 </div>
-
 )
 
 }
