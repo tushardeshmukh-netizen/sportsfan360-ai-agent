@@ -232,56 +232,85 @@ def compare_players(p1,p2):
 
 def generate_trivia_questions():
 
-    load_dataset()
+    # ❌ REMOVED load_dataset() → this was crashing app
 
     questions=[]
 
     players=list(all_players)
+
+    # ✅ SAFE fallback (VERY IMPORTANT)
+    if not players or len(players)<5:
+        players=[
+            "Virat Kohli","MS Dhoni","Rohit Sharma","Chris Gayle",
+            "AB de Villiers","KL Rahul","Jasprit Bumrah","Chahal"
+        ]
+
     random.shuffle(players)
 
-    # 1. Most runs
+    # 1. Most runs (SAFE)
     if runs_cache:
-        top_player=max(runs_cache,key=runs_cache.get)
-        options=random.sample(players,3)
-        if top_player not in options:
-            options[0]=top_player
-        random.shuffle(options)
+        try:
+            top_player=max(runs_cache,key=runs_cache.get)
+        except:
+            top_player=random.choice(players)
+    else:
+        top_player=random.choice(players)
 
-        questions.append({
-            "q":"Who has scored the most IPL runs?",
-            "options":options,
-            "answer":top_player
-        })
+    options=random.sample(players,3)
+    if top_player not in options:
+        options[0]=top_player
+    random.shuffle(options)
 
-    # 2. Most wickets
+    questions.append({
+        "q":"Who has scored the most IPL runs?",
+        "options":options,
+        "answer":top_player
+    })
+
+
+    # 2. Most wickets (SAFE)
     if wickets_cache:
-        top_bowler=max(wickets_cache,key=wickets_cache.get)
-        options=random.sample(players,3)
-        if top_bowler not in options:
-            options[0]=top_bowler
-        random.shuffle(options)
+        try:
+            top_bowler=max(wickets_cache,key=wickets_cache.get)
+        except:
+            top_bowler=random.choice(players)
+    else:
+        top_bowler=random.choice(players)
 
-        questions.append({
-            "q":"Who has taken the most IPL wickets?",
-            "options":options,
-            "answer":top_bowler
-        })
+    options=random.sample(players,3)
+    if top_bowler not in options:
+        options[0]=top_bowler
+    random.shuffle(options)
 
-    # 3. Most sixes
+    questions.append({
+        "q":"Who has taken the most IPL wickets?",
+        "options":options,
+        "answer":top_bowler
+    })
+
+
+    # 3. Most sixes (SAFE)
     if sixes_cache:
-        top_sixes=max(sixes_cache,key=sixes_cache.get)
-        options=random.sample(players,3)
-        if top_sixes not in options:
-            options[0]=top_sixes
-        random.shuffle(options)
+        try:
+            top_sixes=max(sixes_cache,key=sixes_cache.get)
+        except:
+            top_sixes=random.choice(players)
+    else:
+        top_sixes=random.choice(players)
 
-        questions.append({
-            "q":"Who has hit the most IPL sixes?",
-            "options":options,
-            "answer":top_sixes
-        })
+    options=random.sample(players,3)
+    if top_sixes not in options:
+        options[0]=top_sixes
+    random.shuffle(options)
 
-    # 4–10 RANDOM QUESTIONS
+    questions.append({
+        "q":"Who has hit the most IPL sixes?",
+        "options":options,
+        "answer":top_sixes
+    })
+
+
+    # 4–10 RANDOM QUESTIONS (SAFE)
     for i in range(7):
 
         correct=random.choice(players)
@@ -299,7 +328,6 @@ def generate_trivia_questions():
         })
 
     return questions[:10]
-
 
 
 @app.get("/trivia")
