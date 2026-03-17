@@ -2,7 +2,6 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
-// PlayerBattle disabled
 
 const statsPool=[
 
@@ -31,6 +30,8 @@ function App(){
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
 const [activeTab,setActiveTab]=useState("home")
+const [feed,setFeed]=useState(null)
+
 const [question,setQuestion]=useState("")
 const [messages,setMessages]=useState([])
 const [loading,setLoading]=useState(false)
@@ -48,6 +49,17 @@ setStats(shuffled.slice(0,3))
 return ()=>clearInterval(interval)
 },[])
 
+/* LOAD FEED */
+useEffect(()=>{
+if(activeTab==="home"){
+fetch(`${API_URL}/feed`)
+.then(res=>res.json())
+.then(data=>setFeed(data))
+.catch(()=>setFeed(null))
+}
+},[activeTab])
+
+/* CHAT SCROLL */
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
@@ -55,6 +67,17 @@ chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 const clearChat=()=>{
 setMessages([])
 }
+
+/* SUGGESTIONS */
+const suggestions=[
+"Most IPL runs",
+"Most IPL wickets",
+"Most IPL sixes",
+"Which team has most IPL titles",
+"Highest IPL score",
+"Compare Kohli vs Rohit",
+"Why is IPL popular"
+]
 
 /* ASK AI */
 const askAI=async(q=question)=>{
@@ -100,6 +123,7 @@ return(
 </div>
 </header>
 
+{/* NAV */}
 <div className="tabs">
 
 <button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>
@@ -120,7 +144,7 @@ return(
 
 </div>
 
-{/* HOME */}
+{/* ================= HOME ================= */}
 {activeTab==="home" && (
 
 <div className="home">
@@ -144,24 +168,61 @@ return(
 ))}
 </div>
 
+<div className="sectionTitle">📰 Latest Cricket News</div>
+
+{!feed && <p style={{padding:"20px"}}>Loading news...</p>}
+
+{feed && (
+<div className="feedCards">
+{feed.cards.map((c,i)=>(
+<a key={i} href={c.link} target="_blank" rel="noreferrer" className="feedCard">
+
+{c.image && <img src={c.image} className="feedImage" alt="news"/>}
+
+<div className="feedContent">
+<h3>{c.title}</h3>
+<p>{c.text}</p>
+</div>
+
+</a>
+))}
+</div>
+)}
+
 </div>
 
 )}
 
-{/* ASK */}
+{/* ================= ASK ================= */}
 {activeTab==="ask" && (
 
 <div className="askPage">
 
+<div style={{display:"flex",justifyContent:"flex-end"}}>
 <button className="clearChat" onClick={clearChat}>
 Clear Chat
 </button>
+</div>
+
+{/* STATS */}
+<div className="quickStats">
+{stats.map((s,i)=>(
+<div key={i} className="statCard">
+<span className="statLabel">{s.label}</span>
+<div className="statRow">
+<strong>{s.value}</strong>
+<span className="statNum">{s.num}</span>
+</div>
+</div>
+))}
+</div>
 
 <main className="chatPanel">
 
 {messages.length===0 && (
 <div className="welcome">
 <h2>Ask anything about IPL</h2>
+<p>Teams • Players • Records • Runs • Wickets • Comparisons</p>
 </div>
 )}
 
@@ -171,17 +232,28 @@ Clear Chat
 </div>
 ))}
 
-{loading && <div className="message ai">Analyzing...</div>}
+{loading && <div className="message ai typing">Analyzing cricket data...</div>}
 
 <div ref={chatEndRef}></div>
 
 </main>
 
-<div className="inputBox">
+<div className="bottomPanel">
 
+{/* SUGGESTIONS */}
+<div className="suggestions">
+{suggestions.map((s,i)=>(
+<button key={i} onClick={()=>askAI(s)}>
+{s}
+</button>
+))}
+</div>
+
+{/* INPUT */}
+<div className="inputBox">
 <input
 value={question}
-placeholder="Ask..."
+placeholder="Ask SportsFan360..."
 onChange={(e)=>setQuestion(e.target.value)}
 onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 />
@@ -189,6 +261,7 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 <button onClick={()=>askAI()}>
 Ask
 </button>
+</div>
 
 </div>
 
@@ -196,13 +269,13 @@ Ask
 
 )}
 
-{/* TRIVIA */}
+{/* ================= TRIVIA ================= */}
 {activeTab==="trivia" && <Trivia />}
 
-{/* BATTLE DISABLED */}
+{/* ================= BATTLE ================= */}
 {activeTab==="battle" && (
 <div style={{padding:"20px"}}>
-⚠️ Player Battle disabled
+⚔️ Coming soon: Player Battle
 </div>
 )}
 

@@ -45,6 +45,7 @@ highest_score_cache={}
 sixes_cache={}
 season_latest_match={}
 
+
 # ---------------- DATASET LOADER ----------------
 
 def load_dataset():
@@ -119,7 +120,7 @@ def load_dataset():
     print("Dataset Loaded")
 
 
-# ---------------- TRIVIA ENGINE (FIXED) ----------------
+# ---------------- TRIVIA ENGINE (ONLY FIXED PART) ----------------
 
 def generate_trivia_questions():
 
@@ -137,7 +138,7 @@ def generate_trivia_questions():
 
     attempts=0
 
-    while len(questions)<10 and attempts<100:
+    while len(questions)<10 and attempts<200:
 
         attempts+=1
 
@@ -161,61 +162,45 @@ def generate_trivia_questions():
             if q_type=="runs_compare":
                 p1,p2=random.sample(players,2)
                 correct=max([p1,p2],key=lambda x:runs_cache[x])
-                options=[p1,p2] + random.sample(players,2)
+                options=random.sample(players,3)+[correct]
 
-                q={
-                "q":"Who has scored more IPL runs?",
-                "options":list(set(options))[:4],
-                "answer":correct
-                }
+                q={"q":"Who has scored more IPL runs?","options":list(set(options))[:4],"answer":correct}
 
             elif q_type=="wickets_compare":
                 p1,p2=random.sample(bowlers,2)
                 correct=max([p1,p2],key=lambda x:wickets_cache[x])
-                options=[p1,p2] + random.sample(bowlers,2)
+                options=random.sample(bowlers,3)+[correct]
 
-                q={
-                "q":"Who has taken more IPL wickets?",
-                "options":list(set(options))[:4],
-                "answer":correct
-                }
+                q={"q":"Who has taken more IPL wickets?","options":list(set(options))[:4],"answer":correct}
 
             elif q_type=="titles_compare":
                 if len(teams)<2:
                     continue
                 t1,t2=random.sample(teams,2)
                 correct=max([t1,t2],key=lambda x:titles_cache.get(x,0))
-                options=[t1,t2] + random.sample(teams,2)
+                options=random.sample(teams,min(3,len(teams)))+[correct]
 
-                q={
-                "q":"Which team has more IPL titles?",
-                "options":list(set(options))[:4],
-                "answer":correct
-                }
+                q={"q":"Which team has more IPL titles?","options":list(set(options))[:4],"answer":correct}
 
             elif q_type=="top_player":
                 opts=random.sample(players,4)
                 correct=max(opts,key=lambda x:runs_cache[x])
-
-                q={"q":"Who scored the most IPL runs?","options":opts,"answer":correct}
+                q={"q":"Who has scored the most IPL runs among these?","options":opts,"answer":correct}
 
             elif q_type=="lowest_player":
                 opts=random.sample(players,4)
                 correct=min(opts,key=lambda x:runs_cache[x])
-
-                q={"q":"Who scored the least IPL runs?","options":opts,"answer":correct}
+                q={"q":"Who has scored the least IPL runs among these?","options":opts,"answer":correct}
 
             elif q_type=="top_bowler":
                 opts=random.sample(bowlers,4)
                 correct=max(opts,key=lambda x:wickets_cache[x])
-
-                q={"q":"Who has most IPL wickets?","options":opts,"answer":correct}
+                q={"q":"Who has taken the most IPL wickets among these?","options":opts,"answer":correct}
 
             elif q_type=="odd_one_out":
                 opts=random.sample(players,4)
                 correct=min(opts,key=lambda x:runs_cache[x])
-
-                q={"q":"Find lowest run scorer","options":opts,"answer":correct}
+                q={"q":"Find the lowest run scorer","options":opts,"answer":correct}
 
             elif q_type=="milestone_runs":
                 p=random.choice(players)
@@ -229,39 +214,24 @@ def generate_trivia_questions():
                     f"{milestone+500}+"
                 ]
 
-                q={
-                "q":f"{p} falls into which run bracket?",
-                "options":options,
-                "answer":f"{milestone}+"
-                }
+                q={"q":f"{p} falls into which IPL run bracket?","options":options,"answer":f"{milestone}+"}
 
             elif q_type=="closest_runs":
                 target=random.randint(1000,6000)
                 opts=random.sample(players,4)
                 correct=min(opts,key=lambda x:abs(runs_cache[x]-target))
-
-                q={
-                "q":f"Who is closest to {target} runs?",
-                "options":opts,
-                "answer":correct
-                }
+                q={"q":f"Who is closest to {target} IPL runs?","options":opts,"answer":correct}
 
             elif q_type=="multi_best":
                 opts=random.sample(players,4)
                 correct=max(opts,key=lambda x:runs_cache[x])
-
-                q={"q":"Highest run scorer?","options":opts,"answer":correct}
+                q={"q":"Who is highest run scorer?","options":opts,"answer":correct}
 
             elif q_type=="player_identify":
                 real=random.choice(players)
-                fake=f"Player_{random.randint(1000,9999)}"
-                fake2=f"Player_{random.randint(1000,9999)}"
-                fake3=f"Player_{random.randint(1000,9999)}"
-
-                opts=[real,fake,fake2,fake3]
+                opts=[real,f"Player_{random.randint(1000,9999)}",f"Player_{random.randint(1000,9999)}",f"Player_{random.randint(1000,9999)}"]
                 random.shuffle(opts)
-
-                q={"q":"Which is real IPL player?","options":opts,"answer":real}
+                q={"q":"Which is a real IPL player?","options":opts,"answer":real}
 
             elif q_type=="team_identify":
                 if not teams:
@@ -269,10 +239,9 @@ def generate_trivia_questions():
                 real=random.choice(teams)
                 opts=[real,f"Team_{random.randint(100,999)}",f"Team_{random.randint(100,999)}",f"Team_{random.randint(100,999)}"]
                 random.shuffle(opts)
+                q={"q":"Which is a real IPL team?","options":opts,"answer":real}
 
-                q={"q":"Which is IPL team?","options":opts,"answer":real}
-
-            key=q["q"]+str(q["answer"])
+            key=q["q"]+str(q["options"])
 
             if key in used:
                 continue
@@ -286,7 +255,7 @@ def generate_trivia_questions():
     return {"questions":questions}
 
 
-# ---------------- REST UNCHANGED ----------------
+# ---------------- LLM ANSWER ----------------
 
 def knowledge_answer(question):
 
@@ -307,6 +276,8 @@ def knowledge_answer(question):
 
     return {"answer":answer}
 
+
+# ---------------- AGENT ----------------
 
 def run_agent(question):
 
@@ -329,6 +300,8 @@ def run_agent(question):
     save_context(question,result["answer"])
     return result
 
+
+# ---------------- API ----------------
 
 @app.get("/")
 def home():
