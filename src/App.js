@@ -5,6 +5,29 @@ import Trivia from "./Trivia";
 import PlayerBattle from "./PlayerBattle"; // ⭐ NEW
 
 
+// 🔥 ADD THIS (ERROR BOUNDARY)
+class ErrorBoundary extends React.Component {
+  constructor(props){
+    super(props);
+    this.state={hasError:false};
+  }
+  static getDerivedStateFromError(){
+    return {hasError:true};
+  }
+  componentDidCatch(error){
+    console.error("Battle Crash:",error);
+  }
+  render(){
+    if(this.state.hasError){
+      return <div style={{padding:"20px",color:"red"}}>
+        ⚠️ Battle module failed to load
+      </div>;
+    }
+    return this.props.children;
+  }
+}
+
+
 const statsPool=[
 
 {label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
@@ -169,7 +192,6 @@ onClick={()=>setActiveTab("trivia")}
 🏏 IPL Trivia
 </button>
 
-{/* ⭐ NEW TAB */}
 <button
 className={activeTab==="battle"?"tab active":"tab"}
 onClick={()=>setActiveTab("battle")}
@@ -365,7 +387,9 @@ Ask
 
 {activeTab==="battle" && (
 <div className="battleWrapper">
+<ErrorBoundary>
 <PlayerBattle API_URL={API_URL}/>
+</ErrorBoundary>
 </div>
 )}
 

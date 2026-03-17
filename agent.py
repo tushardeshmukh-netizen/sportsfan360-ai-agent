@@ -46,9 +46,13 @@ sixes_cache={}
 season_latest_match={}
 
 all_players=set()
+
+# 🔥 NEW
 shotmap_cache={}
 pitchmap_cache={}
 
+
+# ---------------- DATASET LOADER ----------------
 
 def load_dataset():
 
@@ -59,8 +63,14 @@ def load_dataset():
     if dataset_loaded:
         return
 
-    r=requests.get(DATA_URL,timeout=120)
-    zip_file=zipfile.ZipFile(io.BytesIO(r.content))
+    print("Loading IPL dataset...")
+
+    try:
+        r=requests.get(DATA_URL,timeout=120)
+        zip_file=zipfile.ZipFile(io.BytesIO(r.content))
+    except Exception as e:
+        print("DATA LOAD FAILED:",e)
+        return
 
     batsman_runs={}
     bowler_wickets={}
@@ -76,12 +86,14 @@ def load_dataset():
 
         try:
             match=json.loads(zip_file.read(file))
+
             match_runs={}
 
             info=match.get("info",{})
             registry=info.get("registry",{}).get("people",{})
             for name in registry.values():
-                players_set.add(name)
+                if isinstance(name,str):
+                    players_set.add(name)
 
             for inn in match.get("innings",[]):
                 for over in inn.get("overs",[]):
@@ -132,6 +144,13 @@ def load_dataset():
                         if wickets and bowler:
                             bowler_wickets[bowler]=bowler_wickets.get(bowler,0)+len(wickets)
 
+                            for w in wickets:
+                                out=w.get("player_out")
+                                if out:
+                                    players_set.add(out)
+                                    pitchmap_cache.setdefault(out,{"full":0,"good":0,"short":0,"wickets":0})
+                                    pitchmap_cache[out]["wickets"]+=1
+
             for p,runs in match_runs.items():
                 if runs>highest["runs"]:
                     highest={"runs":runs,"player":p}
@@ -141,13 +160,28 @@ def load_dataset():
 
     all_players=set([p.strip() for p in players_set if isinstance(p,str) and len(p)>2])
 
+    titles={}
+    for season,data in season_latest_match.items():
+        winner=data.get("winner")
+        if winner:
+            titles[winner]=titles.get(winner,0)+1
+
     runs_cache=batsman_runs
     wickets_cache=bowler_wickets
+    titles_cache=titles
     highest_score_cache=highest
     sixes_cache=batsman_sixes
 
-    dataset_loaded=True
+    try:
+        set_caches(runs_cache,wickets_cache,titles_cache,highest_score_cache,sixes_cache)
+    except:
+        pass
 
+    dataset_loaded=True
+    print(f"Dataset Loaded: {len(all_players)} players")
+
+
+# ---------------- PLAYER BATTLE ----------------
 
 def get_player_stats(player):
     return {
@@ -192,9 +226,17 @@ def compare_players(p1,p2):
     }
 
 
+# ---------------- APIs ----------------
+
+@app.get("/")
+def home():
+    return {"message":"API running"}
+
 @app.get("/player-battle")
 def player_battle(p1:str,p2:str):
     load_dataset()
+    if not p1 or not p2:
+        return {"error":"Missing players"}
     return compare_players(p1,p2)
 
 @app.get("/player-list")
@@ -205,4 +247,9 @@ def player_list():
 @app.get("/player-shotmap")
 def player_shotmap(player:str):
     load_dataset()
-    return {"data":shotmap_cache.get(player,{})}
+    return {"data":shotmap_cache.get(player,{"off":0,"leg":0,"straight":0})}
+
+@app.get("/player-pitchmap")
+def player_pitchmap(player:str):
+    load_dataset()
+    return {"data":pitchmap_cache.get(player,{"full":0,"good":0,"short":0,"wickets":0})}
