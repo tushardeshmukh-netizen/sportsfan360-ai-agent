@@ -154,162 +154,73 @@ def generate_trivia_questions():
 
         try:
 
-            # 🔥 RUNS COMPARE
             if q_type=="runs_compare":
                 p1,p2=random.sample(players,2)
                 correct=max([p1,p2],key=lambda x:runs_cache[x])
+                q={"q":"Who has scored more IPL runs?","options":[p1,p2],"answer":correct}
 
-                q={
-                "q":"Who has scored more IPL runs?",
-                "options":[p1,p2],
-                "answer":correct
-                }
-
-            # 🔥 WICKETS COMPARE
             elif q_type=="wickets_compare":
                 p1,p2=random.sample(bowlers,2)
                 correct=max([p1,p2],key=lambda x:wickets_cache[x])
+                q={"q":"Who has taken more IPL wickets?","options":[p1,p2],"answer":correct}
 
-                q={
-                "q":"Who has taken more IPL wickets?",
-                "options":[p1,p2],
-                "answer":correct
-                }
-
-            # 🔥 TITLES COMPARE
             elif q_type=="titles_compare":
                 t1,t2=random.sample(teams,2)
                 correct=max([t1,t2],key=lambda x:titles_cache.get(x,0))
+                q={"q":"Which team has more IPL titles?","options":[t1,t2],"answer":correct}
 
-                q={
-                "q":"Which team has more IPL titles?",
-                "options":[t1,t2],
-                "answer":correct
-                }
-
-            # 🔥 TOP PLAYER
             elif q_type=="top_player":
                 opts=random.sample(players,4)
                 correct=max(opts,key=lambda x:runs_cache[x])
+                q={"q":"Who has scored the most IPL runs among these?","options":opts,"answer":correct}
 
-                q={
-                "q":"Who has scored the most IPL runs among these?",
-                "options":opts,
-                "answer":correct
-                }
-
-            # 🔥 LOWEST PLAYER
             elif q_type=="lowest_player":
                 opts=random.sample(players,4)
                 correct=min(opts,key=lambda x:runs_cache[x])
+                q={"q":"Who has scored the least IPL runs among these?","options":opts,"answer":correct}
 
-                q={
-                "q":"Who has scored the least IPL runs among these?",
-                "options":opts,
-                "answer":correct
-                }
-
-            # 🔥 TOP BOWLER
             elif q_type=="top_bowler":
                 opts=random.sample(bowlers,4)
                 correct=max(opts,key=lambda x:wickets_cache[x])
+                q={"q":"Who has taken the most IPL wickets among these?","options":opts,"answer":correct}
 
-                q={
-                "q":"Who has taken the most IPL wickets among these?",
-                "options":opts,
-                "answer":correct
-                }
-
-            # 🔥 ODD ONE OUT
             elif q_type=="odd_one_out":
                 opts=random.sample(players,4)
                 correct=min(opts,key=lambda x:runs_cache[x])
+                q={"q":"Find the odd one out (lowest run scorer)","options":opts,"answer":correct}
 
-                q={
-                "q":"Find the odd one out (lowest run scorer)",
-                "options":opts,
-                "answer":correct
-                }
-
-            # 🔥 MILESTONE
             elif q_type=="milestone_runs":
                 p=random.choice(players)
                 runs=runs_cache[p]
-
                 milestone=1000*(runs//1000)
-
-                options=[
-                    f"{milestone}+",
-                    f"{milestone+1000}+",
-                    f"{max(0,milestone-1000)}+"
-                ]
-
-                options=list(set(options))
+                options=list(set([f"{milestone}+",f"{milestone+1000}+",f"{max(0,milestone-1000)}+"]))
                 random.shuffle(options)
+                q={"q":f"{p} falls into which IPL run bracket?","options":options,"answer":f"{milestone}+"}
 
-                correct=f"{milestone}+"
-
-                q={
-                "q":f"{p} falls into which IPL run bracket?",
-                "options":options,
-                "answer":correct
-                }
-
-            # 🔥 CLOSEST RUNS
             elif q_type=="closest_runs":
                 target=random.randint(1000,6000)
                 opts=random.sample(players,4)
-
                 correct=min(opts,key=lambda x:abs(runs_cache[x]-target))
+                q={"q":f"Who is closest to {target} IPL runs?","options":opts,"answer":correct}
 
-                q={
-                "q":f"Who is closest to {target} IPL runs?",
-                "options":opts,
-                "answer":correct
-                }
-
-            # 🔥 MULTI BEST
             elif q_type=="multi_best":
                 opts=random.sample(players,4)
                 correct=max(opts,key=lambda x:runs_cache[x])
+                q={"q":"Who is the highest run scorer among these players?","options":opts,"answer":correct}
 
-                q={
-                "q":"Who is the highest run scorer among these players?",
-                "options":opts,
-                "answer":correct
-                }
-
-            # 🔥 PLAYER IDENTIFY
             elif q_type=="player_identify":
                 real=random.choice(players)
                 fake=f"Player_{random.randint(1000,9999)}"
+                options=[real,fake]; random.shuffle(options)
+                q={"q":"Which is a real IPL player?","options":options,"answer":real}
 
-                options=[real,fake]
-                random.shuffle(options)
-
-                q={
-                "q":"Which is a real IPL player?",
-                "options":options,
-                "answer":real
-                }
-
-            # 🔥 TEAM IDENTIFY
             elif q_type=="team_identify":
                 real=random.choice(teams)
                 fake=f"Team_{random.randint(100,999)}"
+                options=[real,fake]; random.shuffle(options)
+                q={"q":"Which is a real IPL team?","options":options,"answer":real}
 
-                options=[real,fake]
-                random.shuffle(options)
-
-                q={
-                "q":"Which is a real IPL team?",
-                "options":options,
-                "answer":real
-                }
-
-            # 🔒 DUPLICATE BLOCK
             key=q["q"]+str(q["options"])
-
             if key in used:
                 continue
 
@@ -320,20 +231,69 @@ def generate_trivia_questions():
             continue
 
     return {"questions":questions}
+
+
+# ---------------- PLAYER BATTLE ENGINE ----------------
+
+def get_player_stats(player):
+
+    return {
+        "runs": runs_cache.get(player,0),
+        "wickets": wickets_cache.get(player,0),
+        "sixes": sixes_cache.get(player,0)
+    }
+
+
+def calculate_impact(stats):
+    return stats["runs"] + (stats["wickets"] * 20) + (stats["sixes"] * 2)
+
+
+def compare_players(p1,p2):
+
+    stats1=get_player_stats(p1)
+    stats2=get_player_stats(p2)
+
+    impact1=calculate_impact(stats1)
+    impact2=calculate_impact(stats2)
+
+    comparison={
+        "runs": p1 if stats1["runs"]>stats2["runs"] else p2,
+        "wickets": p1 if stats1["wickets"]>stats2["wickets"] else p2,
+        "sixes": p1 if stats1["sixes"]>stats2["sixes"] else p2,
+        "impact": p1 if impact1>impact2 else p2
+    }
+
+    score1=sum(1 for v in comparison.values() if v==p1)
+    score2=sum(1 for v in comparison.values() if v==p2)
+
+    winner = p1 if score1>score2 else p2
+
+    return {
+        "player1": p1,
+        "player2": p2,
+        "stats1": stats1,
+        "stats2": stats2,
+        "impact1": impact1,
+        "impact2": impact2,
+        "comparison": comparison,
+        "score": {p1:score1,p2:score2},
+        "winner": winner
+    }
+
+
 # ---------------- LLM ANSWER ----------------
 
 def knowledge_answer(question):
 
     try:
         res=groq.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-        {"role":"system","content":"You are an IPL cricket analyst."},
-        {"role":"user","content":question}
-        ],
-        temperature=0
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role":"system","content":"You are an IPL cricket analyst."},
+                {"role":"user","content":question}
+            ],
+            temperature=0
         )
-
         answer=res.choices[0].message.content
 
     except:
@@ -403,8 +363,30 @@ def standings():
     return get_standings()
 
 
-# ---------------- TRIVIA API ----------------
-
 @app.get("/trivia")
 def trivia():
     return generate_trivia_questions()
+
+
+# ---------------- PLAYER BATTLE API ----------------
+
+@app.get("/player-battle")
+def player_battle(p1:str,p2:str):
+
+    load_dataset()
+
+    if p1 not in runs_cache or p2 not in runs_cache:
+        return {"error":"Player not found"}
+
+    return compare_players(p1,p2)
+
+
+@app.get("/player-list")
+def player_list():
+
+    load_dataset()
+
+    players=list(runs_cache.keys())
+    players.sort()
+
+    return {"players":players}

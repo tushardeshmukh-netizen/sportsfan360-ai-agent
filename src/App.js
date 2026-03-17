@@ -2,6 +2,7 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
+import PlayerBattle from "./PlayerBattle"; // ⭐ NEW
 
 const statsPool=[
 
@@ -165,6 +166,14 @@ className={activeTab==="trivia"?"tab active":"tab"}
 onClick={()=>setActiveTab("trivia")}
 >
 🏏 IPL Trivia
+</button>
+
+{/* ⭐ NEW TAB */}
+<button
+className={activeTab==="battle"?"tab active":"tab"}
+onClick={()=>setActiveTab("battle")}
+>
+⚔️ Player Battle
 </button>
 
 </div>
@@ -347,9 +356,14 @@ Ask
 {/* ================= TRIVIA ================= */}
 
 {activeTab==="trivia" && (
-
 <Trivia />
+)}
 
+
+{/* ================= PLAYER BATTLE ================= */}
+
+{activeTab==="battle" && (
+<PlayerBattle API_URL={API_URL}/>
 )}
 
 </div>
@@ -358,4 +372,4 @@ Ask
 
 }
 
-export default App
+export default App;

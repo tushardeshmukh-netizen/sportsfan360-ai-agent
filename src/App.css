@@ -591,3 +591,188 @@ height:100%;
 background:linear-gradient(90deg,#FE2165,#FD6E0C);
 transition:width .4s ease;
 }
+
+/* ================= PLAYER BATTLE ================= */
+
+.battleContainer{
+  padding:20px;
+  max-width:1100px;
+  margin:auto;
+}
+
+.battleHeader{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.battleHeader h2{
+  font-size:26px;
+  margin-bottom:5px;
+}
+
+.battleHeader p{
+  color:#aaa;
+}
+
+/* SELECTORS */
+
+.battleSelectors{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:20px;
+  margin-bottom:25px;
+  flex-wrap:wrap;
+}
+
+.battleSelectors select{
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #333;
+  background:#111;
+  color:#fff;
+  min-width:180px;
+  cursor:pointer;
+}
+
+.vsText{
+  font-size:20px;
+  font-weight:bold;
+  color:#ff4d4d;
+}
+
+/* BATTLE CARD */
+
+.battleCard{
+  background:#111;
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 0 15px rgba(255,255,255,0.05);
+}
+
+/* PLAYER HEAD */
+
+.playersRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.playerName{
+  font-size:18px;
+  font-weight:bold;
+}
+
+.vsBig{
+  font-size:22px;
+  color:#ff4d4d;
+}
+
+/* STATS */
+
+.statRowBattle{
+  margin:15px 0;
+}
+
+.statLabelBattle{
+  font-size:13px;
+  color:#aaa;
+  margin-bottom:6px;
+}
+
+.statBars{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.bar{
+  height:12px;
+  border-radius:6px;
+  background:linear-gradient(90deg,#ff4d4d,#ff944d);
+  transition:0.5s ease;
+}
+
+.barContainer{
+  flex:1;
+  background:#222;
+  border-radius:6px;
+  overflow:hidden;
+}
+
+.statValue{
+  font-size:13px;
+  min-width:40px;
+  text-align:center;
+}
+
+/* WINNER */
+
+.winnerSection{
+  margin-top:25px;
+  text-align:center;
+}
+
+.winnerBox{
+  padding:15px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#ff4d4d,#ff944d);
+  color:#000;
+  font-weight:bold;
+  font-size:18px;
+  box-shadow:0 0 20px rgba(255,77,77,0.5);
+}
+
+/* BUTTON */
+
+.battleBtn{
+  margin-top:15px;
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  background:#ff4d4d;
+  color:#fff;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.battleBtn:hover{
+  background:#ff2e2e;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:768px){
+
+  .playersRow{
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .vsBig{
+    display:none;
+  }
+
+}
+
+.insightBox{
+  margin-top:15px;
+  padding:12px;
+  border-radius:10px;
+  background:#1a1a1a;
+  color:#ffcc80;
+  font-size:14px;
+}
+.winnerBox{
+  animation: glowPulse 1.5s infinite alternate;
+}
+
+@keyframes glowPulse{
+  from{
+    box-shadow:0 0 10px rgba(255,77,77,0.4);
+  }
+  to{
+    box-shadow:0 0 25px rgba(255,77,77,0.9);
+  }
+}
