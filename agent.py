@@ -52,6 +52,47 @@ dismissals_cache={}
 fours_cache={}
 matches_played_cache={}
 
+# 🔥 NAME NORMALIZATION
+name_map={}
+
+def build_name_map():
+    global name_map
+    name_map={}
+
+    for p in runs_cache.keys():
+        clean=p.lower().replace(".", "").strip()
+
+        parts=clean.split()
+
+        # map full
+        name_map[clean]=p
+
+        # map last name
+        if len(parts)>=2:
+            name_map[parts[-1]]=p
+
+        # map initials (V Kohli → virat kohli)
+        if len(parts)>=2:
+            name_map[parts[0]+" "+parts[-1]]=p
+
+
+def resolve_player(name):
+
+    if name in runs_cache:
+        return name
+
+    key=name.lower().replace(".", "").strip()
+
+    if key in name_map:
+        return name_map[key]
+
+    # fallback contains match
+    for p in runs_cache.keys():
+        if key in p.lower():
+            return p
+
+    return name
+
 
 # ---------------- DATASET LOADER ----------------
 
@@ -100,28 +141,23 @@ def load_dataset():
                         bowler=d.get("bowler")
                         runs=d.get("runs",{}).get("batter",0)
 
-                        # ALL PLAYERS
                         if batter:
                             players_set.add(batter)
                             match_players.add(batter)
 
-                        if bowler:
-                            players_set.add(bowler)
-                            match_players.add(bowler)
-
-                        # RUNS
-                        if batter:
                             batsman_runs[batter]=batsman_runs.get(batter,0)+runs
                             match_runs[batter]=match_runs.get(batter,0)+runs
 
-                            # BALL FACED
                             balls_faced[batter]=balls_faced.get(batter,0)+1
 
-                            # FOURS / SIXES
                             if runs==4:
                                 fours[batter]=fours.get(batter,0)+1
                             if runs==6:
                                 batsman_sixes[batter]=batsman_sixes.get(batter,0)+1
+
+                        if bowler:
+                            players_set.add(bowler)
+                            match_players.add(bowler)
 
                         wickets=d.get("wickets",[])
 
@@ -134,11 +170,9 @@ def load_dataset():
                         if wickets and bowler:
                             bowler_wickets[bowler]=bowler_wickets.get(bowler,0)+len(wickets)
 
-            # MATCH PLAYED COUNT
             for p in match_players:
                 matches_played[p]=matches_played.get(p,0)+1
 
-            # HIGHEST SCORE
             for p,runs in match_runs.items():
                 if runs>highest["runs"]:
                     highest={"runs":runs,"player":p}
@@ -166,6 +200,9 @@ def load_dataset():
     matches_played_cache=matches_played
 
     set_caches(runs_cache,wickets_cache,titles_cache,highest_score_cache,sixes_cache)
+
+    # 🔥 BUILD NAME MAP HERE
+    build_name_map()
 
     dataset_loaded=True
     print("Dataset Loaded")
@@ -220,41 +257,39 @@ def player_battle(p1:str,p2:str):
 
     load_dataset()
 
-    stats1={
-        "runs": runs_cache.get(p1,0),
-        "wickets": wickets_cache.get(p1,0),
-        "sixes": sixes_cache.get(p1,0),
-        "fours": fours_cache.get(p1,0),
-        "balls": balls_faced_cache.get(p1,0),
-        "matches": matches_played_cache.get(p1,0),
-        "strike_rate": round((runs_cache.get(p1,0)/max(1,balls_faced_cache.get(p1,1)))*100,2),
-        "average": round(runs_cache.get(p1,0)/max(1,dismissals_cache.get(p1,1)),2)
-    }
+    # 🔥 FIX NAME HERE
+    p1 = resolve_player(p1)
+    p2 = resolve_player(p2)
 
-    stats2={
-        "runs": runs_cache.get(p2,0),
-        "wickets": wickets_cache.get(p2,0),
-        "sixes": sixes_cache.get(p2,0),
-        "fours": fours_cache.get(p2,0),
-        "balls": balls_faced_cache.get(p2,0),
-        "matches": matches_played_cache.get(p2,0),
-        "strike_rate": round((runs_cache.get(p2,0)/max(1,balls_faced_cache.get(p2,1)))*100,2),
-        "average": round(runs_cache.get(p2,0)/max(1,dismissals_cache.get(p2,1)),2)
-    }
+    def build_stats(player):
 
-    impact1 = (
-        stats1["runs"] +
-        stats1["wickets"]*25 +
-        stats1["strike_rate"]*2 +
-        stats1["average"]*2
-    )
+        runs = runs_cache.get(player,0)
+        wickets = wickets_cache.get(player,0)
+        sixes = sixes_cache.get(player,0)
+        balls = balls_faced_cache.get(player,1)
+        dismissals = dismissals_cache.get(player,1)
+        fours = fours_cache.get(player,0)
+        matches = matches_played_cache.get(player,1)
 
-    impact2 = (
-        stats2["runs"] +
-        stats2["wickets"]*25 +
-        stats2["strike_rate"]*2 +
-        stats2["average"]*2
-    )
+        strike_rate = round((runs/balls)*100,2) if balls>0 else 0
+        average = round((runs/dismissals),2) if dismissals>0 else runs
+
+        return {
+            "runs": runs,
+            "wickets": wickets,
+            "sixes": sixes,
+            "fours": fours,
+            "balls": balls,
+            "matches": matches,
+            "strike_rate": strike_rate,
+            "average": average
+        }
+
+    stats1 = build_stats(p1)
+    stats2 = build_stats(p2)
+
+    impact1 = stats1["runs"] + stats1["wickets"]*20 + stats1["sixes"]*2
+    impact2 = stats2["runs"] + stats2["wickets"]*20 + stats2["sixes"]*2
 
     winner = p1 if impact1 > impact2 else p2
 
@@ -280,7 +315,7 @@ def player_shotmap(player:str):
     }
 
 
-# ---------------- LLM ANSWER ----------------
+# ---------------- LLM ----------------
 
 def knowledge_answer(question):
 
@@ -330,36 +365,29 @@ def run_agent(question):
 def home():
     return {"message":"SportsFan360 AI running"}
 
-
 @app.get("/ask")
 def ask(question:str):
     return run_agent(question)
-
 
 @app.get("/feed")
 def feed():
     return get_feed()
 
-
 @app.get("/teams")
 def teams():
     return get_teams()
-
 
 @app.get("/players")
 def players(team:str=None):
     return get_players(team)
 
-
 @app.get("/matches")
 def matches():
     return get_matches()
 
-
 @app.get("/standings")
 def standings():
     return get_standings()
-
 
 @app.get("/trivia")
 def trivia():

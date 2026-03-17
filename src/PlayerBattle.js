@@ -12,7 +12,7 @@ Cell
 
 function PlayerBattle({API_URL}){
 
-/* ================= STATE ================= */
+
 
 const [players,setPlayers]=useState([]);
 const [loadingPlayers,setLoadingPlayers]=useState(true);
@@ -35,7 +35,7 @@ const [loading,setLoading]=useState(false);
 const ref1=useRef();
 const ref2=useRef();
 
-/* ================= LOAD PLAYERS ================= */
+
 
 useEffect(()=>{
 setLoadingPlayers(true);
@@ -52,7 +52,7 @@ setLoadingPlayers(false);
 });
 },[API_URL]);
 
-/* ================= OUTSIDE CLICK ================= */
+
 
 useEffect(()=>{
 const handler=(e)=>{
@@ -63,7 +63,6 @@ document.addEventListener("click",handler);
 return ()=>document.removeEventListener("click",handler);
 },[]);
 
-/* ================= FILTER ================= */
 
 const filtered1=useMemo(()=>{
 if(!search1) return [];
@@ -79,7 +78,7 @@ return players
 .slice(0,15);
 },[search2,players]);
 
-/* ================= FETCH ================= */
+
 
 const startBattle=async()=>{
 
@@ -108,7 +107,7 @@ console.error(e);
 setLoading(false);
 };
 
-/* ================= RADAR ================= */
+
 
 const radarData = result ? [
 {stat:"Runs",p1:result.stats1.runs,p2:result.stats2.runs},
@@ -118,7 +117,7 @@ const radarData = result ? [
 {stat:"Avg",p1:result.stats1.average,p2:result.stats2.average}
 ] : [];
 
-/* ================= PIE ================= */
+
 
 const pie1=[
 {name:"Off",value:shot1.off},
@@ -132,7 +131,7 @@ const pie2=[
 {name:"Straight",value:shot2.straight}
 ];
 
-/* ================= HELPER ================= */
+
 
 const getClass=(v1,v2)=>{
 if(v1>v2) return "statBox win";
@@ -140,7 +139,7 @@ if(v1<v2) return "statBox lose";
 return "statBox";
 };
 
-/* ================= UI ================= */
+
 
 return(
 
@@ -154,7 +153,6 @@ return(
 {/* LOADING */}
 {loadingPlayers && <p className="loadingText">Loading IPL player database...</p>}
 
-/* ================= SELECTORS ================= */
 
 <div className="battleSelectors">
 
@@ -230,7 +228,7 @@ Compare Players
 
 {loading && <p className="loadingText">Analyzing performance...</p>}
 
-/* ================= RESULT ================= */
+
 
 {result && result.stats1 && result.stats2 && (
 
