@@ -4,7 +4,6 @@ import zipfile
 import io
 import os
 import random
-import re
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,11 +27,11 @@ DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
 app=FastAPI()
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+CORSMiddleware,
+allow_origins=["*"],
+allow_credentials=True,
+allow_methods=["*"],
+allow_headers=["*"],
 )
 
 groq=Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -46,52 +45,25 @@ highest_score_cache={}
 sixes_cache={}
 season_latest_match={}
 
-all_players=set()
-
-shotmap_cache={}
-pitchmap_cache={}
-
-
 # ---------------- DATASET LOADER ----------------
 
 def load_dataset():
 
     global dataset_loaded,runs_cache,wickets_cache,titles_cache
-    global highest_score_cache,sixes_cache,season_latest_match,all_players
-    global shotmap_cache,pitchmap_cache
+    global highest_score_cache,sixes_cache,season_latest_match
 
     if dataset_loaded:
         return
 
     print("Loading IPL dataset...")
 
-    def is_valid_player(name):
-        if not isinstance(name,str):
-            return False
-        name=name.strip()
-
-        if re.match(r'^[a-f0-9]{6,}$', name.lower()):
-            return False
-        if len(name)<4:
-            return False
-        if " " not in name:
-            return False
-
-        return True
-
-    try:
-        r=requests.get(DATA_URL,timeout=120)
-        zip_file=zipfile.ZipFile(io.BytesIO(r.content))
-    except Exception as e:
-        print("DATA LOAD FAILED:",e)
-        return
+    r=requests.get(DATA_URL,timeout=120)
+    zip_file=zipfile.ZipFile(io.BytesIO(r.content))
 
     batsman_runs={}
     bowler_wickets={}
     batsman_sixes={}
     highest={"runs":0,"player":None}
-
-    players_set=set()
 
     for file in zip_file.namelist():
 
@@ -103,12 +75,6 @@ def load_dataset():
 
             match_runs={}
 
-            info=match.get("info",{})
-            registry=info.get("registry",{}).get("people",{})
-            for name in registry.values():
-                if isinstance(name,str):
-                    players_set.add(name)
-
             for inn in match.get("innings",[]):
                 for over in inn.get("overs",[]):
                     for d in over.get("deliveries",[]):
@@ -118,52 +84,15 @@ def load_dataset():
                         runs=d.get("runs",{}).get("batter",0)
 
                         if batter:
-                            players_set.add(batter)
-                        if bowler:
-                            players_set.add(bowler)
-
-                        if batter:
                             batsman_runs[batter]=batsman_runs.get(batter,0)+runs
                             match_runs[batter]=match_runs.get(batter,0)+runs
 
                             if runs==6:
                                 batsman_sixes[batter]=batsman_sixes.get(batter,0)+1
 
-                            # shotmap
-                            shotmap_cache.setdefault(batter,{"off":0,"leg":0,"straight":0})
-
-                            if runs>=6:
-                                shotmap_cache[batter]["leg"]+=runs*1.2
-                                shotmap_cache[batter]["off"]+=runs*0.8
-                            elif runs==4:
-                                shotmap_cache[batter]["off"]+=runs*1.3
-                                shotmap_cache[batter]["straight"]+=runs*0.5
-                            elif runs>=2:
-                                shotmap_cache[batter]["straight"]+=runs
-                                shotmap_cache[batter]["leg"]+=runs*0.5
-                            else:
-                                shotmap_cache[batter]["straight"]+=1
-
-                            # pitchmap
-                            pitchmap_cache.setdefault(batter,{"full":0,"good":0,"short":0,"wickets":0})
-
-                            if runs>=4:
-                                pitchmap_cache[batter]["full"]+=1
-                            elif runs==0:
-                                pitchmap_cache[batter]["good"]+=1
-                            else:
-                                pitchmap_cache[batter]["short"]+=1
-
                         wickets=d.get("wickets",[])
                         if wickets and bowler:
                             bowler_wickets[bowler]=bowler_wickets.get(bowler,0)+len(wickets)
-
-                            for w in wickets:
-                                out=w.get("player_out")
-                                if out:
-                                    players_set.add(out)
-                                    pitchmap_cache.setdefault(out,{"full":0,"good":0,"short":0,"wickets":0})
-                                    pitchmap_cache[out]["wickets"]+=1
 
             for p,runs in match_runs.items():
                 if runs>highest["runs"]:
@@ -172,16 +101,9 @@ def load_dataset():
         except:
             continue
 
-    # CLEAN PLAYERS
-    all_players=set([
-        p.strip()
-        for p in players_set
-        if isinstance(p,str) and is_valid_player(p)
-    ])
-
     titles={}
     for season,data in season_latest_match.items():
-        winner=data.get("winner")
+        winner=data["winner"]
         if winner:
             titles[winner]=titles.get(winner,0)+1
 
@@ -191,161 +113,258 @@ def load_dataset():
     highest_score_cache=highest
     sixes_cache=batsman_sixes
 
-    try:
-        set_caches(runs_cache,wickets_cache,titles_cache,highest_score_cache,sixes_cache)
-    except:
-        pass
+    set_caches(runs_cache,wickets_cache,titles_cache,highest_score_cache,sixes_cache)
 
     dataset_loaded=True
-    print(f"Dataset Loaded: {len(all_players)} players")
+    print("Dataset Loaded")
 
 
-# ---------------- PLAYER BATTLE ----------------
-
-def get_player_stats(player):
-    return {
-        "runs": runs_cache.get(player,0),
-        "wickets": wickets_cache.get(player,0),
-        "sixes": sixes_cache.get(player,0)
-    }
-
-def calculate_impact(stats):
-    return stats["runs"] + (stats["wickets"] * 20) + (stats["sixes"] * 2)
-
-def compare_players(p1,p2):
-
-    stats1=get_player_stats(p1)
-    stats2=get_player_stats(p2)
-
-    impact1=calculate_impact(stats1)
-    impact2=calculate_impact(stats2)
-
-    comparison={
-        "runs": p1 if stats1["runs"]>stats2["runs"] else p2,
-        "wickets": p1 if stats1["wickets"]>stats2["wickets"] else p2,
-        "sixes": p1 if stats1["sixes"]>stats2["sixes"] else p2,
-        "impact": p1 if impact1>impact2 else p2
-    }
-
-    score1=sum(1 for v in comparison.values() if v==p1)
-    score2=sum(1 for v in comparison.values() if v==p2)
-
-    winner = p1 if score1>score2 else p2
-
-    return {
-        "player1": p1,
-        "player2": p2,
-        "stats1": stats1,
-        "stats2": stats2,
-        "impact1": impact1,
-        "impact2": impact2,
-        "comparison": comparison,
-        "score": {p1:score1,p2:score2},
-        "winner": winner
-    }
-
-
-# ---------------- TRIVIA ----------------
+# ---------------- TRIVIA ENGINE (FIXED) ----------------
 
 def generate_trivia_questions():
 
     load_dataset()
 
-    players=list(all_players)
-
-    if len(players)<10:
-        players=["Virat Kohli","MS Dhoni","Rohit Sharma","Chris Gayle"]
-
     questions=[]
+    used=set()
 
-    runs_sorted=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)
-    wickets_sorted=sorted(wickets_cache.items(), key=lambda x:x[1], reverse=True)
-    sixes_sorted=sorted(sixes_cache.items(), key=lambda x:x[1], reverse=True)
+    players=list(runs_cache.keys())
+    bowlers=list(wickets_cache.keys())
+    teams=list(titles_cache.keys())
 
-    def wrong(correct):
-        opts=[]
-        while len(opts)<3:
-            p=random.choice(players)
-            if p!=correct and p not in opts:
-                opts.append(p)
-        return opts
+    if len(players)<50:
+        return {"questions":[]}
 
-    def make(q,c):
-        opts=wrong(c)+[c]
-        random.shuffle(opts)
-        return {"q":q,"options":opts,"answer":c}
+    attempts=0
 
-    for _ in range(15):
+    while len(questions)<10 and attempts<100:
 
-        choice=random.randint(1,5)
+        attempts+=1
 
-        if choice==1 and runs_sorted:
-            questions.append(make("Top IPL run scorer?", random.choice(runs_sorted[:20])[0]))
+        q_type=random.choice([
+            "runs_compare",
+            "wickets_compare",
+            "titles_compare",
+            "top_player",
+            "lowest_player",
+            "top_bowler",
+            "odd_one_out",
+            "milestone_runs",
+            "closest_runs",
+            "multi_best",
+            "player_identify",
+            "team_identify"
+        ])
 
-        elif choice==2 and wickets_sorted:
-            questions.append(make("Top IPL wicket taker?", random.choice(wickets_sorted[:20])[0]))
+        try:
 
-        elif choice==3 and sixes_sorted:
-            questions.append(make("Most sixes hitter?", random.choice(sixes_sorted[:20])[0]))
+            if q_type=="runs_compare":
+                p1,p2=random.sample(players,2)
+                correct=max([p1,p2],key=lambda x:runs_cache[x])
+                options=[p1,p2] + random.sample(players,2)
 
-        elif choice==4 and len(runs_sorted)>30:
-            p1=random.choice(runs_sorted[:50])[0]
-            p2=random.choice(runs_sorted[:50])[0]
-            if p1!=p2:
-                correct=p1 if runs_cache[p1]>runs_cache[p2] else p2
-                opts=[p1,p2]+random.sample(players,2)
+                q={
+                "q":"Who has scored more IPL runs?",
+                "options":list(set(options))[:4],
+                "answer":correct
+                }
+
+            elif q_type=="wickets_compare":
+                p1,p2=random.sample(bowlers,2)
+                correct=max([p1,p2],key=lambda x:wickets_cache[x])
+                options=[p1,p2] + random.sample(bowlers,2)
+
+                q={
+                "q":"Who has taken more IPL wickets?",
+                "options":list(set(options))[:4],
+                "answer":correct
+                }
+
+            elif q_type=="titles_compare":
+                if len(teams)<2:
+                    continue
+                t1,t2=random.sample(teams,2)
+                correct=max([t1,t2],key=lambda x:titles_cache.get(x,0))
+                options=[t1,t2] + random.sample(teams,2)
+
+                q={
+                "q":"Which team has more IPL titles?",
+                "options":list(set(options))[:4],
+                "answer":correct
+                }
+
+            elif q_type=="top_player":
+                opts=random.sample(players,4)
+                correct=max(opts,key=lambda x:runs_cache[x])
+
+                q={"q":"Who scored the most IPL runs?","options":opts,"answer":correct}
+
+            elif q_type=="lowest_player":
+                opts=random.sample(players,4)
+                correct=min(opts,key=lambda x:runs_cache[x])
+
+                q={"q":"Who scored the least IPL runs?","options":opts,"answer":correct}
+
+            elif q_type=="top_bowler":
+                opts=random.sample(bowlers,4)
+                correct=max(opts,key=lambda x:wickets_cache[x])
+
+                q={"q":"Who has most IPL wickets?","options":opts,"answer":correct}
+
+            elif q_type=="odd_one_out":
+                opts=random.sample(players,4)
+                correct=min(opts,key=lambda x:runs_cache[x])
+
+                q={"q":"Find lowest run scorer","options":opts,"answer":correct}
+
+            elif q_type=="milestone_runs":
+                p=random.choice(players)
+                runs=runs_cache[p]
+                milestone=1000*(runs//1000)
+
+                options=[
+                    f"{milestone}+",
+                    f"{milestone+1000}+",
+                    f"{max(0,milestone-1000)}+",
+                    f"{milestone+500}+"
+                ]
+
+                q={
+                "q":f"{p} falls into which run bracket?",
+                "options":options,
+                "answer":f"{milestone}+"
+                }
+
+            elif q_type=="closest_runs":
+                target=random.randint(1000,6000)
+                opts=random.sample(players,4)
+                correct=min(opts,key=lambda x:abs(runs_cache[x]-target))
+
+                q={
+                "q":f"Who is closest to {target} runs?",
+                "options":opts,
+                "answer":correct
+                }
+
+            elif q_type=="multi_best":
+                opts=random.sample(players,4)
+                correct=max(opts,key=lambda x:runs_cache[x])
+
+                q={"q":"Highest run scorer?","options":opts,"answer":correct}
+
+            elif q_type=="player_identify":
+                real=random.choice(players)
+                fake=f"Player_{random.randint(1000,9999)}"
+                fake2=f"Player_{random.randint(1000,9999)}"
+                fake3=f"Player_{random.randint(1000,9999)}"
+
+                opts=[real,fake,fake2,fake3]
                 random.shuffle(opts)
-                questions.append({"q":"Who scored more runs?","options":opts,"answer":correct})
 
-        else:
-            questions.append(make("IPL player?", random.choice(players)))
+                q={"q":"Which is real IPL player?","options":opts,"answer":real}
 
-    unique=[]
-    seen=set()
+            elif q_type=="team_identify":
+                if not teams:
+                    continue
+                real=random.choice(teams)
+                opts=[real,f"Team_{random.randint(100,999)}",f"Team_{random.randint(100,999)}",f"Team_{random.randint(100,999)}"]
+                random.shuffle(opts)
 
-    for q in questions:
-        if q["q"] not in seen:
-            unique.append(q)
-            seen.add(q["q"])
+                q={"q":"Which is IPL team?","options":opts,"answer":real}
 
-    while len(unique)<10:
-        unique.append(make("Identify IPL player", random.choice(players)))
+            key=q["q"]+str(q["answer"])
 
-    random.shuffle(unique)
+            if key in used:
+                continue
 
-    return unique[:10]
+            used.add(key)
+            questions.append(q)
+
+        except:
+            continue
+
+    return {"questions":questions}
 
 
-# ---------------- APIs ----------------
+# ---------------- REST UNCHANGED ----------------
 
-@app.get("/trivia")
-def get_trivia():
-    return {"questions": generate_trivia_questions()}
+def knowledge_answer(question):
+
+    try:
+        res=groq.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+        {"role":"system","content":"You are an IPL cricket analyst."},
+        {"role":"user","content":question}
+        ],
+        temperature=0
+        )
+
+        answer=res.choices[0].message.content
+
+    except:
+        answer="Unable to answer."
+
+    return {"answer":answer}
+
+
+def run_agent(question):
+
+    load_dataset()
+    intent=detect_intent(question)
+
+    if intent=="runs":
+        result=top_runs()
+    elif intent=="wickets":
+        result=top_wickets()
+    elif intent=="titles":
+        result=team_titles()
+    elif intent=="highest":
+        result=highest_score()
+    elif intent=="sixes":
+        result=top_sixes()
+    else:
+        result=knowledge_answer(question)
+
+    save_context(question,result["answer"])
+    return result
+
 
 @app.get("/")
 def home():
-    return {"message":"API running"}
-
-@app.get("/player-battle")
-def player_battle(p1:str,p2:str):
-    load_dataset()
-    return compare_players(p1,p2)
-
-@app.get("/player-list")
-def player_list():
-    load_dataset()
-    return {"players":sorted(list(all_players))}
-
-@app.get("/player-shotmap")
-def player_shotmap(player:str):
-    load_dataset()
-    return {"data":shotmap_cache.get(player,{"off":0,"leg":0,"straight":0})}
-
-@app.get("/player-pitchmap")
-def player_pitchmap(player:str):
-    load_dataset()
-    return {"data":pitchmap_cache.get(player,{"full":0,"good":0,"short":0,"wickets":0})}
+    return {"message":"SportsFan360 AI running"}
 
 
-# 🔥 LOAD ON START
-load_dataset()
+@app.get("/ask")
+def ask(question:str):
+    return run_agent(question)
+
+
+@app.get("/feed")
+def feed():
+    return get_feed()
+
+
+@app.get("/teams")
+def teams():
+    return get_teams()
+
+
+@app.get("/players")
+def players(team:str=None):
+    return get_players(team)
+
+
+@app.get("/matches")
+def matches():
+    return get_matches()
+
+
+@app.get("/standings")
+def standings():
+    return get_standings()
+
+
+@app.get("/trivia")
+def trivia():
+    return generate_trivia_questions()
