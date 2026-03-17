@@ -4,15 +4,16 @@ Radar,
 RadarChart,
 PolarGrid,
 PolarAngleAxis,
+PolarRadiusAxis,
 ResponsiveContainer,
 PieChart,
 Pie,
-Cell
+Cell,
+Tooltip,
+Legend
 } from "recharts";
 
 function PlayerBattle({API_URL}){
-
-
 
 const [players,setPlayers]=useState([]);
 const [loadingPlayers,setLoadingPlayers]=useState(true);
@@ -35,15 +36,19 @@ const [loading,setLoading]=useState(false);
 const ref1=useRef();
 const ref2=useRef();
 
-
-
+/* ================= LOAD PLAYERS ================= */
 useEffect(()=>{
 setLoadingPlayers(true);
 
 fetch(`${API_URL}/player-list`)
 .then(r=>r.json())
 .then(d=>{
-setPlayers(d?.players || []);
+let list = d?.players || [];
+
+/* 🔥 ensure sorting */
+list = list.sort((a,b)=>a.localeCompare(b));
+
+setPlayers(list);
 setLoadingPlayers(false);
 })
 .catch(()=>{
@@ -52,8 +57,7 @@ setLoadingPlayers(false);
 });
 },[API_URL]);
 
-
-
+/* ================= CLOSE DROPDOWN ================= */
 useEffect(()=>{
 const handler=(e)=>{
 if(ref1.current && !ref1.current.contains(e.target)) setShow1(false);
@@ -63,7 +67,7 @@ document.addEventListener("click",handler);
 return ()=>document.removeEventListener("click",handler);
 },[]);
 
-
+/* ================= FILTER ================= */
 const filtered1=useMemo(()=>{
 if(!search1) return [];
 return players
@@ -78,8 +82,7 @@ return players
 .slice(0,15);
 },[search2,players]);
 
-
-
+/* ================= FETCH ================= */
 const startBattle=async()=>{
 
 if(!p1 || !p2 || p1===p2){
@@ -107,18 +110,19 @@ console.error(e);
 setLoading(false);
 };
 
+/* ================= SAFE VALUE ================= */
+const safe=(v)=> (v===undefined || v===null ? 0 : v);
 
-
+/* ================= RADAR ================= */
 const radarData = result ? [
-{stat:"Runs",p1:result.stats1.runs,p2:result.stats2.runs},
-{stat:"Wickets",p1:result.stats1.wickets,p2:result.stats2.wickets},
-{stat:"Sixes",p1:result.stats1.sixes,p2:result.stats2.sixes},
-{stat:"SR",p1:result.stats1.strike_rate,p2:result.stats2.strike_rate},
-{stat:"Avg",p1:result.stats1.average,p2:result.stats2.average}
+{stat:"Runs",p1:safe(result.stats1.runs),p2:safe(result.stats2.runs)},
+{stat:"Wickets",p1:safe(result.stats1.wickets),p2:safe(result.stats2.wickets)},
+{stat:"Sixes",p1:safe(result.stats1.sixes),p2:safe(result.stats2.sixes)},
+{stat:"SR",p1:safe(result.stats1.strike_rate),p2:safe(result.stats2.strike_rate)},
+{stat:"Avg",p1:safe(result.stats1.average),p2:safe(result.stats2.average)}
 ] : [];
 
-
-
+/* ================= PIE ================= */
 const pie1=[
 {name:"Off",value:shot1.off},
 {name:"Leg",value:shot1.leg},
@@ -131,15 +135,12 @@ const pie2=[
 {name:"Straight",value:shot2.straight}
 ];
 
-
-
+/* ================= CLASS ================= */
 const getClass=(v1,v2)=>{
 if(v1>v2) return "statBox win";
 if(v1<v2) return "statBox lose";
 return "statBox";
 };
-
-
 
 return(
 
@@ -150,15 +151,12 @@ return(
 <p>Compare full IPL performance across seasons</p>
 </div>
 
-{/* LOADING */}
 {loadingPlayers && <p className="loadingText">Loading IPL player database...</p>}
 
-
+/* ================= SELECTORS ================= */
 <div className="battleSelectors">
 
-{/* PLAYER 1 */}
 <div className="dropdown" ref={ref1}>
-
 <input
 className="battleInput"
 value={search1}
@@ -189,9 +187,7 @@ setShow1(false);
 
 <div className="vs">VS</div>
 
-{/* PLAYER 2 */}
 <div className={`dropdown ${!p1 ? "disabled":""}`} ref={ref2}>
-
 <input
 className="battleInput"
 value={search2}
@@ -222,99 +218,83 @@ setShow2(false);
 
 </div>
 
+{/* 🔥 CENTER BUTTON FIX */}
+<div style={{textAlign:"center"}}>
 <button className="compareBtn" onClick={startBattle} disabled={!p1 || !p2}>
 Compare Players
 </button>
+</div>
 
 {loading && <p className="loadingText">Analyzing performance...</p>}
 
-
-
+{/* ================= RESULT ================= */}
 {result && result.stats1 && result.stats2 && (
 
 <div className="resultCard">
 
-{/* PLAYER NAMES */}
 <div className="playersRow">
-<div className="playerName">{p1}</div>
+<div className="playerName">{result.player1}</div>
 <div className="vsBig">VS</div>
-<div className="playerName">{p2}</div>
+<div className="playerName">{result.player2}</div>
 </div>
 
-{/* STATS GRID */}
+{/* 🔥 STATS GRID */}
 <div className="statsGrid">
 
-<div className={getClass(result.stats1.runs,result.stats2.runs)}>
-<div className="statTitle">Runs</div>
-<div className="statValueBig">{result.stats1.runs} | {result.stats2.runs}</div>
+{["runs","wickets","sixes","fours","strike_rate","average","matches"].map((k,i)=>(
+<div key={i} className={getClass(safe(result.stats1[k]),safe(result.stats2[k]))}>
+<div className="statTitle">{k.toUpperCase()}</div>
+<div className="statValueBig">
+{safe(result.stats1[k])} | {safe(result.stats2[k])}
 </div>
-
-<div className={getClass(result.stats1.wickets,result.stats2.wickets)}>
-<div className="statTitle">Wickets</div>
-<div className="statValueBig">{result.stats1.wickets} | {result.stats2.wickets}</div>
 </div>
-
-<div className={getClass(result.stats1.sixes,result.stats2.sixes)}>
-<div className="statTitle">Sixes</div>
-<div className="statValueBig">{result.stats1.sixes} | {result.stats2.sixes}</div>
-</div>
-
-<div className={getClass(result.stats1.fours,result.stats2.fours)}>
-<div className="statTitle">Fours</div>
-<div className="statValueBig">{result.stats1.fours} | {result.stats2.fours}</div>
-</div>
-
-<div className={getClass(result.stats1.strike_rate,result.stats2.strike_rate)}>
-<div className="statTitle">Strike Rate</div>
-<div className="statValueBig">{result.stats1.strike_rate} | {result.stats2.strike_rate}</div>
-</div>
-
-<div className={getClass(result.stats1.average,result.stats2.average)}>
-<div className="statTitle">Average</div>
-<div className="statValueBig">{result.stats1.average} | {result.stats2.average}</div>
-</div>
-
-<div className={getClass(result.stats1.matches,result.stats2.matches)}>
-<div className="statTitle">Matches</div>
-<div className="statValueBig">{result.stats1.matches} | {result.stats2.matches}</div>
-</div>
+))}
 
 </div>
 
-{/* RADAR */}
-<ResponsiveContainer width="100%" height={300}>
+{/* 🔥 RADAR WITH LABELS */}
+<ResponsiveContainer width="100%" height={320}>
 <RadarChart data={radarData}>
 <PolarGrid/>
 <PolarAngleAxis dataKey="stat"/>
-<Radar dataKey="p1" stroke="#FE2165" fill="#FE2165" fillOpacity={0.4}/>
-<Radar dataKey="p2" stroke="#4da6ff" fill="#4da6ff" fillOpacity={0.4}/>
+<PolarRadiusAxis/>
+<Radar name={result.player1} dataKey="p1" stroke="#FE2165" fill="#FE2165" fillOpacity={0.4}/>
+<Radar name={result.player2} dataKey="p2" stroke="#4da6ff" fill="#4da6ff" fillOpacity={0.4}/>
+<Legend/>
+<Tooltip/>
 </RadarChart>
 </ResponsiveContainer>
 
-{/* PIE */}
+{/* 🔥 PIE WITH TOOLTIP */}
 <div className="pieContainer">
 
-<PieChart width={200} height={200}>
-<Pie data={pie1} dataKey="value">
+<PieChart width={220} height={220}>
+<Pie data={pie1} dataKey="value" nameKey="name">
 <Cell fill="#FE2165"/>
 <Cell fill="#FD6E0C"/>
 <Cell fill="#22c55e"/>
 </Pie>
+<Tooltip/>
+<Legend/>
 </PieChart>
 
-<PieChart width={200} height={200}>
-<Pie data={pie2} dataKey="value">
+<PieChart width={220} height={220}>
+<Pie data={pie2} dataKey="value" nameKey="name">
 <Cell fill="#4da6ff"/>
 <Cell fill="#60a5fa"/>
 <Cell fill="#22c55e"/>
 </Pie>
+<Tooltip/>
+<Legend/>
 </PieChart>
 
 </div>
 
-{/* WINNER */}
-<div className="winner">
-🏆 Winner: <span>{result.winner}</span>
+{/* 🔥 WINNER FIX */}
+<div style={{textAlign:"center",marginTop:"20px"}}>
+<div className="winnerBox glow">
+🏆 Winner: {result.winner}
+</div>
 </div>
 
 </div>

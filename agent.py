@@ -55,6 +55,20 @@ matches_played_cache={}
 # 🔥 NAME NORMALIZATION
 name_map={}
 
+# 🔥 HUMAN FRIENDLY NAMES (IMPORTANT FIX)
+player_alias = {
+    "Virat Kohli": "V Kohli",
+    "Rohit Sharma": "RG Sharma",
+    "MS Dhoni": "MS Dhoni",
+    "AB de Villiers": "AB de Villiers",
+    "Chris Gayle": "CH Gayle",
+    "KL Rahul": "KL Rahul",
+    "Hardik Pandya": "HH Pandya",
+    "Jasprit Bumrah": "JJ Bumrah",
+    "Ravindra Jadeja": "RA Jadeja",
+    "Suresh Raina": "SK Raina"
+}
+
 def build_name_map():
     global name_map
     name_map={}
@@ -78,6 +92,16 @@ def build_name_map():
 
 def resolve_player(name):
 
+    # 🔥 direct alias mapping
+    if name in player_alias:
+        return player_alias[name]
+
+    # 🔥 reverse alias
+    for full, short in player_alias.items():
+        if name == short:
+            return short
+
+    # 🔥 exact match
     if name in runs_cache:
         return name
 
@@ -86,7 +110,7 @@ def resolve_player(name):
     if key in name_map:
         return name_map[key]
 
-    # fallback contains match
+    # 🔥 fallback fuzzy
     for p in runs_cache.keys():
         if key in p.lower():
             return p
@@ -249,9 +273,20 @@ def generate_trivia_questions():
 @app.get("/player-list")
 def player_list():
     load_dataset()
-    return {"players": sorted(list(all_players))}
 
+    # dataset players
+    base_players = set(all_players)
 
+    # 🔥 ADD FULL NAMES
+    for full, short in player_alias.items():
+        base_players.add(full)
+
+    # 🔥 RETURN CLEAN SORTED LIST
+    return {
+        "players": sorted(list(base_players))
+    }
+    
+    
 @app.get("/player-battle")
 def player_battle(p1:str,p2:str):
 
