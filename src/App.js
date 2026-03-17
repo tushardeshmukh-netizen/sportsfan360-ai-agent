@@ -2,7 +2,7 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
-import PlayerBattle from "./PlayerBattle";
+// import PlayerBattle from "./PlayerBattle";  // 🔴 DISABLED
 
 window.onerror = function(message, source, lineno, colno, error){
   console.error("GLOBAL ERROR:", message, error);
@@ -290,12 +290,10 @@ Ask
 {/* ================= TRIVIA ================= */}
 {activeTab==="trivia" && <Trivia />}
 
-{/* ================= BATTLE ================= */}
+{/* ================= BATTLE DISABLED ================= */}
 {activeTab==="battle" && (
-<div className="battleWrapper">
-<ErrorBoundary>
-<PlayerBattle API_URL={API_URL}/>
-</ErrorBoundary>
+<div style={{padding:"20px"}}>
+⚠️ Player Battle temporarily disabled
 </div>
 )}
 
