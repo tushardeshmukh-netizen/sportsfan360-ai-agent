@@ -250,32 +250,19 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 
 <div className="feedCards">
 
-{(feed.cards || []).map((c,i)=>(
+{feed && feed.cards && Array.isArray(feed.cards) && (
+
+<div className="feedCards">
+
+{feed.cards.map((c,i)=>(
 
 <a
 key={i}
-href={c.link}
+href={c.link || "#"}
 target="_blank"
 rel="noreferrer"
 className="feedCard"
 >
-
-{c.image && (
-<img src={c.image} className="feedImage" alt="news"/>
-)}
-
-<div className="feedContent">
-<h3>{c.title}</h3>
-<p>{c.text}</p>
-</div>
-
-</a>
-
-))}
-
-</div>
-
-)}
 
 </div>
 
