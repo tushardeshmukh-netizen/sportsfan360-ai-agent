@@ -187,7 +187,7 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 </div>
 
 <div className="sectionTitle">
-🔥 Cricket Quick Stats
+🔥 IPL Quick Stats
 </div>
 
 <div className="quickStats">

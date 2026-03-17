@@ -68,15 +68,18 @@ setCurrent(prev=>prev+1);
 
 }else{
 
+const finalScore = selected===questions[current].answer ? score+1 : score;
+
+setScore(finalScore);
 setQuizFinished(true);
 
-/* CONFETTI FOR GOOD SCORE */
+/* CONFETTI ONLY FOR 10/10 */
 
-if(score>=7){
+if(finalScore===questions.length){
 
 confetti({
-particleCount:120,
-spread:80,
+particleCount:200,
+spread:120,
 origin:{y:0.6}
 });
 
@@ -98,6 +101,26 @@ setScore(0);
 setSelected(null);
 setQuestions([]);
 
+};
+
+
+/* RESULT MESSAGE */
+
+const getResultMessage=()=>{
+
+if(score===questions.length){
+return "🏆 Legendary! 10/10 – You are an IPL Grandmaster!";
+}
+
+if(score>=7){
+return "🔥 Strong game! You really know your cricket!";
+}
+
+if(score>=5){
+return "🙂 Decent effort! A little more and you'll dominate!";
+}
+
+return "😅 Better luck next time – time to watch more IPL!";
 };
 
 
@@ -211,10 +234,7 @@ Next →
 Your Score: {score} / {questions.length}
 </h3>
 
-{score===questions.length && <p>🏆 Perfect Score! IPL Master!</p>}
-{score>=8 && score<questions.length && <p>🔥 IPL Expert!</p>}
-{score>=5 && score<8 && <p>👏 Good Knowledge!</p>}
-{score<5 && <p>🙂 Better luck next time!</p>}
+<p>{getResultMessage()}</p>
 
 <button className="startQuiz" onClick={resetQuiz}>
 Play Again
