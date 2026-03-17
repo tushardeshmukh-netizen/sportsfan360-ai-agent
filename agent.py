@@ -55,7 +55,7 @@ matches_played_cache={}
 # 🔥 NAME NORMALIZATION
 name_map={}
 
-# 🔥 HUMAN FRIENDLY NAMES (IMPORTANT FIX)
+# 🔥 HUMAN FRIENDLY NAMES
 player_alias = {
     "Virat Kohli": "V Kohli",
     "Rohit Sharma": "RG Sharma",
@@ -75,42 +75,29 @@ def build_name_map():
 
     for p in runs_cache.keys():
         clean=p.lower().replace(".", "").strip()
-
         parts=clean.split()
 
-        # map full
         name_map[clean]=p
 
-        # map last name
         if len(parts)>=2:
             name_map[parts[-1]]=p
-
-        # map initials (V Kohli → virat kohli)
-        if len(parts)>=2:
             name_map[parts[0]+" "+parts[-1]]=p
 
 
 def resolve_player(name):
 
-    # 🔥 direct alias mapping
-    if name in player_alias:
-        return player_alias[name]
+    key = name.lower().replace(".", "").strip()
 
-    # 🔥 reverse alias
-    for full, short in player_alias.items():
-        if name == short:
-            return short
-
-    # 🔥 exact match
     if name in runs_cache:
         return name
-l 
-    key=name.lower().replace(".", "").strip()
 
     if key in name_map:
         return name_map[key]
 
-    # 🔥 fallback fuzzy
+    for full, short in player_alias.items():
+        if key == full.lower():
+            return short
+
     for p in runs_cache.keys():
         if key in p.lower():
             return p
@@ -171,7 +158,6 @@ def load_dataset():
 
                             batsman_runs[batter]=batsman_runs.get(batter,0)+runs
                             match_runs[batter]=match_runs.get(batter,0)+runs
-
                             balls_faced[batter]=balls_faced.get(batter,0)+1
 
                             if runs==4:
@@ -206,15 +192,8 @@ def load_dataset():
 
     all_players = players_set
 
-    titles={}
-    for season,data in season_latest_match.items():
-        winner=data["winner"]
-        if winner:
-            titles[winner]=titles.get(winner,0)+1
-
     runs_cache=batsman_runs
     wickets_cache=bowler_wickets
-    titles_cache=titles
     highest_score_cache=highest
     sixes_cache=batsman_sixes
 
@@ -225,74 +204,40 @@ def load_dataset():
 
     set_caches(runs_cache,wickets_cache,titles_cache,highest_score_cache,sixes_cache)
 
-    # 🔥 BUILD NAME MAP HERE
     build_name_map()
 
     dataset_loaded=True
     print("Dataset Loaded")
 
 
-# ---------------- TRIVIA ENGINE ----------------
-
-def generate_trivia_questions():
-    load_dataset()
-    questions=[]
-    used=set()
-
-    players=list(runs_cache.keys())
-
-    if len(players)<50:
-        return {"questions":[]}
-
-    while len(questions)<10:
-        try:
-            opts=random.sample(players,4)
-            correct=max(opts,key=lambda x:runs_cache[x])
-
-            q={
-                "q":"Who has scored the most IPL runs among these?",
-                "options":opts,
-                "answer":correct
-            }
-
-            key=q["q"]+str(q["options"])
-            if key in used:
-                continue
-
-            used.add(key)
-            questions.append(q)
-
-        except:
-            continue
-
-    return {"questions":questions}
-
-
-# ---------------- PLAYER APIs ----------------
+# ---------------- PLAYER LIST ----------------
 
 @app.get("/player-list")
 def player_list():
     load_dataset()
 
-    # dataset players
-    base_players = set(all_players)
+    players = set(all_players)
 
-    # 🔥 ADD FULL NAMES
-    for full, short in player_alias.items():
-        base_players.add(full)
+    reverse_alias = {v:k for k,v in player_alias.items()}
 
-    # 🔥 RETURN CLEAN SORTED LIST
-    return {
-        "players": sorted(list(base_players))
-    }
-    
-    
+    clean_players=set()
+
+    for p in players:
+        if p in reverse_alias:
+            clean_players.add(reverse_alias[p])
+        else:
+            clean_players.add(p)
+
+    return {"players": sorted(list(clean_players))}
+
+
+# ---------------- PLAYER BATTLE ----------------
+
 @app.get("/player-battle")
 def player_battle(p1:str,p2:str):
 
     load_dataset()
 
-    # 🔥 FIX NAME HERE
     p1 = resolve_player(p1)
     p2 = resolve_player(p2)
 
@@ -350,51 +295,7 @@ def player_shotmap(player:str):
     }
 
 
-# ---------------- LLM ----------------
-
-def knowledge_answer(question):
-
-    try:
-        res=groq.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-        {"role":"system","content":"You are an IPL cricket analyst."},
-        {"role":"user","content":question}
-        ],
-        temperature=0
-        )
-        answer=res.choices[0].message.content
-    except:
-        answer="Unable to answer."
-
-    return {"answer":answer}
-
-
-# ---------------- AGENT ----------------
-
-def run_agent(question):
-
-    load_dataset()
-    intent=detect_intent(question)
-
-    if intent=="runs":
-        result=top_runs()
-    elif intent=="wickets":
-        result=top_wickets()
-    elif intent=="titles":
-        result=team_titles()
-    elif intent=="highest":
-        result=highest_score()
-    elif intent=="sixes":
-        result=top_sixes()
-    else:
-        result=knowledge_answer(question)
-
-    save_context(question,result["answer"])
-    return result
-
-
-# ---------------- API ----------------
+# ---------------- CORE API ----------------
 
 @app.get("/")
 def home():
@@ -429,5 +330,8 @@ def trivia():
     return generate_trivia_questions()
 
 
-# 🔥 LOAD DATA ON START
-load_dataset()
+# 🔥 SAFE LOAD (IMPORTANT FOR RENDER)
+try:
+    load_dataset()
+except Exception as e:
+    print("Startup load failed:", e)
