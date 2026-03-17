@@ -2,32 +2,7 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
-// import PlayerBattle from "./PlayerBattle";  // 🔴 DISABLED
-
-window.onerror = function(message, source, lineno, colno, error){
-  console.error("GLOBAL ERROR:", message, error);
-};
-
-class ErrorBoundary extends React.Component {
-  constructor(props){
-    super(props);
-    this.state={hasError:false};
-  }
-  static getDerivedStateFromError(){
-    return {hasError:true};
-  }
-  componentDidCatch(error){
-    console.error("Battle Crash:",error);
-  }
-  render(){
-    if(this.state.hasError){
-      return <div style={{padding:"20px",color:"red"}}>
-        ⚠️ Battle module failed to load
-      </div>;
-    }
-    return this.props.children;
-  }
-}
+// PlayerBattle disabled
 
 const statsPool=[
 
@@ -56,8 +31,6 @@ function App(){
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
 const [activeTab,setActiveTab]=useState("home")
-const [feed,setFeed]=useState(null)
-
 const [question,setQuestion]=useState("")
 const [messages,setMessages]=useState([])
 const [loading,setLoading]=useState(false)
@@ -74,32 +47,6 @@ setStats(shuffled.slice(0,3))
 },8000)
 return ()=>clearInterval(interval)
 },[])
-
-/* SAFE FEED LOAD */
-useEffect(()=>{
-if(activeTab==="home"){
-fetch(`${API_URL}/feed`)
-.then(res=>res.json())
-.then(data=>{
-if(data && data.cards){
-setFeed(data)
-}else{
-setFeed({cards:[]})
-}
-})
-.catch(()=>setFeed({cards:[]}))
-}
-},[activeTab])
-
-const suggestions=[
-"Most IPL runs",
-"Most IPL wickets",
-"Most IPL sixes",
-"Which team has most IPL titles",
-"Highest IPL score",
-"Compare Kohli vs Rohit",
-"Why is IPL popular"
-]
 
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
@@ -153,7 +100,6 @@ return(
 </div>
 </header>
 
-{/* NAV */}
 <div className="tabs">
 
 <button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>
@@ -174,7 +120,7 @@ return(
 
 </div>
 
-{/* ================= HOME ================= */}
+{/* HOME */}
 {activeTab==="home" && (
 
 <div className="home">
@@ -198,48 +144,11 @@ return(
 ))}
 </div>
 
-<div className="sectionTitle">📰 Latest Cricket News</div>
-
-{(!feed || !feed.cards) && (
-<p style={{padding:"20px"}}>News unavailable</p>
-)}
-
-{feed && feed.cards && Array.isArray(feed.cards) && (
-
-<div className="feedCards">
-
-{feed.cards.map((c,i)=>(
-
-<a
-key={i}
-href={c?.link || "#"}
-target="_blank"
-rel="noreferrer"
-className="feedCard"
->
-
-{c?.image && (
-<img src={c.image} className="feedImage" alt="news"/>
-)}
-
-<div className="feedContent">
-<h3>{c?.title || "No title"}</h3>
-<p>{c?.text || ""}</p>
-</div>
-
-</a>
-
-))}
-
 </div>
 
 )}
 
-</div>
-
-)}
-
-{/* ================= ASK ================= */}
+{/* ASK */}
 {activeTab==="ask" && (
 
 <div className="askPage">
@@ -287,13 +196,13 @@ Ask
 
 )}
 
-{/* ================= TRIVIA ================= */}
+{/* TRIVIA */}
 {activeTab==="trivia" && <Trivia />}
 
-{/* ================= BATTLE DISABLED ================= */}
+{/* BATTLE DISABLED */}
 {activeTab==="battle" && (
 <div style={{padding:"20px"}}>
-⚠️ Player Battle temporarily disabled
+⚠️ Player Battle disabled
 </div>
 )}
 
