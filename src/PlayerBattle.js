@@ -36,15 +36,15 @@ const [loading,setLoading]=useState(false);
 const ref1=useRef();
 const ref2=useRef();
 
-/* ================= LOAD PLAYERS ================= */
+/* LOAD PLAYERS */
 useEffect(()=>{
 setLoadingPlayers(true);
 
 fetch(`${API_URL}/player-list`)
 .then(r=>r.json())
 .then(d=>{
-let list = d?.players || [];
-list = list.sort((a,b)=>a.localeCompare(b));
+let list=d?.players||[];
+list=list.sort((a,b)=>a.localeCompare(b));
 setPlayers(list);
 setLoadingPlayers(false);
 })
@@ -54,7 +54,7 @@ setLoadingPlayers(false);
 });
 },[API_URL]);
 
-/* ================= CLOSE DROPDOWN ================= */
+/* CLOSE DROPDOWN */
 useEffect(()=>{
 const handler=(e)=>{
 if(ref1.current && !ref1.current.contains(e.target)) setShow1(false);
@@ -64,7 +64,7 @@ document.addEventListener("click",handler);
 return ()=>document.removeEventListener("click",handler);
 },[]);
 
-/* ================= FILTER ================= */
+/* FILTER */
 const filtered1=useMemo(()=>{
 if(!search1) return [];
 return players.filter(p=>p.toLowerCase().includes(search1.toLowerCase())).slice(0,15);
@@ -75,7 +75,7 @@ if(!search2) return [];
 return players.filter(p=>p.toLowerCase().includes(search2.toLowerCase())).slice(0,15);
 },[search2,players]);
 
-/* ================= FETCH ================= */
+/* FETCH */
 const startBattle=async()=>{
 
 if(!p1 || !p2 || p1===p2){
@@ -105,7 +105,7 @@ setLoading(false);
 
 const safe=(v)=> (v===undefined || v===null ? 0 : v);
 
-/* ================= RADAR ================= */
+/* RADAR */
 const radarData = result ? [
 {stat:"Runs",p1:safe(result.stats1.runs),p2:safe(result.stats2.runs)},
 {stat:"Wickets",p1:safe(result.stats1.wickets),p2:safe(result.stats2.wickets)},
@@ -114,20 +114,18 @@ const radarData = result ? [
 {stat:"Average",p1:safe(result.stats1.average),p2:safe(result.stats2.average)}
 ] : [];
 
-/* ================= PIE ================= */
 const pie1=[
-{name:"Off",value:shot1.off},
-{name:"Leg",value:shot1.leg},
+{name:"Off Side",value:shot1.off},
+{name:"Leg Side",value:shot1.leg},
 {name:"Straight",value:shot1.straight}
 ];
 
 const pie2=[
-{name:"Off",value:shot2.off},
-{name:"Leg",value:shot2.leg},
+{name:"Off Side",value:shot2.off},
+{name:"Leg Side",value:shot2.leg},
 {name:"Straight",value:shot2.straight}
 ];
 
-/* ================= CLASS ================= */
 const getClass=(v1,v2)=>{
 if(v1>v2) return "statBox win";
 if(v1<v2) return "statBox lose";
@@ -145,81 +143,62 @@ return(
 
 {loadingPlayers && <p className="loadingText">Loading IPL player database...</p>}
 
-/* ================= SELECTORS ================= */
+{/* SELECTORS */}
 <div className="battleSelectors">
 
 <div className="dropdown" ref={ref1}>
 <input
 className="battleInput"
 value={search1}
-placeholder={loadingPlayers ? "Loading..." : "Search Player 1"}
-disabled={loadingPlayers}
+placeholder="Search Player 1"
 onFocus={()=>setShow1(true)}
-onChange={(e)=>{
-setSearch1(e.target.value);
-setP1("");
-}}
+onChange={(e)=>{setSearch1(e.target.value);setP1("");}}
 />
 
 {show1 && filtered1.length>0 && (
 <div className="dropdownList">
 {filtered1.map((p,i)=>(
-<div key={i} className="dropdownItem" onClick={()=>{
-setP1(p);
-setSearch1(p);
-setShow1(false);
-}}>
+<div key={i} className="dropdownItem" onClick={()=>{setP1(p);setSearch1(p);setShow1(false);}}>
 {p}
 </div>
 ))}
 </div>
 )}
-
 </div>
 
 <div className="vs">VS</div>
 
-<div className={`dropdown ${!p1 ? "disabled":""}`} ref={ref2}>
+<div className={`dropdown ${!p1?"disabled":""}`} ref={ref2}>
 <input
 className="battleInput"
 value={search2}
-placeholder={!p1 ? "Select Player 1 first" : "Search Player 2"}
+placeholder="Search Player 2"
 disabled={!p1}
 onFocus={()=>p1 && setShow2(true)}
-onChange={(e)=>{
-setSearch2(e.target.value);
-setP2("");
-}}
+onChange={(e)=>{setSearch2(e.target.value);setP2("");}}
 />
 
 {show2 && filtered2.length>0 && (
 <div className="dropdownList">
 {filtered2.map((p,i)=>(
-<div key={i} className="dropdownItem" onClick={()=>{
-setP2(p);
-setSearch2(p);
-setShow2(false);
-}}>
+<div key={i} className="dropdownItem" onClick={()=>{setP2(p);setSearch2(p);setShow2(false);}}>
 {p}
 </div>
 ))}
 </div>
 )}
-
 </div>
 
 </div>
 
 <div style={{textAlign:"center"}}>
-<button className="compareBtn" onClick={startBattle} disabled={!p1 || !p2}>
-Compare Players
-</button>
+<button className="compareBtn" onClick={startBattle}>Compare Players</button>
 </div>
 
 {loading && <p className="loadingText">Analyzing performance...</p>}
 
-/* ================= RESULT ================= */
-{result && result.stats1 && result.stats2 && (
+/* RESULT */
+{result && (
 
 <div className="resultCard">
 
@@ -229,26 +208,20 @@ Compare Players
 <div className="playerName">{result.player2}</div>
 </div>
 
-{/* 🔥 STATS GRID */}
+{/* STATS */}
 <div className="statsGrid">
 {["runs","wickets","sixes","fours","strike_rate","average","matches"].map((k,i)=>(
 <div key={i} className={getClass(safe(result.stats1[k]),safe(result.stats2[k]))}>
 <div className="statTitle">{k.toUpperCase()}</div>
-<div className="statValueBig">
-{safe(result.stats1[k])} | {safe(result.stats2[k])}
-</div>
+<div className="statValueBig">{safe(result.stats1[k])} | {safe(result.stats2[k])}</div>
 </div>
 ))}
 </div>
 
-{/* ================= EXPLANATION ================= */}
-<div className="insightBox">
-📊 Radar Chart shows overall dominance. Bigger area = stronger player across metrics.<br/>
-🥧 Pie Charts show scoring zones (Off, Leg, Straight). Helps understand batting style.<br/>
-⚡ Strike Rate = scoring speed, Average = consistency.
-</div>
-
 {/* RADAR */}
+<h3>📊 Performance Radar</h3>
+<p className="chartInfo">Compares overall performance across multiple dimensions.</p>
+
 <ResponsiveContainer width="100%" height={320}>
 <RadarChart data={radarData}>
 <PolarGrid/>
@@ -262,44 +235,44 @@ Compare Players
 </ResponsiveContainer>
 
 {/* PIE */}
+<h3>🥧 Shot Distribution</h3>
+<p className="chartInfo">Shows scoring areas across the field.</p>
+
 <div className="pieContainer">
 
 <PieChart width={220} height={220}>
-<Pie data={pie1} dataKey="value" nameKey="name">
-<Cell fill="#FE2165"/>
-<Cell fill="#FD6E0C"/>
-<Cell fill="#22c55e"/>
+<Pie data={pie1} dataKey="value">
+<Cell fill="#FE2165"/><Cell fill="#FD6E0C"/><Cell fill="#22c55e"/>
 </Pie>
-<Tooltip/>
-<Legend/>
+<Tooltip/><Legend/>
 </PieChart>
 
 <PieChart width={220} height={220}>
-<Pie data={pie2} dataKey="value" nameKey="name">
-<Cell fill="#4da6ff"/>
-<Cell fill="#60a5fa"/>
-<Cell fill="#22c55e"/>
+<Pie data={pie2} dataKey="value">
+<Cell fill="#4da6ff"/><Cell fill="#60a5fa"/><Cell fill="#22c55e"/>
 </Pie>
-<Tooltip/>
-<Legend/>
+<Tooltip/><Legend/>
 </PieChart>
 
 </div>
 
-{/* ================= WAGON WHEEL ================= */}
+{/* WAGON */}
+<h3>🏏 Wagon Wheel</h3>
+<p className="chartInfo">Directional shot intensity from batter.</p>
+
 <div className="wagonContainer">
-<div className="wagonLine red" style={{height:shot1.off,transform:"rotate(20deg)"}}></div>
-<div className="wagonLine red" style={{height:shot1.leg,transform:"rotate(-40deg)"}}></div>
-<div className="wagonLine red" style={{height:shot1.straight,transform:"rotate(90deg)"}}></div>
+<div className="wagonLine red" style={{height:shot1.off,transform:"rotate(20deg)"}}/>
+<div className="wagonLine red" style={{height:shot1.leg,transform:"rotate(-40deg)"}}/>
+<div className="wagonLine red" style={{height:shot1.straight,transform:"rotate(90deg)"}}/>
 </div>
 
-{/* ================= PITCH MAP ================= */}
+{/* PITCH */}
+<h3>📍 Pitch Map</h3>
+<p className="chartInfo">Ball landing zones across pitch length.</p>
+
 <div className="pitchMap">
 {Array.from({length:20}).map((_,i)=>(
-<div key={i} className="pitchDot" style={{
-top:Math.random()*200,
-left:Math.random()*300
-}}></div>
+<div key={i} className="pitchDot" style={{top:Math.random()*200,left:Math.random()*300}}/>
 ))}
 </div>
 

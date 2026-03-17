@@ -109,8 +109,8 @@ def resolve_player(name):
 
 def load_dataset():
 
-    global dataset_loaded,runs_cache,wickets_cache,titles_cache
-    global highest_score_cache,sixes_cache,season_latest_match
+    global dataset_loaded,runs_cache,wickets_cache
+    global highest_score_cache,sixes_cache
     global all_players
     global balls_faced_cache,dismissals_cache,fours_cache,matches_played_cache
 
@@ -280,7 +280,13 @@ def player_battle(p1:str,p2:str):
         "stats2":stats2,
         "impact1":impact1,
         "impact2":impact2,
-        "winner":winner
+        "winner":winner,
+        "explanation":{
+            "radar":"Compares overall performance across multiple dimensions like runs, wickets and strike rate.",
+            "pie":"Shows scoring distribution across field areas (Off, Leg, Straight).",
+            "wagon":"Visual direction of shots played by batter.",
+            "pitch":"Ball impact zones on pitch showing length distribution."
+        }
     }
 
 
@@ -300,10 +306,6 @@ def player_shotmap(player:str):
 @app.get("/")
 def home():
     return {"message":"SportsFan360 AI running"}
-
-@app.get("/ask")
-def ask(question:str):
-    return run_agent(question)
 
 @app.get("/feed")
 def feed():
@@ -330,7 +332,7 @@ def trivia():
     return generate_trivia_questions()
 
 
-# 🔥 SAFE LOAD (IMPORTANT FOR RENDER)
+# 🔥 SAFE LOAD
 try:
     load_dataset()
 except Exception as e:
