@@ -232,108 +232,86 @@ def compare_players(p1,p2):
 def generate_trivia_questions():
 
     load_dataset()
-
+    import random
     import re
 
-    # 🔥 CLEAN PLAYERS HERE (NO JUNK IDS)
     def is_valid_player(name):
         if not isinstance(name,str):
             return False
-
         name=name.strip()
-
-        # remove ids like 8d4d9c311
         if re.match(r'^[a-f0-9]{6,}$', name.lower()):
             return False
-
-        # remove short junk
         if len(name)<4:
             return False
-
-        # must contain space (real names)
         if " " not in name:
             return False
-
         return True
 
     players=[p for p in all_players if is_valid_player(p)]
 
-    # 🔥 fallback safety
-    if len(players)<10:
-        players=[
-            "Virat Kohli","MS Dhoni","Rohit Sharma","Chris Gayle",
-            "AB de Villiers","KL Rahul","Jasprit Bumrah","Yuzvendra Chahal",
-            "Hardik Pandya","Andre Russell","Ravindra Jadeja","David Warner"
-        ]
+    if len(players)<20:
+        return {"error":"Not enough players"}
 
     questions=[]
 
-    # ---- BUILD DATA POOLS ----
     runs_sorted=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)
     wickets_sorted=sorted(wickets_cache.items(), key=lambda x:x[1], reverse=True)
     sixes_sorted=sorted(sixes_cache.items(), key=lambda x:x[1], reverse=True)
 
-    def generate_wrong_answers(correct):
-        wrong=[]
-        attempts=0
-
-        while len(wrong)<3 and attempts<50:
+    def wrong(correct):
+        opts=[]
+        while len(opts)<3:
             p=random.choice(players)
-            if p!=correct and p not in wrong:
-                wrong.append(p)
-            attempts+=1
+            if p!=correct and p not in opts:
+                opts.append(p)
+        return opts
 
-        return wrong
-
-    def create_question_from_stat(stat_list, label):
-
-        if len(stat_list)<5:
-            return None
-
-        idx=random.randint(0, min(30,len(stat_list)-1))
-
-        player,value=stat_list[idx]
-
-        # 🔥 ensure correct is valid
-        if not is_valid_player(player):
-            return None
-
-        q=f"Which player has around {value} {label} in IPL?"
-
-        wrong=generate_wrong_answers(player)
-
-        options=wrong+[player]
+    def make(q, correct):
+        options=wrong(correct)+[correct]
         random.shuffle(options)
+        return {"q":q,"options":options,"answer":correct}
 
-        return {
-            "q": q,
-            "options": options,
-            "answer": player
-        }
+    for _ in range(10):
 
-    # ---- GENERATE QUESTIONS ----
+        # 🔥 RANDOMLY PICK DATA SOURCE (NOT CATEGORY NAME)
+        choice=random.randint(1,8)
 
-    q1=create_question_from_stat(runs_sorted, "runs")
-    q2=create_question_from_stat(wickets_sorted, "wickets")
-    q3=create_question_from_stat(sixes_sorted, "sixes")
+        # 1️⃣ TOP PLAYER
+        if choice==1 and runs_sorted:
+            p=random.choice(runs_sorted[:10])[0]
+            questions.append(make("Which player is among IPL's top performers?",p))
 
-    if q1: questions.append(q1)
-    if q2: questions.append(q2)
-    if q3: questions.append(q3)
+        # 2️⃣ HIGH IMPACT PLAYER
+        elif choice==2 and wickets_sorted:
+            p=random.choice(wickets_sorted[:10])[0]
+            questions.append(make("Which player has had major impact with the ball in IPL?",p))
 
-    # ---- PLAYER COMPARISON ----
-    if len(runs_sorted)>10:
-        valid_top=[p for p,_ in runs_sorted[:30] if is_valid_player(p)]
+        # 3️⃣ POWER HITTER
+        elif choice==3 and sixes_sorted:
+            p=random.choice(sixes_sorted[:15])[0]
+            questions.append(make("Who is known as a powerful hitter in IPL?",p))
 
-        if len(valid_top)>=2:
-            p1=random.choice(valid_top)
-            p2=random.choice(valid_top)
+        # 4️⃣ RANDOM PERFORMANCE BAND
+        elif choice==4 and runs_sorted:
+            p,v=random.choice(runs_sorted[10:60])
+            if is_valid_player(p):
+                questions.append(make(f"Which player has around {v} runs in IPL?",p))
 
-            if p1!=p2:
-                correct = p1 if runs_cache.get(p1,0)>runs_cache.get(p2,0) else p2
+        # 5️⃣ LOW PROFILE PLAYER
+        elif choice==5 and runs_sorted:
+            p=random.choice(runs_sorted[50:120])[0]
+            if is_valid_player(p):
+                questions.append(make("Which player has quietly contributed in IPL?",p))
+
+        # 6️⃣ COMPARISON
+        elif choice==6 and len(runs_sorted)>20:
+            p1=random.choice(runs_sorted[:30])[0]
+            p2=random.choice(runs_sorted[:30])[0]
+
+            if p1!=p2 and is_valid_player(p1) and is_valid_player(p2):
+                correct = p1 if runs_cache[p1]>runs_cache[p2] else p2
 
                 options=[p1,p2]
-
                 while len(options)<4:
                     x=random.choice(players)
                     if x not in options:
@@ -342,34 +320,47 @@ def generate_trivia_questions():
                 random.shuffle(options)
 
                 questions.append({
-                    "q": "Who has scored more IPL runs?",
-                    "options": options,
-                    "answer": correct
+                    "q":"Who has scored more IPL runs?",
+                    "options":options,
+                    "answer":correct
                 })
 
-    # ---- EXTRA QUESTIONS ----
-    for _ in range(6):
+        # 7️⃣ RANDOM PLAYER PRESENCE
+        elif choice==7:
+            p=random.choice(players)
+            questions.append(make("Which of these players has played in IPL?",p))
 
-        stat_type=random.choice(["runs","wickets","sixes"])
+        # 8️⃣ MIXED STAT LOGIC
+        elif choice==8:
+            p=random.choice(players)
+            questions.append(make("Identify a known IPL cricketer.",p))
 
-        if stat_type=="runs":
-            stat_list=runs_sorted
-            label="runs"
-        elif stat_type=="wickets":
-            stat_list=wickets_sorted
-            label="wickets"
-        else:
-            stat_list=sixes_sorted
-            label="sixes"
+   # 🔥 REMOVE DUPLICATE QUESTIONS (same text)
+unique_questions=[]
+seen=set()
 
-        q=create_question_from_stat(stat_list,label)
+for q in questions:
+    if q["q"] not in seen:
+        unique_questions.append(q)
+        seen.add(q["q"])
 
-        if q:
-            questions.append(q)
+# 🔥 ENSURE 10 QUESTIONS
+while len(unique_questions)<10:
+    p=random.choice(players)
+    options=random.sample(players,3)
+    if p not in options:
+        options[0]=p
+    random.shuffle(options)
 
-    random.shuffle(questions)
+    unique_questions.append({
+        "q":"Identify the IPL player.",
+        "options":options,
+        "answer":p
+    })
 
-    return questions[:10]
+random.shuffle(unique_questions)
+
+return unique_questions[:10]
 
 @app.get("/trivia")
 def get_trivia():
