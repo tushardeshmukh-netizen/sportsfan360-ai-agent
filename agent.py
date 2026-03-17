@@ -230,102 +230,113 @@ def compare_players(p1,p2):
 
 # ---------------- DYNAMIC TRIVIA ENGINE ----------------
 
-def generate_trivia_questions():
+# ---------------- DYNAMIC TRIVIA ENGINE (FIXED NO REPEAT) ----------------
 
-    # ❌ REMOVED load_dataset() → this was crashing app
+def generate_trivia_questions():
 
     questions=[]
 
     players=list(all_players)
 
-    # ✅ SAFE fallback (VERY IMPORTANT)
-    if not players or len(players)<5:
+    if not players or len(players)<20:
         players=[
             "Virat Kohli","MS Dhoni","Rohit Sharma","Chris Gayle",
-            "AB de Villiers","KL Rahul","Jasprit Bumrah","Chahal"
+            "AB de Villiers","KL Rahul","Jasprit Bumrah","Yuzvendra Chahal",
+            "Hardik Pandya","Andre Russell","Ravindra Jadeja","David Warner",
+            "Suresh Raina","Shikhar Dhawan","Sunil Narine","Glenn Maxwell",
+            "Kieron Pollard","Faf du Plessis","Dinesh Karthik","Ruturaj Gaikwad"
         ]
 
     random.shuffle(players)
 
-    # 1. Most runs (SAFE)
-    if runs_cache:
-        try:
-            top_player=max(runs_cache,key=runs_cache.get)
-        except:
-            top_player=random.choice(players)
-    else:
-        top_player=random.choice(players)
+    # ---- SORTED POOLS ----
+    top_runs=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)[:20]
+    mid_runs=sorted(runs_cache.items(), key=lambda x:x[1], reverse=True)[20:60]
 
-    options=random.sample(players,3)
-    if top_player not in options:
-        options[0]=top_player
-    random.shuffle(options)
+    top_wickets=sorted(wickets_cache.items(), key=lambda x:x[1], reverse=True)[:20]
+    top_sixes=sorted(sixes_cache.items(), key=lambda x:x[1], reverse=True)[:20]
 
-    questions.append({
-        "q":"Who has scored the most IPL runs?",
-        "options":options,
-        "answer":top_player
-    })
+    def get_options(correct, pool):
+        opts=set([correct])
+        while len(opts)<4:
+            opts.add(random.choice(pool))
+        opts=list(opts)
+        random.shuffle(opts)
+        return opts
 
+    # ---------------- QUESTION TYPES ----------------
 
-    # 2. Most wickets (SAFE)
-    if wickets_cache:
-        try:
-            top_bowler=max(wickets_cache,key=wickets_cache.get)
-        except:
-            top_bowler=random.choice(players)
-    else:
-        top_bowler=random.choice(players)
-
-    options=random.sample(players,3)
-    if top_bowler not in options:
-        options[0]=top_bowler
-    random.shuffle(options)
-
-    questions.append({
-        "q":"Who has taken the most IPL wickets?",
-        "options":options,
-        "answer":top_bowler
-    })
-
-
-    # 3. Most sixes (SAFE)
-    if sixes_cache:
-        try:
-            top_sixes=max(sixes_cache,key=sixes_cache.get)
-        except:
-            top_sixes=random.choice(players)
-    else:
-        top_sixes=random.choice(players)
-
-    options=random.sample(players,3)
-    if top_sixes not in options:
-        options[0]=top_sixes
-    random.shuffle(options)
-
-    questions.append({
-        "q":"Who has hit the most IPL sixes?",
-        "options":options,
-        "answer":top_sixes
-    })
-
-
-    # 4–10 RANDOM QUESTIONS (SAFE)
-    for i in range(7):
-
-        correct=random.choice(players)
-        options=random.sample(players,3)
-
-        if correct not in options:
-            options[0]=correct
-
-        random.shuffle(options)
-
+    # 1 RANDOM TOP RUNNER (not always #1)
+    if top_runs:
+        correct=random.choice(top_runs[:10])[0]
+        options=get_options(correct, players)
         questions.append({
-            "q":f"Which player is part of IPL records dataset? ({i+1})",
+            "q":"Which player is among the top IPL run scorers?",
             "options":options,
             "answer":correct
         })
+
+    # 2 MID PLAYER QUESTION
+    if mid_runs:
+        correct=random.choice(mid_runs)[0]
+        options=get_options(correct, players)
+        questions.append({
+            "q":"Which of these players has a moderate IPL run record?",
+            "options":options,
+            "answer":correct
+        })
+
+    # 3 TOP WICKET (random from top, not fixed)
+    if top_wickets:
+        correct=random.choice(top_wickets[:10])[0]
+        options=get_options(correct, players)
+        questions.append({
+            "q":"Which player is known for taking many IPL wickets?",
+            "options":options,
+            "answer":correct
+        })
+
+    # 4 SIXES POWER HITTER
+    if top_sixes:
+        correct=random.choice(top_sixes[:10])[0]
+        options=get_options(correct, players)
+        questions.append({
+            "q":"Who is a known power hitter in IPL?",
+            "options":options,
+            "answer":correct
+        })
+
+    # 5 HIGHEST SCORE MATCH
+    if highest_score_cache.get("player"):
+        correct=highest_score_cache["player"]
+        options=get_options(correct, players)
+        questions.append({
+            "q":"Who holds one of the highest individual scores in IPL matches?",
+            "options":options,
+            "answer":correct
+        })
+
+    # 6–10 PURE RANDOMIZED CONTEXT QUESTIONS
+    question_templates=[
+        "Which of these players has played in the IPL?",
+        "Identify a known IPL player.",
+        "Which name belongs to an IPL cricketer?",
+        "Who among these is part of IPL history?",
+        "Pick the correct IPL player."
+    ]
+
+    for i in range(5):
+        correct=random.choice(players)
+        options=get_options(correct, players)
+
+        questions.append({
+            "q":random.choice(question_templates),
+            "options":options,
+            "answer":correct
+        })
+
+    # FINAL SHUFFLE (VERY IMPORTANT)
+    random.shuffle(questions)
 
     return questions[:10]
 
