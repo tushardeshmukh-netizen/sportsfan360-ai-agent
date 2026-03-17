@@ -254,7 +254,64 @@ def generate_trivia_questions():
 
     return {"questions":questions}
 
+# ---------------- PLAYER APIs ----------------
 
+all_players=set()
+
+@app.get("/player-list")
+def player_list():
+    load_dataset()
+    return {"players": sorted(list(runs_cache.keys()))}
+
+
+@app.get("/player-battle")
+def player_battle(p1:str,p2:str):
+
+    load_dataset()
+
+    if not p1 or not p2:
+        return {"error":"Missing players"}
+
+    stats1={
+        "runs": runs_cache.get(p1,0),
+        "wickets": wickets_cache.get(p1,0),
+        "sixes": sixes_cache.get(p1,0)
+    }
+
+    stats2={
+        "runs": runs_cache.get(p2,0),
+        "wickets": wickets_cache.get(p2,0),
+        "sixes": sixes_cache.get(p2,0)
+    }
+
+    impact1 = stats1["runs"] + stats1["wickets"]*20 + stats1["sixes"]*2
+    impact2 = stats2["runs"] + stats2["wickets"]*20 + stats2["sixes"]*2
+
+    winner = p1 if impact1 > impact2 else p2
+
+    return {
+        "player1":p1,
+        "player2":p2,
+        "stats1":stats1,
+        "stats2":stats2,
+        "impact1":impact1,
+        "impact2":impact2,
+        "winner":winner
+    }
+
+
+@app.get("/player-shotmap")
+def player_shotmap(player:str):
+    return {
+        "data":{
+            "off": random.randint(10,100),
+            "leg": random.randint(10,100),
+            "straight": random.randint(10,100)
+        }
+    }
+    
+    
+    
 # ---------------- LLM ANSWER ----------------
 
 def knowledge_answer(question):
@@ -341,3 +398,6 @@ def standings():
 @app.get("/trivia")
 def trivia():
     return generate_trivia_questions()
+    
+    
+    load_dataset()

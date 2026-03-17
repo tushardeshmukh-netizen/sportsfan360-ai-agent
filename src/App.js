@@ -261,6 +261,6 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 </div>
 )
 
-}
+} 
 
 export default App;

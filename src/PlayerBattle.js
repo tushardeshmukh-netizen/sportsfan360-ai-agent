@@ -1,4 +1,4 @@
-import React,{useState,useEffect,useMemo} from "react";
+import React,{useState,useEffect,useMemo,useRef} from "react";
 import {
 Radar,
 RadarChart,
@@ -28,6 +28,8 @@ const [shot2,setShot2]=useState({off:0,leg:0,straight:0});
 
 const [loading,setLoading]=useState(false);
 
+const box1Ref=useRef();
+const box2Ref=useRef();
 
 /* LOAD PLAYERS */
 useEffect(()=>{
@@ -49,18 +51,34 @@ setLoadingPlayers(false);
 });
 },[API_URL]);
 
+/* CLOSE DROPDOWN ON OUTSIDE CLICK */
+useEffect(()=>{
+const handleClickOutside=(e)=>{
+if(box1Ref.current && !box1Ref.current.contains(e.target)){
+setSearch1(p1);
+}
+if(box2Ref.current && !box2Ref.current.contains(e.target)){
+setSearch2(p2);
+}
+};
+document.addEventListener("click",handleClickOutside);
+return ()=>document.removeEventListener("click",handleClickOutside);
+},[p1,p2]);
 
 /* FILTER */
 const filtered1=useMemo(()=>{
 if(!players.length || !search1) return [];
-return players.filter(p=>p.toLowerCase().includes(search1.toLowerCase())).slice(0,8);
+return players
+.filter(p=>p.toLowerCase().includes(search1.toLowerCase()))
+.slice(0,12);
 },[search1,players]);
 
 const filtered2=useMemo(()=>{
 if(!players.length || !search2) return [];
-return players.filter(p=>p.toLowerCase().includes(search2.toLowerCase())).slice(0,8);
+return players
+.filter(p=>p.toLowerCase().includes(search2.toLowerCase()))
+.slice(0,12);
 },[search2,players]);
-
 
 /* FETCH */
 const startBattle=async()=>{
@@ -91,7 +109,6 @@ console.error(e);
 setLoading(false);
 };
 
-
 /* DATA */
 const radarData = result ? [
 {stat:"Runs",p1:result.stats1.runs,p2:result.stats2.runs},
@@ -112,26 +129,26 @@ const pie2=[
 {name:"Straight",value:shot2.straight}
 ];
 
-
+/* UI */
 return(
 
 <div className="battleContainer">
 
 <h2>⚔️ Player Intelligence Battle</h2>
 
-
 {/* LOADING STATE */}
 {loadingPlayers && (
-<p style={{opacity:0.7}}>Loading IPL players database...</p>
+<p className="loadingText">Loading IPL players database...</p>
 )}
 
 {/* SEARCH */}
 <div className="battleSelectors">
 
 {/* PLAYER 1 */}
-<div className="dropdown">
+<div className="dropdown" ref={box1Ref}>
 
 <input
+className="battleInput"
 value={search1}
 disabled={loadingPlayers}
 placeholder={loadingPlayers ? "Loading players..." : "Search Player 1"}
@@ -144,7 +161,7 @@ setP1("");
 {search1 && filtered1.length>0 && (
 <div className="dropdownList">
 {filtered1.map((p,i)=>(
-<div key={i} onClick={()=>{
+<div key={i} className="dropdownItem" onClick={()=>{
 setP1(p);
 setSearch1(p);
 }}>
@@ -156,14 +173,13 @@ setSearch1(p);
 
 </div>
 
-
 <div className="vs">VS</div>
 
-
 {/* PLAYER 2 */}
-<div className="dropdown">
+<div className={`dropdown ${!p1 ? "disabled" : ""}`} ref={box2Ref}>
 
 <input
+className="battleInput"
 value={search2}
 disabled={!p1}
 placeholder={!p1 ? "Select Player 1 first" : "Search Player 2"}
@@ -176,7 +192,7 @@ setP2("");
 {search2 && filtered2.length>0 && (
 <div className="dropdownList">
 {filtered2.map((p,i)=>(
-<div key={i} onClick={()=>{
+<div key={i} className="dropdownItem" onClick={()=>{
 setP2(p);
 setSearch2(p);
 }}>
@@ -190,19 +206,16 @@ setSearch2(p);
 
 </div>
 
-
-<button onClick={startBattle} disabled={!p1 || !p2}>
+<button className="compareBtn" onClick={startBattle} disabled={!p1 || !p2}>
 Compare Players
 </button>
 
-
-{loading && <p>Analyzing player intelligence...</p>}
-
+{loading && <p className="loadingText">Analyzing player intelligence...</p>}
 
 {/* RESULT */}
-{result && (
+{result && result.stats1 && result.stats2 && (
 
-<div>
+<div className="resultCard">
 
 <ResponsiveContainer width="100%" height={300}>
 <RadarChart data={radarData}>
@@ -213,7 +226,7 @@ Compare Players
 </RadarChart>
 </ResponsiveContainer>
 
-<div style={{display:"flex",justifyContent:"space-around"}}>
+<div className="pieContainer">
 
 <PieChart width={200} height={200}>
 <Pie data={pie1} dataKey="value">
@@ -233,7 +246,7 @@ Compare Players
 
 </div>
 
-<h3>🏆 Winner: {result.winner}</h3>
+<h3 className="winner">🏆 Winner: {result.winner}</h3>
 
 </div>
 
