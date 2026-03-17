@@ -49,7 +49,6 @@ const pie=(d)=>[
 ];
 
 return(
-
 <div className="battleContainer">
 
 <h2>⚔️ Player Intelligence Battle</h2>
@@ -75,7 +74,6 @@ return(
 {loading && <p>Analyzing...</p>}
 
 {result && (
-
 <div>
 
 <ResponsiveContainer height={300}>
@@ -106,11 +104,9 @@ return(
 <h3>🏆 {result.winner}</h3>
 
 </div>
-
 )}
 
 </div>
-
 );
 
 }
