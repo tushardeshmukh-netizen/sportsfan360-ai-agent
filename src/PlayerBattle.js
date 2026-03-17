@@ -6,17 +6,16 @@ Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContain
 function PlayerBattle({API_URL}){
 
 const [players,setPlayers]=useState([]);
-const [filtered1,setFiltered1]=useState([]);
-const [filtered2,setFiltered2]=useState([]);
-
 const [search1,setSearch1]=useState("");
 const [search2,setSearch2]=useState("");
+
+const [filtered1,setFiltered1]=useState([]);
+const [filtered2,setFiltered2]=useState([]);
 
 const [p1,setP1]=useState("");
 const [p2,setP2]=useState("");
 
 const [loading,setLoading]=useState(false);
-const [searching,setSearching]=useState(false);
 const [result,setResult]=useState(null);
 
 
@@ -26,52 +25,16 @@ useEffect(()=>{
 fetch(`${API_URL}/player-list`)
 .then(res=>res.json())
 .then(data=>setPlayers(data.players || []))
-.catch(()=>setPlayers([]))
+.catch(()=>setPlayers([]));
 },[API_URL])
 
 
-/* DEBOUNCED SEARCH */
+/* SEARCH */
 
-useEffect(()=>{
-if(search1.length<2){
-setFiltered1([]);
-return;
-}
+const filter=(val)=>players.filter(p=>p.toLowerCase().includes(val.toLowerCase())).slice(0,10);
 
-setSearching(true);
-
-const t=setTimeout(()=>{
-const res=players
-.filter(p=>p.toLowerCase().includes(search1.toLowerCase()))
-.slice(0,10);
-setFiltered1(res);
-setSearching(false);
-},300);
-
-return ()=>clearTimeout(t);
-
-},[search1,players])
-
-
-useEffect(()=>{
-if(search2.length<2){
-setFiltered2([]);
-return;
-}
-
-setSearching(true);
-
-const t=setTimeout(()=>{
-const res=players
-.filter(p=>p.toLowerCase().includes(search2.toLowerCase()))
-.slice(0,10);
-setFiltered2(res);
-setSearching(false);
-},300);
-
-return ()=>clearTimeout(t);
-
-},[search2,players])
+useEffect(()=>{setFiltered1(search1.length>1?filter(search1):[])},[search1]);
+useEffect(()=>{setFiltered2(search2.length>1?filter(search2):[])},[search2]);
 
 
 /* FETCH */
@@ -94,158 +57,99 @@ setLoading(false);
 }
 
 
-/* SWAP */
-
-const swapPlayers=()=>{
-setP1(p2);
-setP2(p1);
-setSearch1(p2);
-setSearch2(p1);
-}
-
-
-/* WIDTH */
-
-const getWidth=(v1,v2)=>{
-const max=Math.max(v1,v2,1);
-return {
-w1:(v1/max)*100,
-w2:(v2/max)*100
-};
-}
-
-
 /* RADAR */
 
-const getRadarData=(data)=>[
-{stat:"Runs",p1:data.stats1.runs,p2:data.stats2.runs},
-{stat:"Wickets",p1:data.stats1.wickets,p2:data.stats2.wickets},
-{stat:"Sixes",p1:data.stats1.sixes,p2:data.stats2.sixes},
-{stat:"Impact",p1:data.impact1,p2:data.impact2}
+const getRadarData=(d)=>[
+{stat:"Runs",p1:d.stats1.runs,p2:d.stats2.runs},
+{stat:"Wickets",p1:d.stats1.wickets,p2:d.stats2.wickets},
+{stat:"Sixes",p1:d.stats1.sixes,p2:d.stats2.sixes},
+{stat:"Impact",p1:d.impact1,p2:d.impact2}
 ];
+
+
+/* 🔥 FAKE WAGON DATA (replace later with real) */
+
+const getWagonData=(player)=>{
+return [
+{angle:0,value:Math.random()*10},
+{angle:45,value:Math.random()*10},
+{angle:90,value:Math.random()*10},
+{angle:135,value:Math.random()*10},
+{angle:180,value:Math.random()*10},
+{angle:225,value:Math.random()*10},
+{angle:270,value:Math.random()*10},
+{angle:315,value:Math.random()*10}
+];
+};
+
+
+/* 🔥 FAKE PITCH MAP */
+
+const getPitchMap=()=>{
+return Array.from({length:20},()=>({
+x:Math.random()*100,
+y:Math.random()*100
+}));
+};
 
 
 return(
 
 <div className="battleContainer">
 
-<div className="battleHeader">
 <h2>⚔️ Player Battle</h2>
-<p>Search and compare any IPL players across all seasons</p>
-</div>
 
 
 {/* SEARCH */}
 
 <div className="battleSelectors">
 
-{/* PLAYER 1 */}
-
 <div className="searchBox">
-
-<input
-placeholder="Type player name (min 2 letters)"
-value={search1}
-onChange={(e)=>setSearch1(e.target.value)}
-/>
-
-{search1.length<2 && (
-<div className="hint">Start typing…</div>
-)}
-
-{searching && <div className="hint">Searching...</div>}
-
+<input value={search1} placeholder="Player 1" onChange={(e)=>setSearch1(e.target.value)}/>
 {filtered1.length>0 && (
 <div className="dropdownList">
 {filtered1.map((p,i)=>(
-<div key={i} onClick={()=>{
-setP1(p);
-setSearch1(p);
-setFiltered1([]);
-}}>
-{p}
-</div>
+<div key={i} onClick={()=>{setP1(p);setSearch1(p);setFiltered1([])}}>{p}</div>
 ))}
 </div>
 )}
-
 </div>
-
 
 <div className="vsText">VS</div>
 
-
-{/* PLAYER 2 */}
-
 <div className="searchBox">
-
-<input
-placeholder="Type player name"
-value={search2}
-onChange={(e)=>setSearch2(e.target.value)}
-/>
-
-{search2.length<2 && (
-<div className="hint">Start typing…</div>
-)}
-
-{searching && <div className="hint">Searching...</div>}
-
+<input value={search2} placeholder="Player 2" onChange={(e)=>setSearch2(e.target.value)}/>
 {filtered2.length>0 && (
 <div className="dropdownList">
 {filtered2.map((p,i)=>(
-<div key={i} onClick={()=>{
-setP2(p);
-setSearch2(p);
-setFiltered2([]);
-}}>
-{p}
-</div>
+<div key={i} onClick={()=>{setP2(p);setSearch2(p);setFiltered2([])}}>{p}</div>
 ))}
 </div>
 )}
-
 </div>
 
 </div>
 
 
-<div style={{textAlign:"center",marginTop:"15px"}}>
-
-<button className="battleBtn" onClick={startBattle}>
-Compare Players
-</button>
-
-<button className="battleBtn" onClick={swapPlayers} style={{marginLeft:"10px"}}>
-Swap
-</button>
-
+<div style={{textAlign:"center",marginTop:"10px"}}>
+<button className="battleBtn" onClick={startBattle}>Compare</button>
 </div>
 
 
 {/* LOADING */}
 
-{loading && (
-<div className="loader">
-Analyzing player stats...
-</div>
-)}
+{loading && <div className="loader">Analyzing...</div>}
 
 
-{/* RESULT */}
+/* RESULT */
 
-{result && !result.error && (
+{result && (
 
 <div className="battleCard">
 
-<div className="playersRow">
-<div className="playerName">{result.player1}</div>
-<div className="vsBig">VS</div>
-<div className="playerName">{result.player2}</div>
-</div>
+{/* RADAR */}
 
-
-<div style={{width:"100%",height:"300px"}}>
+<div style={{height:"250px"}}>
 <ResponsiveContainer>
 <RadarChart data={getRadarData(result)}>
 <PolarGrid />
@@ -255,6 +159,53 @@ Analyzing player stats...
 <Radar dataKey="p2" stroke="#4da6ff" fill="#4da6ff" fillOpacity={0.5}/>
 </RadarChart>
 </ResponsiveContainer>
+</div>
+
+
+{/* 🟢 WAGON WHEEL */}
+
+<div className="sectionTitle">🟢 Wagon Wheel</div>
+
+<div className="wagonContainer">
+
+{getWagonData(p1).map((d,i)=>(
+<div
+key={i}
+className="wagonLine red"
+style={{
+transform:`rotate(${d.angle}deg)`,
+height:`${d.value*10}px`
+}}
+></div>
+))}
+
+</div>
+
+
+{/* 🔵 PITCH MAP */}
+
+<div className="sectionTitle">🔵 Pitch Map</div>
+
+<div className="pitchMap">
+
+{getPitchMap().map((d,i)=>(
+<div
+key={i}
+className="pitchDot"
+style={{
+left:`${d.x}%`,
+top:`${d.y}%`
+}}
+></div>
+))}
+
+</div>
+
+
+{/* WINNER */}
+
+<div className="winnerBox">
+🏆 {result.winner}
 </div>
 
 </div>
