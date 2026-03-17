@@ -2,12 +2,12 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
-import PlayerBattle from "./PlayerBattle"; // ⭐ NEW
+import PlayerBattle from "./PlayerBattle";
 
 window.onerror = function(message, source, lineno, colno, error){
   console.error("GLOBAL ERROR:", message, error);
 };
-// 🔥 ADD THIS (ERROR BOUNDARY)
+
 class ErrorBoundary extends React.Component {
   constructor(props){
     super(props);
@@ -28,7 +28,6 @@ class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
-
 
 const statsPool=[
 
@@ -82,7 +81,7 @@ return ()=>clearInterval(interval)
 
 },[])
 
-/* LOAD NEWS FEED */
+/* LOAD NEWS FEED SAFE */
 
 useEffect(()=>{
 
@@ -90,8 +89,14 @@ if(activeTab==="home"){
 
 fetch(`${API_URL}/feed`)
 .then(res=>res.json())
-.then(data=>setFeed(data))
-.catch(()=>setFeed(null))
+.then(data=>{
+if(data && data.cards){
+setFeed(data)
+}else{
+setFeed({cards:[]})
+}
+})
+.catch(()=>setFeed({cards:[]}))
 
 }
 
@@ -115,7 +120,7 @@ const clearChat=()=>{
 setMessages([])
 }
 
-/* ASK AI */
+/* ASK AI SAFE */
 
 const askAI=async(q=question)=>{
 
@@ -134,7 +139,7 @@ const data=await res.json()
 
 setMessages([...newMessages,{
 role:"ai",
-text:data.answer
+text:data?.answer || "No response"
 }])
 
 }catch{
@@ -169,8 +174,6 @@ return(
 
 </header>
 
-{/* NAV TABS */}
-
 <div className="tabs">
 
 <button
@@ -204,7 +207,7 @@ onClick={()=>setActiveTab("battle")}
 </div>
 
 
-{/* ================= HOME ================= */}
+{/* HOME */}
 
 {activeTab==="home" && (
 
@@ -220,9 +223,7 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 
 </div>
 
-<div className="sectionTitle">
-🔥 IPL Quick Stats
-</div>
+<div className="sectionTitle">🔥 IPL Quick Stats</div>
 
 <div className="quickStats">
 
@@ -241,9 +242,7 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 
 </div>
 
-<div className="sectionTitle">
-📰 Latest Cricket News
-</div>
+<div className="sectionTitle">📰 Latest Cricket News</div>
 
 {!feed && <p style={{padding:"20px"}}>Loading news...</p>}
 
@@ -251,7 +250,7 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 
 <div className="feedCards">
 
-{feed.cards.map((c,i)=>(
+{(feed.cards || []).map((c,i)=>(
 
 <a
 key={i}
@@ -262,19 +261,12 @@ className="feedCard"
 >
 
 {c.image && (
-<img
-src={c.image}
-className="feedImage"
-alt="news"
-/>
+<img src={c.image} className="feedImage" alt="news"/>
 )}
 
 <div className="feedContent">
-
 <h3>{c.title}</h3>
-
 <p>{c.text}</p>
-
 </div>
 
 </a>
@@ -290,45 +282,21 @@ alt="news"
 )}
 
 
-{/* ================= ASK ================= */}
+{/* ASK */}
 
 {activeTab==="ask" && (
 
 <div className="askPage">
 
-<div style={{display:"flex",justifyContent:"flex-end"}}>
-
 <button className="clearChat" onClick={clearChat}>
 Clear Chat
 </button>
-
-</div>
-
-<div className="quickStats">
-
-{stats.map((s,i)=>(
-<div key={i} className="statCard">
-
-<span className="statLabel">{s.label}</span>
-
-<div className="statRow">
-<strong>{s.value}</strong>
-<span className="statNum">{s.num}</span>
-</div>
-
-</div>
-))}
-
-</div>
 
 <main className="chatPanel">
 
 {messages.length===0 && (
 <div className="welcome">
 <h2>Ask anything about IPL</h2>
-<p>
-Teams • Players • Records • Runs • Wickets • Comparisons
-</p>
 </div>
 )}
 
@@ -338,29 +306,17 @@ Teams • Players • Records • Runs • Wickets • Comparisons
 </div>
 ))}
 
-{loading && <div className="message ai typing">Analyzing cricket data...</div>}
+{loading && <div className="message ai">Analyzing...</div>}
 
 <div ref={chatEndRef}></div>
 
 </main>
 
-<div className="bottomPanel">
-
-<div className="suggestions">
-
-{suggestions.map((s,i)=>(
-<button key={i} onClick={()=>askAI(s)}>
-{s}
-</button>
-))}
-
-</div>
-
 <div className="inputBox">
 
 <input
 value={question}
-placeholder="Ask SportsFan360..."
+placeholder="Ask..."
 onChange={(e)=>setQuestion(e.target.value)}
 onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 />
@@ -373,19 +329,15 @@ Ask
 
 </div>
 
-</div>
-
 )}
 
 
-{/* ================= TRIVIA ================= */}
+{/* TRIVIA */}
 
-{activeTab==="trivia" && (
-<Trivia />
-)}
+{activeTab==="trivia" && <Trivia />}
 
 
-{/* ================= PLAYER BATTLE ================= */}
+{/* BATTLE */}
 
 {activeTab==="battle" && (
 <div className="battleWrapper">
@@ -395,7 +347,7 @@ Ask
 </div>
 )}
 
-</div>  
+</div>
 
 )
 

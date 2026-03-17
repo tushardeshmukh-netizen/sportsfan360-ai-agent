@@ -4,18 +4,11 @@ import App from "./App";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
-try {
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-} catch (e) {
-  console.error("ROOT CRASH:", e);
+window.onerror = function (msg, url, line, col, error) {
+  console.error("GLOBAL ERROR:", msg, error);
+  document.body.innerHTML = `<div style="color:red;padding:20px">
+    Crash Detected:<br>${msg}
+  </div>`;
+};
 
-  document.body.innerHTML = `
-    <div style="padding:20px;color:red">
-      App crashed. Check console.
-    </div>
-  `;
-}
+root.render(<App />);
