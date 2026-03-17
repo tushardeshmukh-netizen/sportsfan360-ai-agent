@@ -197,7 +197,7 @@ onChange={(e)=>{setSearch2(e.target.value);setP2("");}}
 
 {loading && <p className="loadingText">Analyzing performance...</p>}
 
-/* RESULT */
+
 {result && (
 
 <div className="resultCard">
