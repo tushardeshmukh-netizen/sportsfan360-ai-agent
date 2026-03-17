@@ -6,13 +6,18 @@ Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContain
 function PlayerBattle({API_URL}){
 
 const [players,setPlayers]=useState([]);
+const [filtered1,setFiltered1]=useState([]);
+const [filtered2,setFiltered2]=useState([]);
+
 const [search1,setSearch1]=useState("");
 const [search2,setSearch2]=useState("");
+
 const [p1,setP1]=useState("");
 const [p2,setP2]=useState("");
 
-const [result,setResult]=useState(null);
 const [loading,setLoading]=useState(false);
+const [searching,setSearching]=useState(false);
+const [result,setResult]=useState(null);
 
 
 /* LOAD PLAYERS */
@@ -25,16 +30,51 @@ fetch(`${API_URL}/player-list`)
 },[API_URL])
 
 
-/* FILTER PLAYERS */
+/* DEBOUNCED SEARCH */
 
-const filterPlayers=(search)=>{
-return players
-.filter(p=>p.toLowerCase().includes(search.toLowerCase()))
-.slice(0,20)
+useEffect(()=>{
+if(search1.length<2){
+setFiltered1([]);
+return;
 }
 
+setSearching(true);
 
-/* FETCH BATTLE */
+const t=setTimeout(()=>{
+const res=players
+.filter(p=>p.toLowerCase().includes(search1.toLowerCase()))
+.slice(0,10);
+setFiltered1(res);
+setSearching(false);
+},300);
+
+return ()=>clearTimeout(t);
+
+},[search1,players])
+
+
+useEffect(()=>{
+if(search2.length<2){
+setFiltered2([]);
+return;
+}
+
+setSearching(true);
+
+const t=setTimeout(()=>{
+const res=players
+.filter(p=>p.toLowerCase().includes(search2.toLowerCase()))
+.slice(0,10);
+setFiltered2(res);
+setSearching(false);
+},300);
+
+return ()=>clearTimeout(t);
+
+},[search2,players])
+
+
+/* FETCH */
 
 const startBattle=async()=>{
 if(!p1 || !p2 || p1===p2) return;
@@ -59,6 +99,8 @@ setLoading(false);
 const swapPlayers=()=>{
 setP1(p2);
 setP2(p1);
+setSearch1(p2);
+setSearch2(p1);
 }
 
 
@@ -73,35 +115,7 @@ w2:(v2/max)*100
 }
 
 
-/* INSIGHT */
-
-const getInsight=(data)=>{
-
-let insights=[];
-
-if(data.comparison.runs===data.player1){
-insights.push(`${data.player1} leads in runs`);
-}else{
-insights.push(`${data.player2} dominates scoring`);
-}
-
-if(data.comparison.sixes===data.player1){
-insights.push(`${data.player1} is explosive`);
-}else{
-insights.push(`${data.player2} hits more sixes`);
-}
-
-if(data.comparison.wickets===data.player1){
-insights.push(`${data.player1} contributes in bowling`);
-}else{
-insights.push(`${data.player2} stronger in bowling`);
-}
-
-return `${insights.join(", ")}. Overall ${data.winner} leads.`;
-}
-
-
-/* RADAR DATA */
+/* RADAR */
 
 const getRadarData=(data)=>[
 {stat:"Runs",p1:data.stats1.runs,p2:data.stats2.runs},
@@ -121,52 +135,82 @@ return(
 </div>
 
 
-{/* SEARCH SELECTORS */}
+{/* SEARCH */}
 
 <div className="battleSelectors">
+
+{/* PLAYER 1 */}
 
 <div className="searchBox">
 
 <input
-placeholder="Search Player 1..."
+placeholder="Type player name (min 2 letters)"
 value={search1}
 onChange={(e)=>setSearch1(e.target.value)}
 />
 
+{search1.length<2 && (
+<div className="hint">Start typing…</div>
+)}
+
+{searching && <div className="hint">Searching...</div>}
+
+{filtered1.length>0 && (
 <div className="dropdownList">
-{filterPlayers(search1).map((p,i)=>(
-<div key={i} onClick={()=>{setP1(p);setSearch1(p)}}>
+{filtered1.map((p,i)=>(
+<div key={i} onClick={()=>{
+setP1(p);
+setSearch1(p);
+setFiltered1([]);
+}}>
 {p}
 </div>
 ))}
 </div>
+)}
 
 </div>
 
+
 <div className="vsText">VS</div>
+
+
+{/* PLAYER 2 */}
 
 <div className="searchBox">
 
 <input
-placeholder="Search Player 2..."
+placeholder="Type player name"
 value={search2}
 onChange={(e)=>setSearch2(e.target.value)}
 />
 
+{search2.length<2 && (
+<div className="hint">Start typing…</div>
+)}
+
+{searching && <div className="hint">Searching...</div>}
+
+{filtered2.length>0 && (
 <div className="dropdownList">
-{filterPlayers(search2).map((p,i)=>(
-<div key={i} onClick={()=>{setP2(p);setSearch2(p)}}>
+{filtered2.map((p,i)=>(
+<div key={i} onClick={()=>{
+setP2(p);
+setSearch2(p);
+setFiltered2([]);
+}}>
 {p}
 </div>
 ))}
 </div>
+)}
 
 </div>
 
 </div>
 
 
-<div style={{textAlign:"center",marginBottom:"20px"}}>
+<div style={{textAlign:"center",marginTop:"15px"}}>
 
 <button className="battleBtn" onClick={startBattle}>
 Compare Players
@@ -181,7 +225,11 @@ Swap
 
 {/* LOADING */}
 
-{loading && <p style={{textAlign:"center"}}>Analyzing player data...</p>}
+{loading && (
+<div className="loader">
+Analyzing player stats...
+</div>
+)}
 
 
 {/* RESULT */}
@@ -197,80 +245,16 @@ Swap
 </div>
 
 
-{/* RADAR */}
-
-<div style={{width:"100%",height:"320px"}}>
-
+<div style={{width:"100%",height:"300px"}}>
 <ResponsiveContainer>
 <RadarChart data={getRadarData(result)}>
 <PolarGrid />
 <PolarAngleAxis dataKey="stat" />
 <PolarRadiusAxis />
-
 <Radar dataKey="p1" stroke="#ff4d4d" fill="#ff4d4d" fillOpacity={0.5}/>
 <Radar dataKey="p2" stroke="#4da6ff" fill="#4da6ff" fillOpacity={0.5}/>
-
 </RadarChart>
 </ResponsiveContainer>
-
-</div>
-
-
-{/* NUMERIC CARDS */}
-
-<div className="numberGrid">
-
-<div className="numCard">
-<h4>Runs</h4>
-<p>{result.stats1.runs} vs {result.stats2.runs}</p>
-</div>
-
-<div className="numCard">
-<h4>Wickets</h4>
-<p>{result.stats1.wickets} vs {result.stats2.wickets}</p>
-</div>
-
-<div className="numCard">
-<h4>Sixes</h4>
-<p>{result.stats1.sixes} vs {result.stats2.sixes}</p>
-</div>
-
-<div className="numCard">
-<h4>Impact</h4>
-<p>{result.impact1} vs {result.impact2}</p>
-</div>
-
-</div>
-
-
-{/* BARS */}
-
-{(()=>{
-const {w1,w2}=getWidth(result.stats1.runs,result.stats2.runs);
-return(
-<div className="statRowBattle">
-<div className="statLabelBattle">Runs</div>
-<div className="barDual">
-<div className="bar left" style={{width:`${w1}%`}}></div>
-<div className="bar right" style={{width:`${w2}%`}}></div>
-</div>
-</div>
-)
-})()}
-
-
-{/* SCORE */}
-
-<div className="scoreBoard">
-{result.player1} {result.score[result.player1]} - {result.score[result.player2]} {result.player2}
-</div>
-
-
-{/* WINNER */}
-
-<div className="winnerSection">
-<div className="winnerBox">🏆 Winner: {result.winner}</div>
-<div className="insightBox">🔥 {getInsight(result)}</div>
 </div>
 
 </div>
