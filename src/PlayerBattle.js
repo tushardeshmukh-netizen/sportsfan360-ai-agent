@@ -21,6 +21,9 @@ const [search2,setSearch2]=useState("");
 const [p1,setP1]=useState("");
 const [p2,setP2]=useState("");
 
+const [show1,setShow1]=useState(false);
+const [show2,setShow2]=useState(false);
+
 const [result,setResult]=useState(null);
 
 const [shot1,setShot1]=useState({off:0,leg:0,straight:0});
@@ -28,21 +31,15 @@ const [shot2,setShot2]=useState({off:0,leg:0,straight:0});
 
 const [loading,setLoading]=useState(false);
 
-const box1Ref=useRef();
-const box2Ref=useRef();
+const ref1=useRef();
+const ref2=useRef();
 
 /* LOAD PLAYERS */
 useEffect(()=>{
-setLoadingPlayers(true);
-
 fetch(`${API_URL}/player-list`)
 .then(r=>r.json())
 .then(d=>{
-if(d && Array.isArray(d.players)){
-setPlayers(d.players);
-}else{
-setPlayers([]);
-}
+setPlayers(d?.players || []);
 setLoadingPlayers(false);
 })
 .catch(()=>{
@@ -51,38 +48,27 @@ setLoadingPlayers(false);
 });
 },[API_URL]);
 
-/* CLOSE DROPDOWN ON OUTSIDE CLICK */
+/* CLOSE DROPDOWN */
 useEffect(()=>{
-const handleClickOutside=(e)=>{
-if(box1Ref.current && !box1Ref.current.contains(e.target)){
-setSearch1(p1);
-}
-if(box2Ref.current && !box2Ref.current.contains(e.target)){
-setSearch2(p2);
-}
+const handler=(e)=>{
+if(ref1.current && !ref1.current.contains(e.target)) setShow1(false);
+if(ref2.current && !ref2.current.contains(e.target)) setShow2(false);
 };
-document.addEventListener("click",handleClickOutside);
-return ()=>document.removeEventListener("click",handleClickOutside);
-},[p1,p2]);
+document.addEventListener("click",handler);
+return ()=>document.removeEventListener("click",handler);
+},[]);
 
 /* FILTER */
 const filtered1=useMemo(()=>{
-if(!players.length || !search1) return [];
-return players
-.filter(p=>p.toLowerCase().includes(search1.toLowerCase()))
-.slice(0,12);
+return players.filter(p=>p.toLowerCase().includes(search1.toLowerCase())).slice(0,20);
 },[search1,players]);
 
 const filtered2=useMemo(()=>{
-if(!players.length || !search2) return [];
-return players
-.filter(p=>p.toLowerCase().includes(search2.toLowerCase()))
-.slice(0,12);
+return players.filter(p=>p.toLowerCase().includes(search2.toLowerCase())).slice(0,20);
 },[search2,players]);
 
 /* FETCH */
 const startBattle=async()=>{
-
 if(!p1 || !p2 || p1===p2){
 alert("Select 2 different players");
 return;
@@ -90,21 +76,13 @@ return;
 
 setLoading(true);
 
-try{
+const battle=await fetch(`${API_URL}/player-battle?p1=${p1}&p2=${p2}`).then(r=>r.json());
+const s1=await fetch(`${API_URL}/player-shotmap?player=${p1}`).then(r=>r.json());
+const s2=await fetch(`${API_URL}/player-shotmap?player=${p2}`).then(r=>r.json());
 
-const battleRes=await fetch(`${API_URL}/player-battle?p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`);
-const battleData=await battleRes.json();
-
-const s1=await fetch(`${API_URL}/player-shotmap?player=${encodeURIComponent(p1)}`).then(r=>r.json());
-const s2=await fetch(`${API_URL}/player-shotmap?player=${encodeURIComponent(p2)}`).then(r=>r.json());
-
-setResult(battleData);
-setShot1(s1?.data || {off:0,leg:0,straight:0});
-setShot2(s2?.data || {off:0,leg:0,straight:0});
-
-}catch(e){
-console.error(e);
-}
+setResult(battle);
+setShot1(s1.data);
+setShot2(s2.data);
 
 setLoading(false);
 };
@@ -129,93 +107,86 @@ const pie2=[
 {name:"Straight",value:shot2.straight}
 ];
 
-/* UI */
 return(
 
 <div className="battleContainer">
 
 <h2>⚔️ Player Intelligence Battle</h2>
 
-{/* LOADING STATE */}
-{loadingPlayers && (
-<p className="loadingText">Loading IPL players database...</p>
-)}
+{loadingPlayers && <p>Loading players...</p>}
 
-{/* SEARCH */}
 <div className="battleSelectors">
 
 {/* PLAYER 1 */}
-<div className="dropdown" ref={box1Ref}>
+<div className="dropdown" ref={ref1}>
+<div className="dropdownHeader" onClick={()=>setShow1(true)}>
+{p1 || "Select Player 1"}
+</div>
 
+{show1 && (
+<div className="dropdownMenu">
 <input
-className="battleInput"
 value={search1}
-disabled={loadingPlayers}
-placeholder={loadingPlayers ? "Loading players..." : "Search Player 1"}
-onChange={(e)=>{
-setSearch1(e.target.value);
-setP1("");
-}}
+placeholder="Search player..."
+onChange={(e)=>setSearch1(e.target.value)}
 />
 
-{search1 && filtered1.length>0 && (
-<div className="dropdownList">
+<div className="list">
 {filtered1.map((p,i)=>(
-<div key={i} className="dropdownItem" onClick={()=>{
+<div key={i} onClick={()=>{
 setP1(p);
 setSearch1(p);
+setShow1(false);
 }}>
 {p}
 </div>
 ))}
 </div>
+</div>
 )}
-
 </div>
 
-<div className="vs">VS</div>
+<div>VS</div>
 
 {/* PLAYER 2 */}
-<div className={`dropdown ${!p1 ? "disabled" : ""}`} ref={box2Ref}>
+<div className="dropdown" ref={ref2}>
+<div className="dropdownHeader" onClick={()=>p1 && setShow2(true)}>
+{p2 || (p1 ? "Select Player 2" : "Select Player 1 first")}
+</div>
 
+{show2 && (
+<div className="dropdownMenu">
 <input
-className="battleInput"
 value={search2}
-disabled={!p1}
-placeholder={!p1 ? "Select Player 1 first" : "Search Player 2"}
-onChange={(e)=>{
-setSearch2(e.target.value);
-setP2("");
-}}
+placeholder="Search player..."
+onChange={(e)=>setSearch2(e.target.value)}
 />
 
-{search2 && filtered2.length>0 && (
-<div className="dropdownList">
+<div className="list">
 {filtered2.map((p,i)=>(
-<div key={i} className="dropdownItem" onClick={()=>{
+<div key={i} onClick={()=>{
 setP2(p);
 setSearch2(p);
+setShow2(false);
 }}>
 {p}
 </div>
 ))}
 </div>
+</div>
 )}
-
 </div>
 
 </div>
 
-<button className="compareBtn" onClick={startBattle} disabled={!p1 || !p2}>
+<button onClick={startBattle} disabled={!p1 || !p2}>
 Compare Players
 </button>
 
-{loading && <p className="loadingText">Analyzing player intelligence...</p>}
+{loading && <p>Analyzing...</p>}
 
-{/* RESULT */}
-{result && result.stats1 && result.stats2 && (
-
-<div className="resultCard">
+{result && (
+<div>
 
 <ResponsiveContainer width="100%" height={300}>
 <RadarChart data={radarData}>
@@ -226,7 +197,7 @@ Compare Players
 </RadarChart>
 </ResponsiveContainer>
 
-<div className="pieContainer">
+<div style={{display:"flex",justifyContent:"space-around"}}>
 
 <PieChart width={200} height={200}>
 <Pie data={pie1} dataKey="value">
@@ -246,10 +217,9 @@ Compare Players
 
 </div>
 
-<h3 className="winner">🏆 Winner: {result.winner}</h3>
+<h3>🏆 Winner: {result.winner}</h3>
 
 </div>
-
 )}
 
 </div>
