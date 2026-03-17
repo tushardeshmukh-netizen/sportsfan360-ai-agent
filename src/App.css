@@ -1121,3 +1121,280 @@ text-align:center;
 margin-top:20px;
 color:#00ffcc;
 }
+
+/* ========================= */
+/* 🔥 PLAYER BATTLE PRO UI */
+/* ========================= */
+
+/* CONTAINER ENHANCEMENT */
+
+.battleContainer{
+padding:40px;
+max-width:1100px;
+margin:auto;
+}
+
+/* HEADER */
+
+.battleHeader{
+text-align:center;
+margin-bottom:25px;
+}
+
+.battleHeader h2{
+font-size:28px;
+margin-bottom:6px;
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.battleHeader p{
+color:#94a3b8;
+font-size:13px;
+}
+
+/* SEARCH EXPERIENCE */
+
+.dropdown{
+position:relative;
+width:260px;
+}
+
+.battleInput{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid #334155;
+background:#020617;
+color:white;
+font-size:14px;
+transition:0.2s;
+}
+
+.battleInput:focus{
+outline:none;
+border:1px solid #FE2165;
+box-shadow:0 0 10px rgba(254,33,101,0.3);
+}
+
+/* DROPDOWN LIST */
+
+.dropdownList{
+position:absolute;
+top:48px;
+left:0;
+right:0;
+background:#020617;
+border:1px solid #334155;
+max-height:260px;
+overflow-y:auto;
+z-index:100;
+border-radius:10px;
+box-shadow:0 10px 30px rgba(0,0,0,0.6);
+}
+
+.dropdownItem{
+padding:10px;
+cursor:pointer;
+font-size:14px;
+transition:0.2s;
+border-bottom:1px solid #111;
+}
+
+.dropdownItem:hover{
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+color:white;
+}
+
+/* VS TEXT */
+
+.vs{
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:bold;
+font-size:18px;
+color:#FE2165;
+padding-top:10px;
+}
+
+/* COMPARE BUTTON */
+
+.compareBtn{
+margin-top:20px;
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+padding:12px 26px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-size:15px;
+transition:0.2s;
+}
+
+.compareBtn:hover{
+transform:scale(1.05);
+box-shadow:0 0 15px rgba(255,80,120,0.6);
+}
+
+/* LOADING */
+
+.loadingText{
+text-align:center;
+margin-top:15px;
+color:#94a3b8;
+}
+
+/* ========================= */
+/* 🔥 RESULT CARD */
+/* ========================= */
+
+.resultCard{
+margin-top:30px;
+background:#020617;
+border:1px solid #1e293b;
+border-radius:16px;
+padding:25px;
+box-shadow:0 0 30px rgba(0,0,0,0.6);
+animation:fadeIn 0.4s ease;
+}
+
+/* PLAYER NAMES */
+
+.playersRow{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+}
+
+.playerName{
+font-size:18px;
+font-weight:bold;
+}
+
+.vsBig{
+font-size:22px;
+color:#FE2165;
+}
+
+/* ========================= */
+/* 🔥 STATS GRID */
+/* ========================= */
+
+.statsGrid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+gap:15px;
+margin-bottom:25px;
+}
+
+.statBox{
+background:#0f172a;
+border:1px solid #1e293b;
+border-radius:10px;
+padding:12px;
+text-align:center;
+transition:0.2s;
+}
+
+.statBox:hover{
+transform:translateY(-3px);
+box-shadow:0 0 10px rgba(255,70,120,0.2);
+}
+
+.statTitle{
+font-size:12px;
+color:#94a3b8;
+}
+
+.statValueBig{
+font-size:18px;
+font-weight:bold;
+margin-top:4px;
+}
+
+/* WIN / LOSE HIGHLIGHT */
+
+.statBox.win{
+border:1px solid #22c55e;
+box-shadow:0 0 10px rgba(34,197,94,0.4);
+}
+
+.statBox.lose{
+opacity:0.6;
+}
+
+/* ========================= */
+/* 🔥 CHARTS */
+/* ========================= */
+
+.pieContainer{
+display:flex;
+justify-content:space-around;
+margin-top:25px;
+flex-wrap:wrap;
+gap:20px;
+}
+
+/* ========================= */
+/* 🔥 WINNER */
+/* ========================= */
+
+.winner{
+text-align:center;
+margin-top:25px;
+font-size:20px;
+font-weight:bold;
+}
+
+.winner span{
+background:linear-gradient(90deg,#FE2165,#FD6E0C);
+padding:10px 20px;
+border-radius:12px;
+color:white;
+display:inline-block;
+box-shadow:0 0 20px rgba(255,80,120,0.6);
+}
+
+/* ========================= */
+/* 🔥 ANIMATION */
+/* ========================= */
+
+@keyframes fadeIn{
+from{
+opacity:0;
+transform:translateY(10px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+/* ========================= */
+/* 🔥 MOBILE */
+/* ========================= */
+
+@media(max-width:768px){
+
+.battleSelectors{
+flex-direction:column;
+align-items:center;
+}
+
+.playersRow{
+flex-direction:column;
+gap:10px;
+}
+
+.vsBig{
+display:none;
+}
+
+.pieContainer{
+flex-direction:column;
+align-items:center;
+}
+
+}

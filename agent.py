@@ -45,8 +45,12 @@ highest_score_cache={}
 sixes_cache={}
 season_latest_match={}
 
-# 🔥 ADD ONLY THIS (NO REMOVAL)
+# 🔥 FULL PLAYER + ADVANCED STATS
 all_players=set()
+balls_faced_cache={}
+dismissals_cache={}
+fours_cache={}
+matches_played_cache={}
 
 
 # ---------------- DATASET LOADER ----------------
@@ -56,6 +60,7 @@ def load_dataset():
     global dataset_loaded,runs_cache,wickets_cache,titles_cache
     global highest_score_cache,sixes_cache,season_latest_match
     global all_players
+    global balls_faced_cache,dismissals_cache,fours_cache,matches_played_cache
 
     if dataset_loaded:
         return
@@ -68,6 +73,10 @@ def load_dataset():
     batsman_runs={}
     bowler_wickets={}
     batsman_sixes={}
+    balls_faced={}
+    dismissals={}
+    fours={}
+    matches_played={}
     highest={"runs":0,"player":None}
 
     players_set=set()
@@ -81,6 +90,7 @@ def load_dataset():
             match=json.loads(zip_file.read(file))
 
             match_runs={}
+            match_players=set()
 
             for inn in match.get("innings",[]):
                 for over in inn.get("overs",[]):
@@ -90,30 +100,45 @@ def load_dataset():
                         bowler=d.get("bowler")
                         runs=d.get("runs",{}).get("batter",0)
 
-                        # 🔥 ADD THIS ONLY
+                        # ALL PLAYERS
                         if batter:
                             players_set.add(batter)
+                            match_players.add(batter)
+
                         if bowler:
                             players_set.add(bowler)
+                            match_players.add(bowler)
 
+                        # RUNS
                         if batter:
                             batsman_runs[batter]=batsman_runs.get(batter,0)+runs
                             match_runs[batter]=match_runs.get(batter,0)+runs
 
+                            # BALL FACED
+                            balls_faced[batter]=balls_faced.get(batter,0)+1
+
+                            # FOURS / SIXES
+                            if runs==4:
+                                fours[batter]=fours.get(batter,0)+1
                             if runs==6:
                                 batsman_sixes[batter]=batsman_sixes.get(batter,0)+1
 
                         wickets=d.get("wickets",[])
 
-                        # 🔥 ADD THIS ONLY
                         for w in wickets:
                             out=w.get("player_out")
                             if out:
                                 players_set.add(out)
+                                dismissals[out]=dismissals.get(out,0)+1
 
                         if wickets and bowler:
                             bowler_wickets[bowler]=bowler_wickets.get(bowler,0)+len(wickets)
 
+            # MATCH PLAYED COUNT
+            for p in match_players:
+                matches_played[p]=matches_played.get(p,0)+1
+
+            # HIGHEST SCORE
             for p,runs in match_runs.items():
                 if runs>highest["runs"]:
                     highest={"runs":runs,"player":p}
@@ -121,7 +146,6 @@ def load_dataset():
         except:
             continue
 
-    # 🔥 FINAL PLAYER SET
     all_players = players_set
 
     titles={}
@@ -136,13 +160,18 @@ def load_dataset():
     highest_score_cache=highest
     sixes_cache=batsman_sixes
 
+    balls_faced_cache=balls_faced
+    dismissals_cache=dismissals
+    fours_cache=fours
+    matches_played_cache=matches_played
+
     set_caches(runs_cache,wickets_cache,titles_cache,highest_score_cache,sixes_cache)
 
     dataset_loaded=True
     print("Dataset Loaded")
 
 
-# ---------------- TRIVIA ENGINE (UNCHANGED) ----------------
+# ---------------- TRIVIA ENGINE ----------------
 
 def generate_trivia_questions():
     load_dataset()
@@ -150,6 +179,7 @@ def generate_trivia_questions():
     used=set()
 
     players=list(runs_cache.keys())
+
     if len(players)<50:
         return {"questions":[]}
 
@@ -157,7 +187,12 @@ def generate_trivia_questions():
         try:
             opts=random.sample(players,4)
             correct=max(opts,key=lambda x:runs_cache[x])
-            q={"q":"Who has scored the most IPL runs among these?","options":opts,"answer":correct}
+
+            q={
+                "q":"Who has scored the most IPL runs among these?",
+                "options":opts,
+                "answer":correct
+            }
 
             key=q["q"]+str(q["options"])
             if key in used:
@@ -188,17 +223,38 @@ def player_battle(p1:str,p2:str):
     stats1={
         "runs": runs_cache.get(p1,0),
         "wickets": wickets_cache.get(p1,0),
-        "sixes": sixes_cache.get(p1,0)
+        "sixes": sixes_cache.get(p1,0),
+        "fours": fours_cache.get(p1,0),
+        "balls": balls_faced_cache.get(p1,0),
+        "matches": matches_played_cache.get(p1,0),
+        "strike_rate": round((runs_cache.get(p1,0)/max(1,balls_faced_cache.get(p1,1)))*100,2),
+        "average": round(runs_cache.get(p1,0)/max(1,dismissals_cache.get(p1,1)),2)
     }
 
     stats2={
         "runs": runs_cache.get(p2,0),
         "wickets": wickets_cache.get(p2,0),
-        "sixes": sixes_cache.get(p2,0)
+        "sixes": sixes_cache.get(p2,0),
+        "fours": fours_cache.get(p2,0),
+        "balls": balls_faced_cache.get(p2,0),
+        "matches": matches_played_cache.get(p2,0),
+        "strike_rate": round((runs_cache.get(p2,0)/max(1,balls_faced_cache.get(p2,1)))*100,2),
+        "average": round(runs_cache.get(p2,0)/max(1,dismissals_cache.get(p2,1)),2)
     }
 
-    impact1 = stats1["runs"] + stats1["wickets"]*20 + stats1["sixes"]*2
-    impact2 = stats2["runs"] + stats2["wickets"]*20 + stats2["sixes"]*2
+    impact1 = (
+        stats1["runs"] +
+        stats1["wickets"]*25 +
+        stats1["strike_rate"]*2 +
+        stats1["average"]*2
+    )
+
+    impact2 = (
+        stats2["runs"] +
+        stats2["wickets"]*25 +
+        stats2["strike_rate"]*2 +
+        stats2["average"]*2
+    )
 
     winner = p1 if impact1 > impact2 else p2
 
@@ -224,7 +280,7 @@ def player_shotmap(player:str):
     }
 
 
-# ---------------- REST (UNCHANGED) ----------------
+# ---------------- LLM ANSWER ----------------
 
 def knowledge_answer(question):
 
@@ -243,6 +299,8 @@ def knowledge_answer(question):
 
     return {"answer":answer}
 
+
+# ---------------- AGENT ----------------
 
 def run_agent(question):
 
@@ -265,6 +323,8 @@ def run_agent(question):
     save_context(question,result["answer"])
     return result
 
+
+# ---------------- API ----------------
 
 @app.get("/")
 def home():

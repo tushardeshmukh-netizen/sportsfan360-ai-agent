@@ -2,7 +2,7 @@ import React,{useState,useRef,useEffect} from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
-import PlayerBattle from "./PlayerBattle"; // ✅ ADD THIS
+import PlayerBattle from "./PlayerBattle";
 
 const statsPool=[
 
@@ -255,12 +255,28 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 {/* TRIVIA */}
 {activeTab==="trivia" && <Trivia />}
 
-{/* ✅ PLAYER BATTLE LIVE */}
-{activeTab==="battle" && <PlayerBattle API_URL={API_URL} />}
+{/* 🔥 PLAYER BATTLE (UPGRADED SECTION WRAPPER) */}
+{activeTab==="battle" && (
+<div className="battlePage">
+
+<div className="battleHero">
+<h2>⚔️ Player Intelligence Battle</h2>
+<p>
+Compare any two IPL players across batting, bowling, impact and performance metrics.
+Analyze who dominates with data, not opinions.
+</p>
+</div>
+
+<div className="battleWrapper">
+<PlayerBattle API_URL={API_URL} />
+</div>
+
+</div>
+)}
 
 </div>
 )
 
-} 
+}
 
 export default App;
