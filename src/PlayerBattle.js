@@ -8,7 +8,6 @@ function PlayerBattle({API_URL}){
 const [players,setPlayers]=useState([]);
 const [p1,setP1]=useState("");
 const [p2,setP2]=useState("");
-
 const [result,setResult]=useState(null);
 const [loading,setLoading]=useState(false);
 
@@ -35,27 +34,22 @@ setLoading(true);
 setResult(null);
 
 try{
-
 const res=await fetch(`${API_URL}/player-battle?p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`);
 const data=await res.json();
-
 setResult(data);
-
 }catch(e){
 console.error(e);
 }
 
 setLoading(false);
-
 }
 
 
 /* SWAP */
 
 const swapPlayers=()=>{
-const temp=p1;
 setP1(p2);
-setP2(temp);
+setP2(p1);
 }
 
 
@@ -73,8 +67,6 @@ w2:(v2/max)*100
 /* INSIGHT */
 
 const getInsight=(data)=>{
-
-let winner=data.winner;
 
 let insights=[];
 
@@ -96,41 +88,19 @@ insights.push(`${data.player1} contributes in bowling`);
 insights.push(`${data.player2} stronger in bowling`);
 }
 
-return `${insights.join(", ")}. Overall ${winner} leads.`;
+return `${insights.join(", ")}. Overall ${data.winner} leads.`;
 }
 
 
 /* RADAR DATA */
 
-const getRadarData=(data)=>{
+const getRadarData=(data)=>[
+{stat:"Runs",p1:data.stats1.runs,p2:data.stats2.runs},
+{stat:"Wickets",p1:data.stats1.wickets,p2:data.stats2.wickets},
+{stat:"Sixes",p1:data.stats1.sixes,p2:data.stats2.sixes},
+{stat:"Impact",p1:data.impact1,p2:data.impact2}
+];
 
-return [
-{
-stat:"Runs",
-p1:data.stats1.runs,
-p2:data.stats2.runs
-},
-{
-stat:"Wickets",
-p1:data.stats1.wickets,
-p2:data.stats2.wickets
-},
-{
-stat:"Sixes",
-p1:data.stats1.sixes,
-p2:data.stats2.sixes
-},
-{
-stat:"Impact",
-p1:data.impact1,
-p2:data.impact2
-}
-]
-
-}
-
-
-/* ================= UI ================= */
 
 return(
 
@@ -198,36 +168,20 @@ Swap
 </div>
 
 
-{/* 🔥 RADAR CHART */}
+{/* RADAR */}
 
 <div style={{width:"100%",height:"300px"}}>
 
 <ResponsiveContainer>
-
 <RadarChart data={getRadarData(result)}>
-
 <PolarGrid />
 <PolarAngleAxis dataKey="stat" />
 <PolarRadiusAxis />
 
-<Radar
-name={result.player1}
-dataKey="p1"
-stroke="#ff4d4d"
-fill="#ff4d4d"
-fillOpacity={0.5}
-/>
-
-<Radar
-name={result.player2}
-dataKey="p2"
-stroke="#4da6ff"
-fill="#4da6ff"
-fillOpacity={0.5}
-/>
+<Radar name={result.player1} dataKey="p1" stroke="#ff4d4d" fill="#ff4d4d" fillOpacity={0.5}/>
+<Radar name={result.player2} dataKey="p2" stroke="#4da6ff" fill="#4da6ff" fillOpacity={0.5}/>
 
 </RadarChart>
-
 </ResponsiveContainer>
 
 </div>
@@ -242,21 +196,11 @@ return(
 <div className="statLabelBattle">
 Runs {result.comparison.runs===result.player1 ? "🏆" : ""}
 </div>
-
 <div className="statBars">
-
 <span className="statValue">{result.stats1.runs}</span>
-
-<div className="barContainer">
-<div className="bar" style={{width:`${w1}%`}}></div>
-</div>
-
-<div className="barContainer">
-<div className="bar" style={{width:`${w2}%`}}></div>
-</div>
-
+<div className="barContainer"><div className="bar" style={{width:`${w1}%`}}></div></div>
+<div className="barContainer"><div className="bar" style={{width:`${w2}%`}}></div></div>
 <span className="statValue">{result.stats2.runs}</span>
-
 </div>
 </div>
 )
@@ -272,21 +216,11 @@ return(
 <div className="statLabelBattle">
 Wickets {result.comparison.wickets===result.player1 ? "🏆" : ""}
 </div>
-
 <div className="statBars">
-
 <span className="statValue">{result.stats1.wickets}</span>
-
-<div className="barContainer">
-<div className="bar" style={{width:`${w1}%`}}></div>
-</div>
-
-<div className="barContainer">
-<div className="bar" style={{width:`${w2}%`}}></div>
-</div>
-
+<div className="barContainer"><div className="bar" style={{width:`${w1}%`}}></div></div>
+<div className="barContainer"><div className="bar" style={{width:`${w2}%`}}></div></div>
 <span className="statValue">{result.stats2.wickets}</span>
-
 </div>
 </div>
 )
@@ -302,21 +236,11 @@ return(
 <div className="statLabelBattle">
 Sixes {result.comparison.sixes===result.player1 ? "🏆" : ""}
 </div>
-
 <div className="statBars">
-
 <span className="statValue">{result.stats1.sixes}</span>
-
-<div className="barContainer">
-<div className="bar" style={{width:`${w1}%`}}></div>
-</div>
-
-<div className="barContainer">
-<div className="bar" style={{width:`${w2}%`}}></div>
-</div>
-
+<div className="barContainer"><div className="bar" style={{width:`${w1}%`}}></div></div>
+<div className="barContainer"><div className="bar" style={{width:`${w2}%`}}></div></div>
 <span className="statValue">{result.stats2.sixes}</span>
-
 </div>
 </div>
 )
@@ -326,24 +250,15 @@ Sixes {result.comparison.sixes===result.player1 ? "🏆" : ""}
 {/* SCORE */}
 
 <div className="scoreBoard">
-{result.player1} {result.score[result.player1]} 
-&nbsp; - &nbsp;
-{result.score[result.player2]} {result.player2}
+{result.player1} {result.score[result.player1]} - {result.score[result.player2]} {result.player2}
 </div>
 
 
 {/* WINNER */}
 
 <div className="winnerSection">
-
-<div className="winnerBox">
-🏆 Winner: {result.winner}
-</div>
-
-<div className="insightBox">
-🔥 {getInsight(result)}
-</div>
-
+<div className="winnerBox">🏆 Winner: {result.winner}</div>
+<div className="insightBox">🔥 {getInsight(result)}</div>
 </div>
 
 </div>

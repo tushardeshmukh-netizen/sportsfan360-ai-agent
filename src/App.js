@@ -4,6 +4,7 @@ import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
 import PlayerBattle from "./PlayerBattle"; // ⭐ NEW
 
+
 const statsPool=[
 
 {label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
@@ -363,10 +364,10 @@ Ask
 {/* ================= PLAYER BATTLE ================= */}
 
 {activeTab==="battle" && (
+<div className="battleWrapper">
 <PlayerBattle API_URL={API_URL}/>
-)}
-
 </div>
+)}
 
 )
 
