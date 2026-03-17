@@ -67,26 +67,17 @@ const chatEndRef=useRef()
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
 /* ROTATING STATS */
-
 useEffect(()=>{
-
 const interval=setInterval(()=>{
-
 const shuffled=[...statsPool].sort(()=>0.5-Math.random())
 setStats(shuffled.slice(0,3))
-
 },8000)
-
 return ()=>clearInterval(interval)
-
 },[])
 
-/* LOAD NEWS FEED SAFE */
-
+/* SAFE FEED LOAD */
 useEffect(()=>{
-
 if(activeTab==="home"){
-
 fetch(`${API_URL}/feed`)
 .then(res=>res.json())
 .then(data=>{
@@ -97,9 +88,7 @@ setFeed({cards:[]})
 }
 })
 .catch(()=>setFeed({cards:[]}))
-
 }
-
 },[activeTab])
 
 const suggestions=[
@@ -120,8 +109,7 @@ const clearChat=()=>{
 setMessages([])
 }
 
-/* ASK AI SAFE */
-
+/* ASK AI */
 const askAI=async(q=question)=>{
 
 if(!q.trim()) return
@@ -133,7 +121,6 @@ setMessages(newMessages)
 setQuestion("")
 
 try{
-
 const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
 const data=await res.json()
 
@@ -143,16 +130,13 @@ text:data?.answer || "No response"
 }])
 
 }catch{
-
 setMessages([...newMessages,{
 role:"ai",
 text:"Server error"
 }])
-
 }
 
 setLoading(false)
-
 }
 
 return(
@@ -160,95 +144,65 @@ return(
 <div className="app">
 
 <header className="header">
-
 <div className="brand">
-
 <img src={logo} className="logo" alt="logo"/>
-
 <div className="title">
 <h1>SportsFan360</h1>
 <p>AI Cricket Analyst</p>
 </div>
-
 </div>
-
 </header>
 
+{/* NAV */}
 <div className="tabs">
 
-<button
-className={activeTab==="home"?"tab active":"tab"}
-onClick={()=>setActiveTab("home")}
->
+<button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>
 🏠 Home
 </button>
 
-<button
-className={activeTab==="ask"?"tab active":"tab"}
-onClick={()=>setActiveTab("ask")}
->
+<button className={activeTab==="ask"?"tab active":"tab"} onClick={()=>setActiveTab("ask")}>
 🤖 AskSportsFan360
 </button>
 
-<button
-className={activeTab==="trivia"?"tab active":"tab"}
-onClick={()=>setActiveTab("trivia")}
->
+<button className={activeTab==="trivia"?"tab active":"tab"} onClick={()=>setActiveTab("trivia")}>
 🏏 IPL Trivia
 </button>
 
-<button
-className={activeTab==="battle"?"tab active":"tab"}
-onClick={()=>setActiveTab("battle")}
->
+<button className={activeTab==="battle"?"tab active":"tab"} onClick={()=>setActiveTab("battle")}>
 ⚔️ Player Battle
 </button>
 
 </div>
 
-
-{/* HOME */}
-
+{/* ================= HOME ================= */}
 {activeTab==="home" && (
 
 <div className="home">
 
 <div className="hero">
-
 <h2>Cricket Intelligence Hub</h2>
-
-<p>
-Live insights, player trends, match analysis and AI powered cricket knowledge.
-</p>
-
+<p>Live insights, player trends, match analysis and AI powered cricket knowledge.</p>
 </div>
 
 <div className="sectionTitle">🔥 IPL Quick Stats</div>
 
 <div className="quickStats">
-
 {stats.map((s,i)=>(
 <div key={i} className="statCard">
-
 <span className="statLabel">{s.label}</span>
-
 <div className="statRow">
 <strong>{s.value}</strong>
 <span className="statNum">{s.num}</span>
 </div>
-
 </div>
 ))}
-
 </div>
 
 <div className="sectionTitle">📰 Latest Cricket News</div>
 
-{!feed && <p style={{padding:"20px"}}>Loading news...</p>}
-
-{feed && (
-
-<div className="feedCards">
+{(!feed || !feed.cards) && (
+<p style={{padding:"20px"}}>News unavailable</p>
+)}
 
 {feed && feed.cards && Array.isArray(feed.cards) && (
 
@@ -258,19 +212,34 @@ Live insights, player trends, match analysis and AI powered cricket knowledge.
 
 <a
 key={i}
-href={c.link || "#"}
+href={c?.link || "#"}
 target="_blank"
 rel="noreferrer"
 className="feedCard"
 >
 
+{c?.image && (
+<img src={c.image} className="feedImage" alt="news"/>
+)}
+
+<div className="feedContent">
+<h3>{c?.title || "No title"}</h3>
+<p>{c?.text || ""}</p>
+</div>
+
+</a>
+
+))}
+
 </div>
 
 )}
 
+</div>
 
-{/* ASK */}
+)}
 
+{/* ================= ASK ================= */}
 {activeTab==="ask" && (
 
 <div className="askPage">
@@ -318,14 +287,10 @@ Ask
 
 )}
 
-
-{/* TRIVIA */}
-
+{/* ================= TRIVIA ================= */}
 {activeTab==="trivia" && <Trivia />}
 
-
-{/* BATTLE */}
-
+{/* ================= BATTLE ================= */}
 {activeTab==="battle" && (
 <div className="battleWrapper">
 <ErrorBoundary>
