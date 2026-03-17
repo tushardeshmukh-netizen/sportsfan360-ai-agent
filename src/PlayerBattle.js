@@ -6,8 +6,11 @@ Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContain
 function PlayerBattle({API_URL}){
 
 const [players,setPlayers]=useState([]);
+const [search1,setSearch1]=useState("");
+const [search2,setSearch2]=useState("");
 const [p1,setP1]=useState("");
 const [p2,setP2]=useState("");
+
 const [result,setResult]=useState(null);
 const [loading,setLoading]=useState(false);
 
@@ -15,19 +18,25 @@ const [loading,setLoading]=useState(false);
 /* LOAD PLAYERS */
 
 useEffect(()=>{
-
 fetch(`${API_URL}/player-list`)
 .then(res=>res.json())
 .then(data=>setPlayers(data.players || []))
 .catch(()=>setPlayers([]))
-
 },[API_URL])
+
+
+/* FILTER PLAYERS */
+
+const filterPlayers=(search)=>{
+return players
+.filter(p=>p.toLowerCase().includes(search.toLowerCase()))
+.slice(0,20)
+}
 
 
 /* FETCH BATTLE */
 
 const startBattle=async()=>{
-
 if(!p1 || !p2 || p1===p2) return;
 
 setLoading(true);
@@ -53,7 +62,7 @@ setP2(p1);
 }
 
 
-/* BAR WIDTH */
+/* WIDTH */
 
 const getWidth=(v1,v2)=>{
 const max=Math.max(v1,v2,1);
@@ -108,34 +117,56 @@ return(
 
 <div className="battleHeader">
 <h2>⚔️ Player Battle</h2>
-<p>Select any two IPL players and compare their stats</p>
+<p>Search and compare any IPL players across all seasons</p>
 </div>
 
 
-{/* SELECTORS */}
+{/* SEARCH SELECTORS */}
 
 <div className="battleSelectors">
 
-<select value={p1} onChange={(e)=>setP1(e.target.value)}>
-<option value="">Select Player 1</option>
-{players.map((p,i)=>(
-<option key={i} value={p}>{p}</option>
+<div className="searchBox">
+
+<input
+placeholder="Search Player 1..."
+value={search1}
+onChange={(e)=>setSearch1(e.target.value)}
+/>
+
+<div className="dropdownList">
+{filterPlayers(search1).map((p,i)=>(
+<div key={i} onClick={()=>{setP1(p);setSearch1(p)}}>
+{p}
+</div>
 ))}
-</select>
+</div>
+
+</div>
 
 <div className="vsText">VS</div>
 
-<select value={p2} onChange={(e)=>setP2(e.target.value)}>
-<option value="">Select Player 2</option>
-{players.map((p,i)=>(
-<option key={i} value={p}>{p}</option>
+<div className="searchBox">
+
+<input
+placeholder="Search Player 2..."
+value={search2}
+onChange={(e)=>setSearch2(e.target.value)}
+/>
+
+<div className="dropdownList">
+{filterPlayers(search2).map((p,i)=>(
+<div key={i} onClick={()=>{setP2(p);setSearch2(p)}}>
+{p}
+</div>
 ))}
-</select>
+</div>
+
+</div>
 
 </div>
 
 
-<div style={{textAlign:"center",marginBottom:"15px"}}>
+<div style={{textAlign:"center",marginBottom:"20px"}}>
 
 <button className="battleBtn" onClick={startBattle}>
 Compare Players
@@ -150,9 +181,7 @@ Swap
 
 {/* LOADING */}
 
-{loading && (
-<p style={{textAlign:"center"}}>Analyzing...</p>
-)}
+{loading && <p style={{textAlign:"center"}}>Analyzing player data...</p>}
 
 
 {/* RESULT */}
@@ -170,7 +199,7 @@ Swap
 
 {/* RADAR */}
 
-<div style={{width:"100%",height:"300px"}}>
+<div style={{width:"100%",height:"320px"}}>
 
 <ResponsiveContainer>
 <RadarChart data={getRadarData(result)}>
@@ -178,8 +207,8 @@ Swap
 <PolarAngleAxis dataKey="stat" />
 <PolarRadiusAxis />
 
-<Radar name={result.player1} dataKey="p1" stroke="#ff4d4d" fill="#ff4d4d" fillOpacity={0.5}/>
-<Radar name={result.player2} dataKey="p2" stroke="#4da6ff" fill="#4da6ff" fillOpacity={0.5}/>
+<Radar dataKey="p1" stroke="#ff4d4d" fill="#ff4d4d" fillOpacity={0.5}/>
+<Radar dataKey="p2" stroke="#4da6ff" fill="#4da6ff" fillOpacity={0.5}/>
 
 </RadarChart>
 </ResponsiveContainer>
@@ -187,60 +216,43 @@ Swap
 </div>
 
 
-{/* RUNS */}
+{/* NUMERIC CARDS */}
+
+<div className="numberGrid">
+
+<div className="numCard">
+<h4>Runs</h4>
+<p>{result.stats1.runs} vs {result.stats2.runs}</p>
+</div>
+
+<div className="numCard">
+<h4>Wickets</h4>
+<p>{result.stats1.wickets} vs {result.stats2.wickets}</p>
+</div>
+
+<div className="numCard">
+<h4>Sixes</h4>
+<p>{result.stats1.sixes} vs {result.stats2.sixes}</p>
+</div>
+
+<div className="numCard">
+<h4>Impact</h4>
+<p>{result.impact1} vs {result.impact2}</p>
+</div>
+
+</div>
+
+
+{/* BARS */}
 
 {(()=>{
 const {w1,w2}=getWidth(result.stats1.runs,result.stats2.runs);
 return(
 <div className="statRowBattle">
-<div className="statLabelBattle">
-Runs {result.comparison.runs===result.player1 ? "🏆" : ""}
-</div>
-<div className="statBars">
-<span className="statValue">{result.stats1.runs}</span>
-<div className="barContainer"><div className="bar" style={{width:`${w1}%`}}></div></div>
-<div className="barContainer"><div className="bar" style={{width:`${w2}%`}}></div></div>
-<span className="statValue">{result.stats2.runs}</span>
-</div>
-</div>
-)
-})()}
-
-
-{/* WICKETS */}
-
-{(()=>{
-const {w1,w2}=getWidth(result.stats1.wickets,result.stats2.wickets);
-return(
-<div className="statRowBattle">
-<div className="statLabelBattle">
-Wickets {result.comparison.wickets===result.player1 ? "🏆" : ""}
-</div>
-<div className="statBars">
-<span className="statValue">{result.stats1.wickets}</span>
-<div className="barContainer"><div className="bar" style={{width:`${w1}%`}}></div></div>
-<div className="barContainer"><div className="bar" style={{width:`${w2}%`}}></div></div>
-<span className="statValue">{result.stats2.wickets}</span>
-</div>
-</div>
-)
-})()}
-
-
-{/* SIXES */}
-
-{(()=>{
-const {w1,w2}=getWidth(result.stats1.sixes,result.stats2.sixes);
-return(
-<div className="statRowBattle">
-<div className="statLabelBattle">
-Sixes {result.comparison.sixes===result.player1 ? "🏆" : ""}
-</div>
-<div className="statBars">
-<span className="statValue">{result.stats1.sixes}</span>
-<div className="barContainer"><div className="bar" style={{width:`${w1}%`}}></div></div>
-<div className="barContainer"><div className="bar" style={{width:`${w2}%`}}></div></div>
-<span className="statValue">{result.stats2.sixes}</span>
+<div className="statLabelBattle">Runs</div>
+<div className="barDual">
+<div className="bar left" style={{width:`${w1}%`}}></div>
+<div className="bar right" style={{width:`${w2}%`}}></div>
 </div>
 </div>
 )
