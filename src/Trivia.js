@@ -73,7 +73,7 @@ const finalScore = selected===questions[current].answer ? score+1 : score;
 setScore(finalScore);
 setQuizFinished(true);
 
-/* CONFETTI ONLY FOR 10/10 */
+/* CONFETTI ONLY FOR FULL SCORE */
 
 if(finalScore===questions.length){
 
@@ -171,13 +171,14 @@ Start Quiz
 Question {current+1} / {questions.length}
 </h3>
 
+{/* ✅ FIXED HERE */}
 <p className="quizQuestion">
-{questions[current].q}
+{questions[current]?.question}
 </p>
 
 <div className="quizOptions">
 
-{questions[current].options.map((opt,i)=>{
+{questions[current]?.options.map((opt,i)=>{
 
 let className="quizOption";
 

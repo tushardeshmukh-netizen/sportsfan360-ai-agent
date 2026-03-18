@@ -1547,6 +1547,13 @@ border:1px solid #2563eb;
 box-shadow:0 0 10px rgba(37,99,235,0.6);
 }
 
+.questionText{
+font-size:18px;
+margin:20px 0;
+color:#fff;
+font-weight:500;
+}
+
 
 .chatContainer{
 display:flex;
