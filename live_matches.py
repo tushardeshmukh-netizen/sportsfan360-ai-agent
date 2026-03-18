@@ -4,31 +4,33 @@ API_KEY = "830cd356-c66b-4f9a-9fcb-40ed04fae5b5"
 
 def get_live_matches():
 
-    url = f"https://api.cricapi.com/v1/currentMatches?apikey={API_KEY}&offset=0"
-
     try:
-        res = requests.get(url, timeout=10)
+        # 🔥 1. CURRENT MATCHES
+        match_url = f"https://api.cricapi.com/v1/currentMatches?apikey={API_KEY}&offset=0"
+        match_res = requests.get(match_url, timeout=10)
+        match_data = match_res.json().get("data", [])
 
-        if res.status_code != 200:
-            print("API ERROR:", res.status_code, res.text)
-            return get_dummy_matches()
-
-        data = res.json()
-
-        # 🔥 IMPORTANT: cricapi uses "data"
-        matches_data = data.get("data", [])
+        # 🔥 2. SCORE DATA
+        score_url = f"https://api.cricapi.com/v1/cricScore?apikey={API_KEY}"
+        score_res = requests.get(score_url, timeout=10)
+        score_data = score_res.json().get("data", [])
 
         matches = []
 
-        for m in matches_data:
+        for m in match_data:
 
-            team1 = m.get("teamInfo", [{}])[0].get("name", "TBD") if len(m.get("teamInfo", [])) > 0 else "TBD"
-            team2 = m.get("teamInfo", [{}])[1].get("name", "TBD") if len(m.get("teamInfo", [])) > 1 else "TBD"
+            team_info = m.get("teamInfo", [])
+            team1 = team_info[0].get("name", "TBD") if len(team_info) > 0 else "TBD"
+            team2 = team_info[1].get("name", "TBD") if len(team_info) > 1 else "TBD"
 
             status = m.get("status", "Upcoming")
 
-            if not team1 or not team2:
-                continue
+            # 🔥 MATCH SCORE LINKING
+            score_text = ""
+            for s in score_data:
+                if team1 in s.get("t1", "") and team2 in s.get("t2", ""):
+                    score_text = s.get("score", "")
+                    break
 
             matches.append({
                 "id": m.get("id"),
@@ -36,44 +38,40 @@ def get_live_matches():
                 "team2": team2,
                 "status": status,
                 "venue": m.get("venue", "Unknown"),
-                "date": m.get("date", "")
+                "date": m.get("date", ""),
+                "score": score_text if score_text else "No score yet"
             })
 
-        # 🔥 SORT: LIVE FIRST
+        # 🔥 SORT LIVE FIRST
         matches = sorted(matches, key=lambda x: (
-            "live" not in x["status"].lower() and "progress" not in x["status"].lower()
+            "live" not in x["status"].lower()
         ))
 
-        # 🔥 LIMIT
-        matches = matches[:10]
-
-        if len(matches) == 0:
-            return get_dummy_matches()
-
-        return matches
+        return matches[:10]
 
     except Exception as e:
-        print("Live Match Error:", e)
+        print("Match Error:", e)
         return get_dummy_matches()
 
 
-# 🔥 FALLBACK
 def get_dummy_matches():
     return [
         {
             "id": "demo1",
             "team1": "CSK",
             "team2": "MI",
-            "status": "Match in progress",
-            "venue": "Wankhede Stadium",
-            "date": "Today"
+            "status": "Live",
+            "venue": "Wankhede",
+            "date": "Today",
+            "score": "CSK 145/3 (15.2)"
         },
         {
             "id": "demo2",
             "team1": "RCB",
             "team2": "KKR",
-            "status": "Starting soon",
+            "status": "Upcoming",
             "venue": "Chinnaswamy",
-            "date": "Today"
+            "date": "Today",
+            "score": "Starts at 7:30 PM"
         }
     ]

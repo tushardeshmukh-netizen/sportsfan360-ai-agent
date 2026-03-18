@@ -227,36 +227,53 @@ return(
 ))}
 </div>
 
-/* live match*/
-
+/* live match */
 <div className="sectionTitle">🏏 Live & Upcoming Matches</div>
 
 {matches.length > 0 && (
 <div className="matchCards">
+
 {matches.map((m,i)=>(
 <div key={i} className="matchCard">
 
+{/* 🔴 STATUS BADGE */}
+<div className={`matchBadge ${
+m.status?.toLowerCase().includes("live") ? "live" : "upcoming"
+}`}>
+{m.status || "Upcoming"}
+</div>
+
+{/* 🏏 TEAMS */}
 <div className="matchTeams">
-<span>{m.team1}</span>
-<span className="vs">vs</span>
-<span>{m.team2}</span>
+<div className="team">{m.team1}</div>
+<div className="vs">vs</div>
+<div className="team">{m.team2}</div>
 </div>
 
-<div className="matchStatus">
-{m.status}
+{/* 📊 SCORE */}
+<div className="matchScore">
+{m.score && m.score !== "" ? m.score : "No score available"}
 </div>
 
+{/* 📍 META */}
 <div className="matchMeta">
-<span>{m.venue}</span>
-<span>{m.date}</span>
+<span>{m.venue || "Unknown venue"}</span>
+<span>{m.date || ""}</span>
 </div>
 
 </div>
 ))}
+
 </div>
 )}
 
-/* live match*/
+{/* ❌ FALLBACK UI */}
+{matches.length === 0 && (
+<div className="noMatches">
+No live or upcoming matches available
+</div>
+)}
+/* live match */
 
 
 <div className="sectionTitle">📰 Latest Cricket News</div>
