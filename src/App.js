@@ -227,53 +227,61 @@ return(
 ))}
 </div>
 
-/* live match */
+{/* Match */}
 <div className="sectionTitle">🏏 Live & Upcoming Matches</div>
 
-{matches.length > 0 && (
-<div className="matchCards">
+{(() => {
 
-{matches.map((m,i)=>(
-<div key={i} className="matchCard">
+const matchList = Array.isArray(matches)
+  ? matches
+  : (matches?.matches || []);
 
-{/* 🔴 STATUS BADGE */}
-<div className={`matchBadge ${
-m.status?.toLowerCase().includes("live") ? "live" : "upcoming"
-}`}>
-{m.status || "Upcoming"}
-</div>
+if(matchList.length === 0){
+  return (
+    <div className="noMatches">
+      No live or upcoming matches available
+    </div>
+  );
+}
 
-{/* 🏏 TEAMS */}
-<div className="matchTeams">
-<div className="team">{m.team1}</div>
-<div className="vs">vs</div>
-<div className="team">{m.team2}</div>
-</div>
+return (
+  <div className="matchCards">
 
-{/* 📊 SCORE */}
-<div className="matchScore">
-{m.score && m.score !== "" ? m.score : "No score available"}
-</div>
+    {matchList.map((m,i)=>(
+      <div key={i} className="matchCard">
 
-{/* 📍 META */}
-<div className="matchMeta">
-<span>{m.venue || "Unknown venue"}</span>
-<span>{m.date || ""}</span>
-</div>
+        {/* 🔴 STATUS BADGE */}
+        <div className={`matchBadge ${
+          (m.status || "").toLowerCase().includes("live") ? "live" : "upcoming"
+        }`}>
+          {m.status || "Upcoming"}
+        </div>
 
-</div>
-))}
+        {/* 🏏 TEAMS */}
+        <div className="matchTeams">
+          <div className="team">{m.team1 || "TBD"}</div>
+          <div className="vs">vs</div>
+          <div className="team">{m.team2 || "TBD"}</div>
+        </div>
 
-</div>
-)}
+        {/* 📊 SCORE */}
+        <div className="matchScore">
+          {m.score && m.score !== "" ? m.score : "No score available"}
+        </div>
 
-{/* ❌ FALLBACK UI */}
-{matches.length === 0 && (
-<div className="noMatches">
-No live or upcoming matches available
-</div>
-)}
-/* live match */
+        {/* 📍 META */}
+        <div className="matchMeta">
+          <span>{m.venue || "Unknown venue"}</span>
+          <span>{m.date || ""}</span>
+        </div>
+
+      </div>
+    ))}
+
+  </div>
+);
+
+})()}
 
 
 <div className="sectionTitle">📰 Latest Cricket News</div>
