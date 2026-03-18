@@ -40,15 +40,14 @@ const [loading,setLoading]=useState(false)
 const chatEndRef=useRef()
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
-/* ✅ FIX: speaking declared BEFORE use */
 const [speaking,setSpeaking]=useState(false)
 const [listening,setListening]=useState(false)
 
-/* ✅ Voice Support */
+/* VOICE SUPPORT */
 const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
 const isSpeechOutputSupported = typeof window !== "undefined" && "speechSynthesis" in window
 
-/* 🔊 SPEAK */
+/* SPEAK */
 const speakText=(text)=>{
 if(!isSpeechOutputSupported) return
 
@@ -63,76 +62,7 @@ utterance.onend=()=>setSpeaking(false)
 window.speechSynthesis.speak(utterance)
 }
 
-// 🔥 ADD THESE STATES AT TOP
-const [liveMatches,setLiveMatches]=useState([])
-const [selectedMatch,setSelectedMatch]=useState(null)
-
-// 🔥 LOAD LIVE MATCHES
-useEffect(()=>{
-if(activeTab==="home"){
-fetch(`${API_URL}/live-matches`)
-.then(res=>res.json())
-.then(data=>setLiveMatches(data || []))
-.catch(()=>setLiveMatches([]))
-}
-},[activeTab])
-
-
-const [commentary,setCommentary]=useState("")
-const [loadingCommentary,setLoadingCommentary]=useState(false)
-const commentaryIntervalRef = useRef(null)
-
-const loadCommentary=async(match)=>{
-useEffect(()=>{
-
-// if match selected → start auto refresh
-if(selectedMatch){
-
-// 🔥 first load already done manually
-// now auto refresh every 20 sec
-
-commentaryIntervalRef.current = setInterval(()=>{
-loadCommentary(selectedMatch)
-},20000)
-
-}
-
-// cleanup when match closed
-return ()=>{
-if(commentaryIntervalRef.current){
-clearInterval(commentaryIntervalRef.current)
-commentaryIntervalRef.current = null
-}
-}
-
-},[selectedMatch])
-
-
-const loadCommentary=async(match)=>{
-
-if(loadingCommentary) return
-
-setLoadingCommentary(true)
-setCommentary("")
-
-try{
-const res=await fetch(
-`${API_URL}/match-commentary?team1=${match.team1}&team2=${match.team2}&status=${encodeURIComponent(match.status)}`
-)
-
-const data=await res.json()
-
-setCommentary(data.commentary || "No commentary")
-
-}catch{
-setCommentary("Error loading commentary")
-}
-
-setLoadingCommentary(false)
-}
-
-
-/* 🎤 VOICE INPUT */
+/* VOICE INPUT */
 const startVoice=()=>{
 if(!isVoiceSupported) return
 
@@ -170,7 +100,6 @@ askAI(finalTranscript)
 recognition.onerror=()=>setListening(false)
 
 recognition.start()
-
 setTimeout(()=>recognition.stop(),6000)
 }
 
@@ -266,71 +195,8 @@ return(
 
 <div className="hero">
 <h2>Cricket Intelligence Hub</h2>
-<p>Live insights, player trends, match analysis and AI powered cricket knowledge.</p>
+<p>Player insights, stats, AI powered cricket knowledge.</p>
 </div>
-
-<div className="sectionTitle">🔴 Live Matches</div>
-
-{liveMatches.length===0 && (
-<p style={{padding:"20px"}}>No live matches currently</p>
-)}
-
-<div className="liveMatches">
-
-{liveMatches.map((m,i)=>(
-<div 
-key={i} 
-className="matchCard"
-onClick={()=>{
-setSelectedMatch(m)
-loadCommentary(m)   // ✅ LOAD AI COMMENTARY
-}}
->
-<h3>{m.team1} vs {m.team2}</h3>
-<p>{m.status}</p>
-<span>{m.venue}</span>
-</div>
-))}
-
-</div>
-
-{/* 🔥 MATCH DETAIL PANEL WITH AI */}
-{selectedMatch && (
-<div className="matchDetail">
-
-<h2>{selectedMatch.team1} vs {selectedMatch.team2}</h2>
-
-<p className="matchStatus">{selectedMatch.status}</p>
-
-<p><strong>Venue:</strong> {selectedMatch.venue}</p>
-<p><strong>Date:</strong> {selectedMatch.date}</p>
-
-{/* 🔥 AI COMMENTARY */}
-<div className="aiCommentary">
-
-<h3>🤖 AI Match Insight</h3>
-
-{loadingCommentary && <p>Analyzing match...</p>}
-
-{!loadingCommentary && (
-<p>{commentary}</p>
-)}
-
-</div>
-
-<button 
-className="closeMatch"
-onClick={()=>{
-setSelectedMatch(null)   // ✅ FIXED (you had wrong logic)
-}}
->
-Close
-</button>
-
-</div>
-)}
-
-
 
 <div className="sectionTitle">🔥 IPL Quick Stats</div>
 
@@ -365,8 +231,6 @@ Close
 </div>
 )}
 
-
-
 {/* ASK */}
 {activeTab==="ask" && (
 <div className="askPage">
@@ -388,7 +252,7 @@ Close
 
 {messages.map((m,i)=>(
 <div key={i} className={`bubbleRow ${m.role}`}>
-<div className={`bubble ${m.role} ${speaking && m.role==="ai" ? "speaking" : ""}`}>
+<div className={`bubble ${m.role}`}>
 {m.text}
 </div>
 </div>
@@ -423,18 +287,6 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 </button>
 )}
 
-{speaking && (
-<button 
-className="stopSpeakBtn"
-onClick={()=>{
-window.speechSynthesis.cancel()
-setSpeaking(false)
-}}
->
-🔊 Stop
-</button>
-)}
-
 <button onClick={()=>askAI()}>Ask</button>
 
 </div>
@@ -446,10 +298,7 @@ setSpeaking(false)
 </div>
 )}
 
-{/* TRIVIA */}
 {activeTab==="trivia" && <Trivia />}
-
-{/* BATTLE */}
 {activeTab==="battle" && <PlayerBattle API_URL={API_URL}/>}
 
 </div>
