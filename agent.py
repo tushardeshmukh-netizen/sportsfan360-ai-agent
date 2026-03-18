@@ -414,6 +414,59 @@ def matches():
 def standings():
     return get_standings()
 
+# 🔥 ADD FUNCTION HERE (IMPORTANT POSITION)
+def generate_trivia_questions():
+
+    load_dataset()
+
+    try:
+
+        questions = []
+
+        top_run = max(runs_cache, key=runs_cache.get)
+        questions.append({
+            "question": "Who has scored the most IPL runs?",
+            "options": random.sample(list(runs_cache.keys()), 3) + [top_run],
+            "answer": top_run
+        })
+
+        top_wicket = max(wickets_cache, key=wickets_cache.get)
+        questions.append({
+            "question": "Who has taken the most IPL wickets?",
+            "options": random.sample(list(wickets_cache.keys()), 3) + [top_wicket],
+            "answer": top_wicket
+        })
+
+        top_sixes = max(sixes_cache, key=sixes_cache.get)
+        questions.append({
+            "question": "Who has hit the most IPL sixes?",
+            "options": random.sample(list(sixes_cache.keys()), 3) + [top_sixes],
+            "answer": top_sixes
+        })
+
+        questions.append({
+            "question": "Who scored the highest individual IPL score?",
+            "options": ["Chris Gayle","Virat Kohli","AB de Villiers","David Warner"],
+            "answer": "Chris Gayle"
+        })
+
+        random_player = random.choice(list(runs_cache.keys()))
+        questions.append({
+            "question": f"Is {random_player} an IPL player?",
+            "options": ["Yes","No"],
+            "answer": "Yes"
+        })
+
+        random.shuffle(questions)
+
+        return {"questions": questions}
+
+    except Exception as e:
+        print("Trivia Error:", e)
+        return {"questions": []}
+
+
+# 🔥 ROUTE (KEEP THIS SAME)
 @app.get("/trivia")
 def trivia():
     return generate_trivia_questions()
