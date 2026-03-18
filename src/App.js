@@ -63,6 +63,73 @@ utterance.onend=()=>setSpeaking(false)
 window.speechSynthesis.speak(utterance)
 }
 
+// 🔥 ADD THESE STATES AT TOP
+const [liveMatches,setLiveMatches]=useState([])
+const [selectedMatch,setSelectedMatch]=useState(null)
+
+// 🔥 LOAD LIVE MATCHES
+useEffect(()=>{
+if(activeTab==="home"){
+fetch(`${API_URL}/live-matches`)
+.then(res=>res.json())
+.then(data=>setLiveMatches(data || []))
+.catch(()=>setLiveMatches([]))
+}
+},[activeTab])
+
+
+const [commentary,setCommentary]=useState("")
+const [loadingCommentary,setLoadingCommentary]=useState(false)
+const commentaryIntervalRef = useRef(null)
+useEffect(()=>{
+
+// if match selected → start auto refresh
+if(selectedMatch){
+
+// 🔥 first load already done manually
+// now auto refresh every 20 sec
+
+commentaryIntervalRef.current = setInterval(()=>{
+loadCommentary(selectedMatch)
+},20000)
+
+}
+
+// cleanup when match closed
+return ()=>{
+if(commentaryIntervalRef.current){
+clearInterval(commentaryIntervalRef.current)
+commentaryIntervalRef.current = null
+}
+}
+
+},[selectedMatch])
+
+
+const loadCommentary=async(match)=>{
+
+if(loadingCommentary) return  // 🔥 prevent overlap
+
+setLoadingCommentary(true)
+setCommentary("")
+
+try{
+const res=await fetch(
+`${API_URL}/match-commentary?team1=${match.team1}&team2=${match.team2}&status=${encodeURIComponent(match.status)}`
+)
+
+const data=await res.json()
+
+setCommentary(data.commentary || "No commentary")
+
+}catch{
+setCommentary("Error loading commentary")
+}
+
+setLoadingCommentary(false)
+}
+
+
 /* 🎤 VOICE INPUT */
 const startVoice=()=>{
 if(!isVoiceSupported) return
@@ -200,6 +267,69 @@ return(
 <p>Live insights, player trends, match analysis and AI powered cricket knowledge.</p>
 </div>
 
+<div className="sectionTitle">🔴 Live Matches</div>
+
+{liveMatches.length===0 && (
+<p style={{padding:"20px"}}>No live matches currently</p>
+)}
+
+<div className="liveMatches">
+
+{liveMatches.map((m,i)=>(
+<div 
+key={i} 
+className="matchCard"
+onClick={()=>{
+setSelectedMatch(m)
+loadCommentary(m)   // ✅ LOAD AI COMMENTARY
+}}
+>
+<h3>{m.team1} vs {m.team2}</h3>
+<p>{m.status}</p>
+<span>{m.venue}</span>
+</div>
+))}
+
+</div>
+
+{/* 🔥 MATCH DETAIL PANEL WITH AI */}
+{selectedMatch && (
+<div className="matchDetail">
+
+<h2>{selectedMatch.team1} vs {selectedMatch.team2}</h2>
+
+<p className="matchStatus">{selectedMatch.status}</p>
+
+<p><strong>Venue:</strong> {selectedMatch.venue}</p>
+<p><strong>Date:</strong> {selectedMatch.date}</p>
+
+{/* 🔥 AI COMMENTARY */}
+<div className="aiCommentary">
+
+<h3>🤖 AI Match Insight</h3>
+
+{loadingCommentary && <p>Analyzing match...</p>}
+
+{!loadingCommentary && (
+<p>{commentary}</p>
+)}
+
+</div>
+
+<button 
+className="closeMatch"
+onClick={()=>{
+setSelectedMatch(null)   // ✅ FIXED (you had wrong logic)
+}}
+>
+Close
+</button>
+
+</div>
+)}
+
+
+
 <div className="sectionTitle">🔥 IPL Quick Stats</div>
 
 <div className="quickStats">
@@ -232,6 +362,27 @@ return(
 
 </div>
 )}
+
+const loadCommentary=async(match)=>{
+
+setLoadingCommentary(true)
+setCommentary("")
+
+try{
+const res=await fetch(
+`${API_URL}/match-commentary?team1=${match.team1}&team2=${match.team2}&status=${encodeURIComponent(match.status)}`
+)
+
+const data=await res.json()
+
+setCommentary(data.commentary || "No commentary")
+
+}catch{
+setCommentary("Error loading commentary")
+}
+
+setLoadingCommentary(false)
+}
 
 {/* ASK */}
 {activeTab==="ask" && (

@@ -528,6 +528,52 @@ def trivia():
     return generate_trivia_questions()
 
 
+from live_matches import get_live_matches
+
+@app.get("/live-matches")
+def live_matches():
+    return get_live_matches()
+    
+    
+@app.get("/match-commentary")
+def match_commentary(team1:str, team2:str, status:str):
+
+    try:
+
+        prompt = f"""
+        You are a professional cricket analyst.
+
+        Match: {team1} vs {team2}
+        Status: {status}
+
+        Give a short live match commentary (2-3 lines).
+        Make it insightful, not generic.
+        """
+
+        if os.getenv("GROQ_API_KEY"):
+
+            res = groq.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role":"system","content":"You are a cricket expert."},
+                    {"role":"user","content":prompt}
+                ],
+                temperature=0.7
+            )
+
+            answer = res.choices[0].message.content
+
+        else:
+            answer = "Live AI commentary unavailable."
+
+    except Exception as e:
+        print("Commentary Error:", e)
+        answer = "Unable to generate commentary."
+
+    return {"commentary": answer}
+    
+    
+    
 # 🔥 SAFE LOAD
 try:
     load_dataset()
