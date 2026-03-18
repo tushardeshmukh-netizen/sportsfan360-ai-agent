@@ -42,6 +42,7 @@ const [stats,setStats]=useState(statsPool.slice(0,3))
 
 /* ✅ Voice Support */
 const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
+const [listening,setListening]=useState(false)
 
 /* ROTATING STATS */
 useEffect(()=>{
@@ -116,11 +117,25 @@ const SpeechRecognition=window.webkitSpeechRecognition
 const recognition=new SpeechRecognition()
 
 recognition.lang="en-IN"
+recognition.continuous=false
+recognition.interimResults=false
+
+recognition.onstart=()=>{
+setListening(true)
+}
+
+recognition.onend=()=>{
+setListening(false)
+}
 
 recognition.onresult=(e)=>{
 const text=e.results[0][0].transcript
 setQuestion(text)
 askAI(text)
+}
+
+recognition.onerror=()=>{
+setListening(false)
 }
 
 recognition.start()
@@ -241,13 +256,18 @@ return(
 
 <input
 value={question}
-placeholder="Ask SportsFan360..."
+placeholder={listening ? "Listening... speak now" : "Ask SportsFan360..."}
 onChange={(e)=>setQuestion(e.target.value)}
 onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 />
 
 {isVoiceSupported && (
-<button className="micBtn" onClick={startVoice}>🎤</button>
+<button 
+className={`micBtn ${listening ? "listening" : ""}`} 
+onClick={startVoice}
+>
+{listening ? "🔴 Listening..." : "🎤"}
+</button>
 )}
 
 <button onClick={()=>askAI()}>Ask</button>
