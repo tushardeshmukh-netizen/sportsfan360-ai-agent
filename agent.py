@@ -420,46 +420,102 @@ def generate_trivia_questions():
     load_dataset()
 
     try:
-
         questions = []
 
+        players = list(runs_cache.keys())
+        bowlers = list(wickets_cache.keys())
+
+        # 🧠 CATEGORY 1: Runs Leader
         top_run = max(runs_cache, key=runs_cache.get)
         questions.append({
             "question": "Who has scored the most IPL runs?",
-            "options": random.sample(list(runs_cache.keys()), 3) + [top_run],
+            "options": random.sample(players, 3) + [top_run],
             "answer": top_run
         })
 
+        # 🧠 CATEGORY 2: Wickets Leader
         top_wicket = max(wickets_cache, key=wickets_cache.get)
         questions.append({
             "question": "Who has taken the most IPL wickets?",
-            "options": random.sample(list(wickets_cache.keys()), 3) + [top_wicket],
+            "options": random.sample(bowlers, 3) + [top_wicket],
             "answer": top_wicket
         })
 
+        # 🧠 CATEGORY 3: Sixes Leader
         top_sixes = max(sixes_cache, key=sixes_cache.get)
         questions.append({
             "question": "Who has hit the most IPL sixes?",
-            "options": random.sample(list(sixes_cache.keys()), 3) + [top_sixes],
+            "options": random.sample(players, 3) + [top_sixes],
             "answer": top_sixes
         })
 
+        # 🧠 CATEGORY 4: Strike Rate Player
+        random_player = random.choice(players)
+        questions.append({
+            "question": f"Which format is {random_player} best known for?",
+            "options": ["Test","ODI","T20","All"],
+            "answer": "T20"
+        })
+
+        # 🧠 CATEGORY 5: Random Runs Compare
+        p1, p2 = random.sample(players, 2)
+        better = p1 if runs_cache.get(p1,0) > runs_cache.get(p2,0) else p2
+
+        questions.append({
+            "question": f"Who has more IPL runs?",
+            "options": [p1, p2],
+            "answer": better
+        })
+
+        # 🧠 CATEGORY 6: Random Wickets Compare
+        b1, b2 = random.sample(bowlers, 2)
+        better_bowler = b1 if wickets_cache.get(b1,0) > wickets_cache.get(b2,0) else b2
+
+        questions.append({
+            "question": "Who has taken more IPL wickets?",
+            "options": [b1, b2],
+            "answer": better_bowler
+        })
+
+        # 🧠 CATEGORY 7: Highest Score
         questions.append({
             "question": "Who scored the highest individual IPL score?",
-            "options": ["Chris Gayle","Virat Kohli","AB de Villiers","David Warner"],
+            "options": ["Chris Gayle","AB de Villiers","Virat Kohli","David Warner"],
             "answer": "Chris Gayle"
         })
 
-        random_player = random.choice(list(runs_cache.keys()))
+        # 🧠 CATEGORY 8: Team Trivia
         questions.append({
-            "question": f"Is {random_player} an IPL player?",
-            "options": ["Yes","No"],
-            "answer": "Yes"
+            "question": "Which team has won most IPL titles?",
+            "options": ["CSK","MI","RCB","KKR"],
+            "answer": "MI"
         })
+
+        # 🧠 CATEGORY 9: True/False Style
+        p = random.choice(players)
+        questions.append({
+            "question": f"{p} is an IPL player.",
+            "options": ["True","False"],
+            "answer": "True"
+        })
+
+        # 🧠 CATEGORY 10: Random Player Exists
+        fake_name = "John Cricket"
+        questions.append({
+            "question": f"Is {fake_name} an IPL player?",
+            "options": ["Yes","No"],
+            "answer": "No"
+        })
+
+        # 🔥 FINAL RANDOMIZE
+        for q in questions:
+            random.shuffle(q["options"])
 
         random.shuffle(questions)
 
-        return {"questions": questions}
+        return {
+            "questions": questions[:10]
+        }
 
     except Exception as e:
         print("Trivia Error:", e)
