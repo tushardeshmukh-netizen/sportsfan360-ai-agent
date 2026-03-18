@@ -62,6 +62,10 @@ utterance.onend=()=>setSpeaking(false)
 window.speechSynthesis.speak(utterance)
 }
 
+
+/* matches*/
+const [matches,setMatches]=useState([])
+
 /* VOICE INPUT */
 const startVoice=()=>{
 if(!isVoiceSupported) return
@@ -115,10 +119,21 @@ return ()=>clearInterval(interval)
 /* LOAD FEED */
 useEffect(()=>{
 if(activeTab==="home"){
+
+// 🔥 MATCHES
+fetch(`${API_URL}/matches`)
+.then(res=>res.json())
+.then(data=>setMatches(data))
+.catch(()=>setMatches([]))
+
+// FEED
 fetch(`${API_URL}/feed`)
 .then(res=>res.json())
 .then(data=>setFeed(data))
 .catch(()=>setFeed(null))
+
+
+
 }
 },[activeTab])
 
@@ -211,6 +226,38 @@ return(
 </div>
 ))}
 </div>
+
+/* live match*/
+
+<div className="sectionTitle">🏏 Live & Upcoming Matches</div>
+
+{matches.length > 0 && (
+<div className="matchCards">
+{matches.map((m,i)=>(
+<div key={i} className="matchCard">
+
+<div className="matchTeams">
+<span>{m.team1}</span>
+<span className="vs">vs</span>
+<span>{m.team2}</span>
+</div>
+
+<div className="matchStatus">
+{m.status}
+</div>
+
+<div className="matchMeta">
+<span>{m.venue}</span>
+<span>{m.date}</span>
+</div>
+
+</div>
+))}
+</div>
+)}
+
+/* live match*/
+
 
 <div className="sectionTitle">📰 Latest Cricket News</div>
 

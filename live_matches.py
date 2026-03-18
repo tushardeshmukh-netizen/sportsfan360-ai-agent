@@ -4,7 +4,7 @@ API_KEY = "830cd356-c66b-4f9a-9fcb-40ed04fae5b5"
 
 def get_live_matches():
 
-    url = f"https://api.cricketdata.org/v1/matches?apikey={API_KEY}"
+    url = f"https://api.cricapi.com/v1/currentMatches?apikey={API_KEY}&offset=0"
 
     try:
         res = requests.get(url, timeout=10)
@@ -15,18 +15,18 @@ def get_live_matches():
 
         data = res.json()
 
+        # 🔥 IMPORTANT: cricapi uses "data"
+        matches_data = data.get("data", [])
+
         matches = []
 
-        for m in data.get("data", []):
+        for m in matches_data:
 
-            teams = m.get("teams", [])
-
-            team1 = teams[0] if len(teams) > 0 else "TBD"
-            team2 = teams[1] if len(teams) > 1 else "TBD"
+            team1 = m.get("teamInfo", [{}])[0].get("name", "TBD") if len(m.get("teamInfo", [])) > 0 else "TBD"
+            team2 = m.get("teamInfo", [{}])[1].get("name", "TBD") if len(m.get("teamInfo", [])) > 1 else "TBD"
 
             status = m.get("status", "Upcoming")
 
-            # 🔥 FILTER ONLY USEFUL MATCHES
             if not team1 or not team2:
                 continue
 
@@ -39,10 +39,9 @@ def get_live_matches():
                 "date": m.get("date", "")
             })
 
-        # 🔥 SORT: LIVE FIRST, THEN UPCOMING
+        # 🔥 SORT: LIVE FIRST
         matches = sorted(matches, key=lambda x: (
-            "live" not in x["status"].lower(),
-            "progress" not in x["status"].lower()
+            "live" not in x["status"].lower() and "progress" not in x["status"].lower()
         ))
 
         # 🔥 LIMIT

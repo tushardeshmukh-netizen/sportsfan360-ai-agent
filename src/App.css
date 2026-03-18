@@ -1553,7 +1553,51 @@ margin:20px 0;
 color:#fff;
 font-weight:500;
 }
+/* MATCH CARDS */
 
+.matchCards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+gap:14px;
+margin-bottom:20px;
+}
+
+.matchCard{
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
+border-radius:14px;
+padding:14px;
+transition:0.3s;
+}
+
+.matchCard:hover{
+transform:translateY(-3px);
+box-shadow:0 6px 20px rgba(0,0,0,0.3);
+}
+
+.matchTeams{
+display:flex;
+justify-content:space-between;
+font-weight:600;
+margin-bottom:8px;
+}
+
+.vs{
+opacity:0.6;
+}
+
+.matchStatus{
+font-size:13px;
+color:#00ffcc;
+margin-bottom:6px;
+}
+
+.matchMeta{
+font-size:12px;
+opacity:0.7;
+display:flex;
+justify-content:space-between;
+}
 
 .chatContainer{
 display:flex;
