@@ -39,6 +39,7 @@ const [stats,setStats]=useState(statsPool.slice(0,3));
 const [speaking,setSpeaking]=useState(false);
 const [listening,setListening]=useState(false);
 
+// ================= VOICE =================
 const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window;
 const isSpeechOutputSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
@@ -71,38 +72,47 @@ const [loadingCommentary,setLoadingCommentary]=useState(false);
 const commentaryIntervalRef = useRef(null);
 
 const loadCommentary=async(match)=>{
-  if(loadingCommentary) return;
+  if(!match) return;
+
   setLoadingCommentary(true);
+
   try{
     const res=await fetch(
       `${API_URL}/match-commentary?team1=${match.team1}&team2=${match.team2}&status=${encodeURIComponent(match.status)}`
     );
+
     const data=await res.json();
     setCommentary(data);
+
   }catch{
     setCommentary({commentary:"Error loading commentary"});
   }
+
   setLoadingCommentary(false);
 };
 
 useEffect(()=>{
   if(selectedMatch){
     loadCommentary(selectedMatch);
+
     commentaryIntervalRef.current=setInterval(()=>{
       loadCommentary(selectedMatch);
     },20000);
   }
+
   return ()=>{
     if(commentaryIntervalRef.current){
       clearInterval(commentaryIntervalRef.current);
       commentaryIntervalRef.current=null;
     }
   };
+
 },[selectedMatch]);
 
-// ================= VOICE =================
+// ================= VOICE INPUT =================
 const startVoice=()=>{
   if(!isVoiceSupported) return;
+
   const SpeechRecognition=window.webkitSpeechRecognition;
   const recognition=new SpeechRecognition();
 
@@ -166,19 +176,10 @@ useEffect(()=>{
 
 const clearChat=()=>setMessages([]);
 
-const suggestions=[
-"Most IPL runs",
-"Most IPL wickets",
-"Most IPL sixes",
-"Which team has most IPL titles",
-"Highest IPL score",
-"Compare Kohli vs Rohit",
-"Why is IPL popular"
-];
-
 // ================= ASK =================
 const askAI=async(q=question)=>{
   if(!q.trim()) return;
+
   setLoading(true);
 
   const newMessages=[...messages,{role:"user",text:q}];
@@ -188,6 +189,7 @@ const askAI=async(q=question)=>{
   try{
     const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`);
     const data=await res.json();
+
     const answer=data?.answer || "No response";
 
     setMessages([...newMessages,{role:"ai",text:answer}]);
@@ -229,7 +231,7 @@ return(
 
 <h2>🔴 Live Matches</h2>
 
-{liveMatches.length===0 && <p>No live matches</p>}
+{liveMatches.length===0 && <p>No matches available</p>}
 
 <div className="liveMatches">
 {liveMatches.map((m,i)=>(
@@ -251,14 +253,6 @@ return(
 
 {commentary && (
 <>
-{commentary.score && (
-<div className="scoreCard">
-<p><strong>{commentary.score.team1}</strong>: {commentary.score.score1}</p>
-<p><strong>{commentary.score.team2}</strong>: {commentary.score.score2}</p>
-<p>Overs: {commentary.score.overs}</p>
-</div>
-)}
-
 <p>{commentary.commentary}</p>
 </>
 )}
@@ -281,14 +275,17 @@ Close
 </div>
 
 <h2>📰 Latest News</h2>
-{feed && feed.cards && (
-<div>
+
+{feed?.cards?.length>0 ? (
+<div className="feedCards">
 {feed.cards.map((c,i)=>(
 <a key={i} href={c.link} target="_blank" rel="noreferrer">
-{c.title}
+<p>{c.title}</p>
 </a>
 ))}
 </div>
+):(
+<p>No news available</p>
 )}
 
 </div>
@@ -298,13 +295,9 @@ Close
 {activeTab==="ask" && (
 <div className="askPage">
 
-<div className="chatMessages">
+<h2>Ask anything about IPL</h2>
 
-{messages.length===0 && (
-<div>
-<h3>Ask anything about IPL</h3>
-</div>
-)}
+<div className="chatMessages">
 
 {messages.map((m,i)=>(
 <div key={i}>{m.text}</div>
@@ -328,7 +321,6 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 </div>
 )}
 
-{/* ================= OTHER ================= */}
 {activeTab==="trivia" && <Trivia />}
 {activeTab==="battle" && <PlayerBattle API_URL={API_URL}/>}
 
