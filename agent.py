@@ -24,6 +24,7 @@ from standings_engine import get_standings
 
 DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
 
+
 app=FastAPI()
 
 app.add_middleware(
@@ -230,6 +231,92 @@ def player_list():
 
     return {"players": sorted(list(clean_players))}
 
+
+# ---------------- ASK API ----------------
+
+@app.get("/ask")
+def ask(question: str):
+
+    try:
+        load_dataset()
+    except Exception as e:
+        print("Dataset load error:", e)
+
+    q = question.lower()
+
+    # 🔥 SAFE CHECKS (important)
+    if not runs_cache:
+        return {
+            "answer": "Data is still loading. Please try again in a few seconds.",
+            "chart_title": "",
+            "chart_data": []
+        }
+
+    # 🔥 BASIC INTENT HANDLING
+    try:
+
+        if "run" in q:
+            top = max(runs_cache, key=runs_cache.get)
+            return {
+                "answer": f"{top} has the most IPL runs ({runs_cache[top]}).",
+                "chart_title": "Most IPL Runs",
+                "chart_data": []
+            }
+
+        elif "wicket" in q:
+            top = max(wickets_cache, key=wickets_cache.get)
+            return {
+                "answer": f"{top} has taken the most IPL wickets ({wickets_cache[top]}).",
+                "chart_title": "Most IPL Wickets",
+                "chart_data": []
+            }
+
+        elif "six" in q:
+            top = max(sixes_cache, key=sixes_cache.get)
+            return {
+                "answer": f"{top} has hit the most IPL sixes ({sixes_cache[top]}).",
+                "chart_title": "Most IPL Sixes",
+                "chart_data": []
+            }
+
+        elif "title" in q:
+            # 🔥 FIX: fallback hardcoded
+            return {
+                "answer": "Mumbai Indians have won the most IPL titles.",
+                "chart_title": "Most IPL Titles",
+                "chart_data": []
+            }
+
+    except Exception as e:
+        print("Stats error:", e)
+
+    # 🔥 FALLBACK LLM (SAFE)
+    try:
+        if os.getenv("GROQ_API_KEY"):
+
+            res = groq.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": "You are an IPL cricket analyst."},
+                    {"role": "user", "content": question}
+                ],
+                temperature=0
+            )
+
+            answer = res.choices[0].message.content
+
+        else:
+            answer = "AI service not configured."
+
+    except Exception as e:
+        print("LLM Error:", e)
+        answer = "Unable to answer right now."
+
+    return {
+        "answer": answer,
+        "chart_title": "",
+        "chart_data": []
+    }
 
 # ---------------- PLAYER BATTLE ----------------
 
