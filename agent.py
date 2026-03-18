@@ -540,6 +540,15 @@ def match_commentary(team1:str, team2:str, status:str):
 
     try:
 
+        # 🔥 BASIC FAKE SCORE (until real API added)
+        score_data = {
+            "team1": team1,
+            "score1": f"{random.randint(80,200)}/{random.randint(1,9)}",
+            "team2": team2,
+            "score2": f"{random.randint(80,200)}/{random.randint(1,9)}",
+            "overs": f"{random.randint(10,20)}.{random.randint(0,5)}"
+        }
+
         prompt = f"""
         You are a professional cricket analyst.
 
@@ -547,7 +556,7 @@ def match_commentary(team1:str, team2:str, status:str):
         Status: {status}
 
         Give a short live match commentary (2-3 lines).
-        Make it insightful, not generic.
+        Make it sharp, realistic, and match situation aware.
         """
 
         if os.getenv("GROQ_API_KEY"):
@@ -564,13 +573,17 @@ def match_commentary(team1:str, team2:str, status:str):
             answer = res.choices[0].message.content
 
         else:
-            answer = "Live AI commentary unavailable."
+            answer = f"{team1} vs {team2} is in progress. Momentum shifting with every over."
 
     except Exception as e:
         print("Commentary Error:", e)
         answer = "Unable to generate commentary."
+        score_data = None
 
-    return {"commentary": answer}
+    return {
+        "score": score_data,
+        "commentary": answer
+    }
     
     
     

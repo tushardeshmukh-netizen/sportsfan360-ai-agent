@@ -1,14 +1,20 @@
 import requests
-import os
 
-API_KEY = os.getenv("CRICKET_API_KEY")
+# 🔥 DUMMY KEY (REPLACE WITH YOUR REAL ONE)
+API_KEY = "830cd356-c66b-4f9a-9fcb-40ed04fae5b5"
 
 def get_live_matches():
 
-    url = f"https://api.cricketdata.org/v1/matches?apikey={830cd356-c66b-4f9a-9fcb-40ed04fae5b5}&status=live"
+    url = f"https://api.cricketdata.org/v1/matches?apikey={API_KEY}&status=live"
 
     try:
         res = requests.get(url, timeout=10)
+
+        # ✅ DEBUG SAFETY
+        if res.status_code != 200:
+            print("API Error:", res.status_code, res.text)
+            return []
+
         data = res.json()
 
         matches = []

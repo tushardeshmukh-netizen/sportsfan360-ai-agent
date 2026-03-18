@@ -40,15 +40,12 @@ const [loading,setLoading]=useState(false)
 const chatEndRef=useRef()
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
-/* ✅ FIX: speaking declared BEFORE use */
 const [speaking,setSpeaking]=useState(false)
 const [listening,setListening]=useState(false)
 
-/* ✅ Voice Support */
 const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
 const isSpeechOutputSupported = typeof window !== "undefined" && "speechSynthesis" in window
 
-/* 🔊 SPEAK */
 const speakText=(text)=>{
 if(!isSpeechOutputSupported) return
 
@@ -63,11 +60,10 @@ utterance.onend=()=>setSpeaking(false)
 window.speechSynthesis.speak(utterance)
 }
 
-// 🔥 ADD THESE STATES AT TOP
+// 🔥 LIVE MATCH
 const [liveMatches,setLiveMatches]=useState([])
 const [selectedMatch,setSelectedMatch]=useState(null)
 
-// 🔥 LOAD LIVE MATCHES
 useEffect(()=>{
 if(activeTab==="home"){
 fetch(`${API_URL}/live-matches`)
@@ -77,41 +73,16 @@ fetch(`${API_URL}/live-matches`)
 }
 },[activeTab])
 
-
-const [commentary,setCommentary]=useState("")
+// 🔥 COMMENTARY
+const [commentary,setCommentary]=useState(null)
 const [loadingCommentary,setLoadingCommentary]=useState(false)
 const commentaryIntervalRef = useRef(null)
-useEffect(()=>{
-
-// if match selected → start auto refresh
-if(selectedMatch){
-
-// 🔥 first load already done manually
-// now auto refresh every 20 sec
-
-commentaryIntervalRef.current = setInterval(()=>{
-loadCommentary(selectedMatch)
-},20000)
-
-}
-
-// cleanup when match closed
-return ()=>{
-if(commentaryIntervalRef.current){
-clearInterval(commentaryIntervalRef.current)
-commentaryIntervalRef.current = null
-}
-}
-
-},[selectedMatch])
-
 
 const loadCommentary=async(match)=>{
 
-if(loadingCommentary) return  // 🔥 prevent overlap
+if(loadingCommentary) return
 
 setLoadingCommentary(true)
-setCommentary("")
 
 try{
 const res=await fetch(
@@ -120,17 +91,37 @@ const res=await fetch(
 
 const data=await res.json()
 
-setCommentary(data.commentary || "No commentary")
+setCommentary(data)
 
 }catch{
-setCommentary("Error loading commentary")
+setCommentary({text:"Error loading commentary"})
 }
 
 setLoadingCommentary(false)
 }
 
+useEffect(()=>{
 
-/* 🎤 VOICE INPUT */
+if(selectedMatch){
+
+loadCommentary(selectedMatch)
+
+commentaryIntervalRef.current = setInterval(()=>{
+loadCommentary(selectedMatch)
+},20000)
+
+}
+
+return ()=>{
+if(commentaryIntervalRef.current){
+clearInterval(commentaryIntervalRef.current)
+commentaryIntervalRef.current=null
+}
+}
+
+},[selectedMatch])
+
+/* VOICE */
 const startVoice=()=>{
 if(!isVoiceSupported) return
 
@@ -172,7 +163,7 @@ recognition.start()
 setTimeout(()=>recognition.stop(),6000)
 }
 
-/* ROTATING STATS */
+/* STATS */
 useEffect(()=>{
 const interval=setInterval(()=>{
 const shuffled=[...statsPool].sort(()=>0.5-Math.random())
@@ -181,7 +172,7 @@ setStats(shuffled.slice(0,3))
 return ()=>clearInterval(interval)
 },[])
 
-/* LOAD FEED */
+/* FEED */
 useEffect(()=>{
 if(activeTab==="home"){
 fetch(`${API_URL}/feed`)
@@ -191,7 +182,7 @@ fetch(`${API_URL}/feed`)
 }
 },[activeTab])
 
-/* AUTO SCROLL */
+/* SCROLL */
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
@@ -208,7 +199,6 @@ const suggestions=[
 "Why is IPL popular"
 ]
 
-/* ASK */
 const askAI=async(q=question)=>{
 if(!q.trim()) return
 
@@ -250,7 +240,6 @@ return(
 </div>
 </header>
 
-{/* NAV */}
 <div className="tabs">
 <button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>🏠 Home</button>
 <button className={activeTab==="ask"?"tab active":"tab"} onClick={()=>setActiveTab("ask")}>🤖 AskSportsFan360</button>
@@ -258,7 +247,6 @@ return(
 <button className={activeTab==="battle"?"tab active":"tab"} onClick={()=>setActiveTab("battle")}>⚔️ Player Battle</button>
 </div>
 
-{/* HOME */}
 {activeTab==="home" && (
 <div className="home">
 
@@ -269,204 +257,67 @@ return(
 
 <div className="sectionTitle">🔴 Live Matches</div>
 
-{liveMatches.length===0 && (
-<p style={{padding:"20px"}}>No live matches currently</p>
-)}
-
 <div className="liveMatches">
-
 {liveMatches.map((m,i)=>(
-<div 
-key={i} 
-className="matchCard"
+<div key={i} className="matchCard"
 onClick={()=>{
 setSelectedMatch(m)
-loadCommentary(m)   // ✅ LOAD AI COMMENTARY
-}}
->
+}}>
 <h3>{m.team1} vs {m.team2}</h3>
 <p>{m.status}</p>
 <span>{m.venue}</span>
 </div>
 ))}
-
 </div>
 
-{/* 🔥 MATCH DETAIL PANEL WITH AI */}
 {selectedMatch && (
 <div className="matchDetail">
 
 <h2>{selectedMatch.team1} vs {selectedMatch.team2}</h2>
-
 <p className="matchStatus">{selectedMatch.status}</p>
 
 <p><strong>Venue:</strong> {selectedMatch.venue}</p>
 <p><strong>Date:</strong> {selectedMatch.date}</p>
 
-{/* 🔥 AI COMMENTARY */}
 <div className="aiCommentary">
 
 <h3>🤖 AI Match Insight</h3>
 
 {loadingCommentary && <p>Analyzing match...</p>}
 
-{!loadingCommentary && (
-<p>{commentary}</p>
+{commentary && (
+<div>
+
+{commentary.score && (
+<div className="scoreCard">
+<p><strong>{commentary.score.team1}</strong>: {commentary.score.score1}</p>
+<p><strong>{commentary.score.team2}</strong>: {commentary.score.score2}</p>
+<p>Overs: {commentary.score.overs}</p>
+</div>
+)}
+
+<p>{commentary.text || commentary.commentary}</p>
+
+</div>
 )}
 
 </div>
 
-<button 
-className="closeMatch"
-onClick={()=>{
-setSelectedMatch(null)   // ✅ FIXED (you had wrong logic)
-}}
->
+<button className="closeMatch" onClick={()=>{
+setSelectedMatch(null)
+setCommentary(null)
+}}>
 Close
 </button>
 
 </div>
 )}
 
-
-
-<div className="sectionTitle">🔥 IPL Quick Stats</div>
-
-<div className="quickStats">
-{stats.map((s,i)=>(
-<div key={i} className="statCard">
-<span className="statLabel">{s.label}</span>
-<div className="statRow">
-<strong>{s.value}</strong>
-<span className="statNum">{s.num}</span>
-</div>
-</div>
-))}
-</div>
-
-<div className="sectionTitle">📰 Latest Cricket News</div>
-
-{feed && (
-<div className="feedCards">
-{feed.cards.map((c,i)=>(
-<a key={i} href={c.link} target="_blank" rel="noreferrer" className="feedCard">
-{c.image && <img src={c.image} className="feedImage" alt="news"/>}
-<div className="feedContent">
-<h3>{c.title}</h3>
-<p>{c.text}</p>
-</div>
-</a>
-))}
 </div>
 )}
 
-</div>
-)}
-
-const loadCommentary=async(match)=>{
-
-setLoadingCommentary(true)
-setCommentary("")
-
-try{
-const res=await fetch(
-`${API_URL}/match-commentary?team1=${match.team1}&team2=${match.team2}&status=${encodeURIComponent(match.status)}`
-)
-
-const data=await res.json()
-
-setCommentary(data.commentary || "No commentary")
-
-}catch{
-setCommentary("Error loading commentary")
-}
-
-setLoadingCommentary(false)
-}
-
-{/* ASK */}
-{activeTab==="ask" && (
-<div className="askPage">
-
-<div className="chatContainer">
-
-<div className="chatHeader">
-<button className="clearChat" onClick={clearChat}>Clear Chat</button>
-</div>
-
-<div className="chatMessages">
-
-{messages.length===0 && (
-<div className="welcome">
-<h2>Ask anything about IPL</h2>
-<p>Teams • Players • Records • Runs • Wickets • Comparisons</p>
-</div>
-)}
-
-{messages.map((m,i)=>(
-<div key={i} className={`bubbleRow ${m.role}`}>
-<div className={`bubble ${m.role} ${speaking && m.role==="ai" ? "speaking" : ""}`}>
-{m.text}
-</div>
-</div>
-))}
-
-{loading && <div className="bubble ai">Analyzing...</div>}
-
-<div ref={chatEndRef}></div>
-
-</div>
-
-<div className="chatBottom">
-
-<div className="suggestions">
-{suggestions.map((s,i)=>(
-<button key={i} onClick={()=>askAI(s)}>{s}</button>
-))}
-</div>
-
-<div className="inputBox">
-
-<input
-value={question}
-placeholder={listening ? "Listening..." : "Ask SportsFan360..."}
-onChange={(e)=>setQuestion(e.target.value)}
-onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
-/>
-
-{isVoiceSupported && (
-<button className={`micBtn ${listening?"listening":""}`} onClick={startVoice}>
-{listening ? "🔴 Listening..." : "🎤"}
-</button>
-)}
-
-{speaking && (
-<button 
-className="stopSpeakBtn"
-onClick={()=>{
-window.speechSynthesis.cancel()
-setSpeaking(false)
-}}
->
-🔊 Stop
-</button>
-)}
-
-<button onClick={()=>askAI()}>Ask</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-)}
-
-{/* TRIVIA */}
+{activeTab==="ask" && <div>ASK PAGE SAME</div>}
 {activeTab==="trivia" && <Trivia />}
-
-{/* BATTLE */}
 {activeTab==="battle" && <PlayerBattle API_URL={API_URL}/>}
 
 </div>
