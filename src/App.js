@@ -25,8 +25,6 @@ const statsPool=[
 {label:"Lowest Team Total",value:"RCB",num:"49"}
 
 ]
-const [listening,setListening]=useState(false)
-const recognitionRef=useRef(null)
 
 function App(){
 
@@ -40,8 +38,10 @@ const [messages,setMessages]=useState([])
 const [loading,setLoading]=useState(false)
 
 const chatEndRef=useRef()
-
 const [stats,setStats]=useState(statsPool.slice(0,3))
+
+/* ✅ Voice Support */
+const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
 
 /* ROTATING STATS */
 useEffect(()=>{
@@ -62,14 +62,12 @@ fetch(`${API_URL}/feed`)
 }
 },[activeTab])
 
-/* SCROLL ONLY CHAT */
+/* AUTO SCROLL */
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
 
-const clearChat=()=>{
-setMessages([])
-}
+const clearChat=()=>setMessages([])
 
 const suggestions=[
 "Most IPL runs",
@@ -82,102 +80,51 @@ const suggestions=[
 ]
 
 /* ASK */
-{activeTab==="ask" && (
-<div className="askPage">
+const askAI=async(q=question)=>{
+if(!q.trim()) return
 
-<div className="chatContainer">
+setLoading(true)
 
-<div className="chatHeader">
-<button className="clearChat" onClick={clearChat}>Clear Chat</button>
-</div>
+const newMessages=[...messages,{role:"user",text:q}]
+setMessages(newMessages)
+setQuestion("")
 
-<div className="chatMessages">
+try{
+const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
+const data=await res.json()
 
-{messages.length===0 && (
-<div className="welcome">
-<h2>Ask anything about IPL</h2>
-<p>Teams • Players • Records • Runs • Wickets • Comparisons</p>
-</div>
-)}
+setMessages([...newMessages,{
+role:"ai",
+text:data?.answer || "No response"
+}])
 
-{messages.map((m,i)=>(
-<div key={i} className={`bubbleRow ${m.role}`}>
-<div className={`bubble ${m.role}`}>
-{m.text}
-</div>
-</div>
-))}
+}catch{
+setMessages([...newMessages,{
+role:"ai",
+text:"Server error"
+}])
+}
 
-{loading && (
-<div className="bubbleRow ai">
-<div className="bubble ai typingDots">
-<span></span><span></span><span></span>
-</div>
-</div>
-)}
+setLoading(false)
+}
 
-<div ref={chatEndRef}></div>
-
-</div>
-
-<div className="chatBottom">
-
-<div className="suggestions">
-{suggestions.map((s,i)=>(
-<button key={i} onClick={()=>askAI(s)}>{s}</button>
-))}
-</div>
-
-{/* 🔥 INPUT WITH VOICE */}
-<div className="inputBox">
-
-<input
-value={question}
-placeholder="Ask SportsFan360..."
-onChange={(e)=>setQuestion(e.target.value)}
-onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
-/>
-
-{/* 🎤 SHOW ONLY IF SUPPORTED */}
-{("webkitSpeechRecognition" in window) && (
-<button
-className="micBtn"
-onClick={()=>{
+/* 🎤 VOICE */
+const startVoice=()=>{
+if(!isVoiceSupported) return
 
 const SpeechRecognition=window.webkitSpeechRecognition
 const recognition=new SpeechRecognition()
 
 recognition.lang="en-IN"
-recognition.continuous=false
-recognition.interimResults=false
 
-recognition.onresult=(event)=>{
-const transcript=event.results[0][0].transcript
-
-setQuestion(transcript)
-
-/* 🔥 AUTO SEND (optional) */
-askAI(transcript)
+recognition.onresult=(e)=>{
+const text=e.results[0][0].transcript
+setQuestion(text)
+askAI(text)
 }
 
 recognition.start()
-
-}}
->
-🎤
-</button>
-)}
-
-<button onClick={()=>askAI()}>Ask</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-)}
+}
 
 return(
 
@@ -195,23 +142,10 @@ return(
 
 {/* NAV */}
 <div className="tabs">
-
-<button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>
-🏠 Home
-</button>
-
-<button className={activeTab==="ask"?"tab active":"tab"} onClick={()=>setActiveTab("ask")}>
-🤖 AskSportsFan360
-</button>
-
-<button className={activeTab==="trivia"?"tab active":"tab"} onClick={()=>setActiveTab("trivia")}>
-🏏 IPL Trivia
-</button>
-
-<button className={activeTab==="battle"?"tab active":"tab"} onClick={()=>setActiveTab("battle")}>
-⚔️ Player Battle
-</button>
-
+<button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>🏠 Home</button>
+<button className={activeTab==="ask"?"tab active":"tab"} onClick={()=>setActiveTab("ask")}>🤖 AskSportsFan360</button>
+<button className={activeTab==="trivia"?"tab active":"tab"} onClick={()=>setActiveTab("trivia")}>🏏 IPL Trivia</button>
+<button className={activeTab==="battle"?"tab active":"tab"} onClick={()=>setActiveTab("battle")}>⚔️ Player Battle</button>
 </div>
 
 {/* HOME */}
@@ -262,13 +196,13 @@ return(
 {activeTab==="ask" && (
 <div className="askPage">
 
-<div style={{display:"flex",justifyContent:"flex-end"}}>
+<div className="chatContainer">
+
+<div className="chatHeader">
 <button className="clearChat" onClick={clearChat}>Clear Chat</button>
 </div>
 
-{/* ❌ REMOVED QUICK STATS FROM HERE */}
-
-<main className="chatPanel">
+<div className="chatMessages">
 
 {messages.length===0 && (
 <div className="welcome">
@@ -278,18 +212,24 @@ return(
 )}
 
 {messages.map((m,i)=>(
-<div key={i} className={`message ${m.role}`}>
-<div className="messageText">{m.text}</div>
+<div key={i} className={`bubbleRow ${m.role}`}>
+<div className={`bubble ${m.role}`}>{m.text}</div>
 </div>
 ))}
 
-{loading && <div className="message ai typing">Analyzing cricket data...</div>}
+{loading && (
+<div className="bubbleRow ai">
+<div className="bubble ai typingDots">
+<span></span><span></span><span></span>
+</div>
+</div>
+)}
 
 <div ref={chatEndRef}></div>
 
-</main>
+</div>
 
-<div className="bottomPanel">
+<div className="chatBottom">
 
 <div className="suggestions">
 {suggestions.map((s,i)=>(
@@ -298,13 +238,22 @@ return(
 </div>
 
 <div className="inputBox">
+
 <input
 value={question}
 placeholder="Ask SportsFan360..."
 onChange={(e)=>setQuestion(e.target.value)}
 onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 />
+
+{isVoiceSupported && (
+<button className="micBtn" onClick={startVoice}>🎤</button>
+)}
+
 <button onClick={()=>askAI()}>Ask</button>
+
+</div>
+
 </div>
 
 </div>
@@ -315,22 +264,14 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 {/* TRIVIA */}
 {activeTab==="trivia" && <Trivia />}
 
-{/* PLAYER BATTLE */}
+{/* BATTLE */}
 {activeTab==="battle" && (
 <div className="battlePage">
-
 <div className="battleHero">
 <h2>⚔️ Player Intelligence Battle</h2>
-<p>
-Compare any two IPL players across batting, bowling, impact and performance metrics.
-Analyze who dominates with data, not opinions.
-</p>
+<p>Compare players using real data insights.</p>
 </div>
-
-<div className="battleWrapper">
-<PlayerBattle API_URL={API_URL} />
-</div>
-
+<PlayerBattle API_URL={API_URL}/>
 </div>
 )}
 
