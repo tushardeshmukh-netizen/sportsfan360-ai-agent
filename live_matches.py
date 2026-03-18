@@ -10,7 +10,7 @@ def get_live_matches():
         res = requests.get(url, timeout=10)
 
         if res.status_code != 200:
-            print("API ERROR:", res.status_code)
+            print("API ERROR:", res.status_code, res.text)
             return get_dummy_matches()
 
         data = res.json()
@@ -18,27 +18,47 @@ def get_live_matches():
         matches = []
 
         for m in data.get("data", []):
+
+            teams = m.get("teams", [])
+
+            team1 = teams[0] if len(teams) > 0 else "TBD"
+            team2 = teams[1] if len(teams) > 1 else "TBD"
+
+            status = m.get("status", "Upcoming")
+
+            # 🔥 FILTER ONLY USEFUL MATCHES
+            if not team1 or not team2:
+                continue
+
             matches.append({
                 "id": m.get("id"),
-                "team1": m.get("team1"),
-                "team2": m.get("team2"),
-                "status": m.get("status"),
-                "venue": m.get("venue"),
-                "date": m.get("date")
+                "team1": team1,
+                "team2": team2,
+                "status": status,
+                "venue": m.get("venue", "Unknown"),
+                "date": m.get("date", "")
             })
 
-        # 🔥 CRITICAL: NEVER RETURN EMPTY
+        # 🔥 SORT: LIVE FIRST, THEN UPCOMING
+        matches = sorted(matches, key=lambda x: (
+            "live" not in x["status"].lower(),
+            "progress" not in x["status"].lower()
+        ))
+
+        # 🔥 LIMIT
+        matches = matches[:10]
+
         if len(matches) == 0:
             return get_dummy_matches()
 
-        return matches[:5]
+        return matches
 
     except Exception as e:
         print("Live Match Error:", e)
         return get_dummy_matches()
 
 
-# 🔥 FALLBACK DATA (THIS SAVES YOUR UI)
+# 🔥 FALLBACK
 def get_dummy_matches():
     return [
         {
