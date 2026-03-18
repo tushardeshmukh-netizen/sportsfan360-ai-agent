@@ -25,6 +25,8 @@ const statsPool=[
 {label:"Lowest Team Total",value:"RCB",num:"49"}
 
 ]
+const [listening,setListening]=useState(false)
+const recognitionRef=useRef(null)
 
 function App(){
 
@@ -60,7 +62,7 @@ fetch(`${API_URL}/feed`)
 }
 },[activeTab])
 
-/* SCROLL */
+/* SCROLL ONLY CHAT */
 useEffect(()=>{
 chatEndRef.current?.scrollIntoView({behavior:"smooth"})
 },[messages])
@@ -80,34 +82,102 @@ const suggestions=[
 ]
 
 /* ASK */
-const askAI=async(q=question)=>{
+{activeTab==="ask" && (
+<div className="askPage">
 
-if(!q.trim()) return
+<div className="chatContainer">
 
-setLoading(true)
+<div className="chatHeader">
+<button className="clearChat" onClick={clearChat}>Clear Chat</button>
+</div>
 
-const newMessages=[...messages,{role:"user",text:q}]
-setMessages(newMessages)
-setQuestion("")
+<div className="chatMessages">
 
-try{
-const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
-const data=await res.json()
+{messages.length===0 && (
+<div className="welcome">
+<h2>Ask anything about IPL</h2>
+<p>Teams • Players • Records • Runs • Wickets • Comparisons</p>
+</div>
+)}
 
-setMessages([...newMessages,{
-role:"ai",
-text:data?.answer || "No response"
-}])
+{messages.map((m,i)=>(
+<div key={i} className={`bubbleRow ${m.role}`}>
+<div className={`bubble ${m.role}`}>
+{m.text}
+</div>
+</div>
+))}
 
-}catch{
-setMessages([...newMessages,{
-role:"ai",
-text:"Server error"
-}])
+{loading && (
+<div className="bubbleRow ai">
+<div className="bubble ai typingDots">
+<span></span><span></span><span></span>
+</div>
+</div>
+)}
+
+<div ref={chatEndRef}></div>
+
+</div>
+
+<div className="chatBottom">
+
+<div className="suggestions">
+{suggestions.map((s,i)=>(
+<button key={i} onClick={()=>askAI(s)}>{s}</button>
+))}
+</div>
+
+{/* 🔥 INPUT WITH VOICE */}
+<div className="inputBox">
+
+<input
+value={question}
+placeholder="Ask SportsFan360..."
+onChange={(e)=>setQuestion(e.target.value)}
+onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
+/>
+
+{/* 🎤 SHOW ONLY IF SUPPORTED */}
+{("webkitSpeechRecognition" in window) && (
+<button
+className="micBtn"
+onClick={()=>{
+
+const SpeechRecognition=window.webkitSpeechRecognition
+const recognition=new SpeechRecognition()
+
+recognition.lang="en-IN"
+recognition.continuous=false
+recognition.interimResults=false
+
+recognition.onresult=(event)=>{
+const transcript=event.results[0][0].transcript
+
+setQuestion(transcript)
+
+/* 🔥 AUTO SEND (optional) */
+askAI(transcript)
 }
 
-setLoading(false)
-}
+recognition.start()
+
+}}
+>
+🎤
+</button>
+)}
+
+<button onClick={()=>askAI()}>Ask</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+)}
 
 return(
 
@@ -196,17 +266,7 @@ return(
 <button className="clearChat" onClick={clearChat}>Clear Chat</button>
 </div>
 
-<div className="quickStats">
-{stats.map((s,i)=>(
-<div key={i} className="statCard">
-<span className="statLabel">{s.label}</span>
-<div className="statRow">
-<strong>{s.value}</strong>
-<span className="statNum">{s.num}</span>
-</div>
-</div>
-))}
-</div>
+{/* ❌ REMOVED QUICK STATS FROM HERE */}
 
 <main className="chatPanel">
 
@@ -255,7 +315,7 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 {/* TRIVIA */}
 {activeTab==="trivia" && <Trivia />}
 
-{/* 🔥 PLAYER BATTLE (UPGRADED SECTION WRAPPER) */}
+{/* PLAYER BATTLE */}
 {activeTab==="battle" && (
 <div className="battlePage">
 
