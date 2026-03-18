@@ -10,14 +10,14 @@ def get_live_matches():
         res = requests.get(url, timeout=10)
 
         if res.status_code != 200:
-            print("API Error:", res.status_code)
-            return []
+            print("API ERROR:", res.status_code)
+            return get_dummy_matches()
 
         data = res.json()
+
         matches = []
 
         for m in data.get("data", []):
-
             matches.append({
                 "id": m.get("id"),
                 "team1": m.get("team1"),
@@ -27,9 +27,34 @@ def get_live_matches():
                 "date": m.get("date")
             })
 
-        # ✅ ALWAYS RETURN SOMETHING
+        # 🔥 CRITICAL: NEVER RETURN EMPTY
+        if len(matches) == 0:
+            return get_dummy_matches()
+
         return matches[:5]
 
     except Exception as e:
-        print("Error:", e)
-        return []
+        print("Live Match Error:", e)
+        return get_dummy_matches()
+
+
+# 🔥 FALLBACK DATA (THIS SAVES YOUR UI)
+def get_dummy_matches():
+    return [
+        {
+            "id": "demo1",
+            "team1": "CSK",
+            "team2": "MI",
+            "status": "Match in progress",
+            "venue": "Wankhede Stadium",
+            "date": "Today"
+        },
+        {
+            "id": "demo2",
+            "team1": "RCB",
+            "team2": "KKR",
+            "status": "Starting soon",
+            "venue": "Chinnaswamy",
+            "date": "Today"
+        }
+    ]

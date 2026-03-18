@@ -39,18 +39,15 @@ const [stats,setStats]=useState(statsPool.slice(0,3));
 const [speaking,setSpeaking]=useState(false);
 const [listening,setListening]=useState(false);
 
-// ================= VOICE =================
-const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window;
-const isSpeechOutputSupported = typeof window !== "undefined" && "speechSynthesis" in window;
-
+// ================= SPEAK =================
 const speakText=(text)=>{
-  if(!isSpeechOutputSupported) return;
-  window.speechSynthesis.cancel();
-  const utterance=new SpeechSynthesisUtterance(text);
-  utterance.lang="en-IN";
-  utterance.onstart=()=>setSpeaking(true);
-  utterance.onend=()=>setSpeaking(false);
-  window.speechSynthesis.speak(utterance);
+if(!("speechSynthesis" in window)) return;
+window.speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(text);
+u.lang="en-IN";
+u.onstart=()=>setSpeaking(true);
+u.onend=()=>setSpeaking(false);
+window.speechSynthesis.speak(u);
 };
 
 // ================= LIVE MATCH =================
@@ -58,150 +55,132 @@ const [liveMatches,setLiveMatches]=useState([]);
 const [selectedMatch,setSelectedMatch]=useState(null);
 
 useEffect(()=>{
-  if(activeTab==="home"){
-    fetch(`${API_URL}/live-matches`)
-    .then(res=>res.json())
-    .then(data=>setLiveMatches(data || []))
-    .catch(()=>setLiveMatches([]));
-  }
+if(activeTab==="home"){
+fetch(`${API_URL}/live-matches`)
+.then(res=>res.json())
+.then(data=>setLiveMatches(data || []))
+.catch(()=>setLiveMatches([]));
+}
 },[activeTab]);
 
 // ================= COMMENTARY =================
 const [commentary,setCommentary]=useState(null);
 const [loadingCommentary,setLoadingCommentary]=useState(false);
-const commentaryIntervalRef = useRef(null);
+const intervalRef=useRef(null);
 
 const loadCommentary=async(match)=>{
-  if(!match) return;
+if(!match) return;
 
-  setLoadingCommentary(true);
+setLoadingCommentary(true);
 
-  try{
-    const res=await fetch(
-      `${API_URL}/match-commentary?team1=${match.team1}&team2=${match.team2}&status=${encodeURIComponent(match.status)}`
-    );
+try{
+const res=await fetch(
+`${API_URL}/match-commentary?team1=${match.team1}&team2=${match.team2}&status=${encodeURIComponent(match.status)}`
+);
+const data=await res.json();
+setCommentary(data);
+}catch{
+setCommentary({commentary:"Error loading commentary"});
+}
 
-    const data=await res.json();
-    setCommentary(data);
-
-  }catch{
-    setCommentary({commentary:"Error loading commentary"});
-  }
-
-  setLoadingCommentary(false);
+setLoadingCommentary(false);
 };
 
 useEffect(()=>{
-  if(selectedMatch){
-    loadCommentary(selectedMatch);
+if(selectedMatch){
+loadCommentary(selectedMatch);
 
-    commentaryIntervalRef.current=setInterval(()=>{
-      loadCommentary(selectedMatch);
-    },20000);
-  }
+intervalRef.current=setInterval(()=>{
+loadCommentary(selectedMatch);
+},20000);
+}
 
-  return ()=>{
-    if(commentaryIntervalRef.current){
-      clearInterval(commentaryIntervalRef.current);
-      commentaryIntervalRef.current=null;
-    }
-  };
-
+return ()=>{
+if(intervalRef.current){
+clearInterval(intervalRef.current);
+intervalRef.current=null;
+}
+};
 },[selectedMatch]);
 
-// ================= VOICE INPUT =================
+// ================= VOICE =================
 const startVoice=()=>{
-  if(!isVoiceSupported) return;
+if(!("webkitSpeechRecognition" in window)) return;
 
-  const SpeechRecognition=window.webkitSpeechRecognition;
-  const recognition=new SpeechRecognition();
+const rec=new window.webkitSpeechRecognition();
+rec.lang="en-IN";
+rec.continuous=true;
 
-  recognition.lang="en-IN";
-  recognition.continuous=true;
-  recognition.interimResults=true;
+let final="";
 
-  let finalTranscript="";
+rec.onstart=()=>setListening(true);
 
-  recognition.onstart=()=>setListening(true);
+rec.onresult=(e)=>{
+for(let i=e.resultIndex;i<e.results.length;i++){
+let t=e.results[i][0].transcript;
+if(e.results[i].isFinal) final+=t;
+}
+setQuestion(final);
+};
 
-  recognition.onresult=(e)=>{
-    let interim="";
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      let transcript=e.results[i][0].transcript;
-      if(e.results[i].isFinal){
-        finalTranscript+=transcript;
-      }else{
-        interim+=transcript;
-      }
-    }
-    setQuestion(finalTranscript + interim);
-  };
+rec.onend=()=>{
+setListening(false);
+if(final.trim()) askAI(final);
+};
 
-  recognition.onend=()=>{
-    setListening(false);
-    if(finalTranscript.trim()){
-      askAI(finalTranscript);
-    }
-  };
-
-  recognition.onerror=()=>setListening(false);
-
-  recognition.start();
-  setTimeout(()=>recognition.stop(),6000);
+rec.start();
+setTimeout(()=>rec.stop(),5000);
 };
 
 // ================= STATS =================
 useEffect(()=>{
-  const interval=setInterval(()=>{
-    const shuffled=[...statsPool].sort(()=>0.5-Math.random());
-    setStats(shuffled.slice(0,3));
-  },8000);
-  return ()=>clearInterval(interval);
+const i=setInterval(()=>{
+setStats([...statsPool].sort(()=>0.5-Math.random()).slice(0,3));
+},8000);
+return ()=>clearInterval(i);
 },[]);
 
 // ================= FEED =================
 useEffect(()=>{
-  if(activeTab==="home"){
-    fetch(`${API_URL}/feed`)
-    .then(res=>res.json())
-    .then(data=>setFeed(data))
-    .catch(()=>setFeed(null));
-  }
+if(activeTab==="home"){
+fetch(`${API_URL}/feed`)
+.then(res=>res.json())
+.then(data=>setFeed(data))
+.catch(()=>setFeed(null));
+}
 },[activeTab]);
 
 // ================= SCROLL =================
 useEffect(()=>{
-  chatEndRef.current?.scrollIntoView({behavior:"smooth"});
+chatEndRef.current?.scrollIntoView({behavior:"smooth"});
 },[messages]);
-
-const clearChat=()=>setMessages([]);
 
 // ================= ASK =================
 const askAI=async(q=question)=>{
-  if(!q.trim()) return;
+if(!q.trim()) return;
 
-  setLoading(true);
+setLoading(true);
 
-  const newMessages=[...messages,{role:"user",text:q}];
-  setMessages(newMessages);
-  setQuestion("");
+const newMsg=[...messages,{role:"user",text:q}];
+setMessages(newMsg);
+setQuestion("");
 
-  try{
-    const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`);
-    const data=await res.json();
+try{
+const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`);
+const data=await res.json();
 
-    const answer=data?.answer || "No response";
+const ans=data?.answer || "No response";
 
-    setMessages([...newMessages,{role:"ai",text:answer}]);
-    speakText(answer);
+setMessages([...newMsg,{role:"ai",text:ans}]);
+speakText(ans);
 
-  }catch{
-    const errorMsg="Server error";
-    setMessages([...newMessages,{role:"ai",text:errorMsg}]);
-    speakText(errorMsg);
-  }
+}catch{
+const err="Server error";
+setMessages([...newMsg,{role:"ai",text:err}]);
+speakText(err);
+}
 
-  setLoading(false);
+setLoading(false);
 };
 
 // ================= UI =================
@@ -209,23 +188,23 @@ return(
 <div className="app">
 
 <header className="header">
-  <div className="brand">
-    <img src={logo} className="logo" alt="logo"/>
-    <div className="title">
-      <h1>SportsFan360</h1>
-      <p>AI Cricket Analyst</p>
-    </div>
-  </div>
+<div className="brand">
+<img src={logo} className="logo" alt="logo"/>
+<div className="title">
+<h1>SportsFan360</h1>
+<p>AI Cricket Analyst</p>
+</div>
+</div>
 </header>
 
 <div className="tabs">
-  <button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>🏠 Home</button>
-  <button className={activeTab==="ask"?"tab active":"tab"} onClick={()=>setActiveTab("ask")}>🤖 AskSportsFan360</button>
-  <button className={activeTab==="trivia"?"tab active":"tab"} onClick={()=>setActiveTab("trivia")}>🏏 IPL Trivia</button>
-  <button className={activeTab==="battle"?"tab active":"tab"} onClick={()=>setActiveTab("battle")}>⚔️ Player Battle</button>
+<button className={activeTab==="home"?"tab active":"tab"} onClick={()=>setActiveTab("home")}>🏠 Home</button>
+<button className={activeTab==="ask"?"tab active":"tab"} onClick={()=>setActiveTab("ask")}>🤖 AskSportsFan360</button>
+<button className={activeTab==="trivia"?"tab active":"tab"} onClick={()=>setActiveTab("trivia")}>🏏 IPL Trivia</button>
+<button className={activeTab==="battle"?"tab active":"tab"} onClick={()=>setActiveTab("battle")}>⚔️ Player Battle</button>
 </div>
 
-{/* ================= HOME ================= */}
+{/* HOME */}
 {activeTab==="home" && (
 <div className="home">
 
@@ -251,18 +230,9 @@ return(
 
 {loadingCommentary && <p>Analyzing match...</p>}
 
-{commentary && (
-<>
-<p>{commentary.commentary}</p>
-</>
-)}
+{commentary && <p>{commentary.commentary}</p>}
 
-<button onClick={()=>{
-setSelectedMatch(null);
-setCommentary(null);
-}}>
-Close
-</button>
+<button onClick={()=>setSelectedMatch(null)}>Close</button>
 
 </div>
 )}
@@ -276,47 +246,32 @@ Close
 
 <h2>📰 Latest News</h2>
 
-{feed?.cards?.length>0 ? (
-<div className="feedCards">
-{feed.cards.map((c,i)=>(
+{feed?.cards?.map((c,i)=>(
 <a key={i} href={c.link} target="_blank" rel="noreferrer">
 <p>{c.title}</p>
 </a>
 ))}
-</div>
-):(
-<p>No news available</p>
-)}
 
 </div>
 )}
 
-{/* ================= ASK ================= */}
+{/* ASK */}
 {activeTab==="ask" && (
 <div className="askPage">
 
 <h2>Ask anything about IPL</h2>
 
 <div className="chatMessages">
-
 {messages.map((m,i)=>(
-<div key={i}>{m.text}</div>
+<div key={i} className={m.role}>{m.text}</div>
 ))}
-
 {loading && <div>Analyzing...</div>}
-
 <div ref={chatEndRef}></div>
-
 </div>
 
-<input
-value={question}
-placeholder={listening ? "Listening..." : "Ask SportsFan360..."}
-onChange={(e)=>setQuestion(e.target.value)}
-onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
-/>
-
+<input value={question} onChange={(e)=>setQuestion(e.target.value)} />
 <button onClick={askAI}>Ask</button>
+<button onClick={startVoice}>{listening?"Listening...":"🎤"}</button>
 
 </div>
 )}
