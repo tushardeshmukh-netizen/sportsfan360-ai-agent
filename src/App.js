@@ -40,9 +40,70 @@ const [loading,setLoading]=useState(false)
 const chatEndRef=useRef()
 const [stats,setStats]=useState(statsPool.slice(0,3))
 
+/* ✅ FIX: speaking declared BEFORE use */
+const [speaking,setSpeaking]=useState(false)
+const [listening,setListening]=useState(false)
+
 /* ✅ Voice Support */
 const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
-const [listening,setListening]=useState(false)
+const isSpeechOutputSupported = typeof window !== "undefined" && "speechSynthesis" in window
+
+/* 🔊 SPEAK */
+const speakText=(text)=>{
+if(!isSpeechOutputSupported) return
+
+window.speechSynthesis.cancel()
+
+const utterance=new SpeechSynthesisUtterance(text)
+utterance.lang="en-IN"
+
+utterance.onstart=()=>setSpeaking(true)
+utterance.onend=()=>setSpeaking(false)
+
+window.speechSynthesis.speak(utterance)
+}
+
+/* 🎤 VOICE INPUT */
+const startVoice=()=>{
+if(!isVoiceSupported) return
+
+const SpeechRecognition=window.webkitSpeechRecognition
+const recognition=new SpeechRecognition()
+
+recognition.lang="en-IN"
+recognition.continuous=true
+recognition.interimResults=true
+
+let finalTranscript=""
+
+recognition.onstart=()=>setListening(true)
+
+recognition.onresult=(e)=>{
+let interim=""
+for(let i=e.resultIndex;i<e.results.length;i++){
+let transcript=e.results[i][0].transcript
+if(e.results[i].isFinal){
+finalTranscript+=transcript
+}else{
+interim+=transcript
+}
+}
+setQuestion(finalTranscript + interim)
+}
+
+recognition.onend=()=>{
+setListening(false)
+if(finalTranscript.trim()){
+askAI(finalTranscript)
+}
+}
+
+recognition.onerror=()=>setListening(false)
+
+recognition.start()
+
+setTimeout(()=>recognition.stop(),6000)
+}
 
 /* ROTATING STATS */
 useEffect(()=>{
@@ -94,51 +155,18 @@ try{
 const res=await fetch(`${API_URL}/ask?question=${encodeURIComponent(q)}`)
 const data=await res.json()
 
-setMessages([...newMessages,{
-role:"ai",
-text:data?.answer || "No response"
-}])
+const answer=data?.answer || "No response"
+
+setMessages([...newMessages,{role:"ai",text:answer}])
+speakText(answer)
 
 }catch{
-setMessages([...newMessages,{
-role:"ai",
-text:"Server error"
-}])
+const errorMsg="Server error"
+setMessages([...newMessages,{role:"ai",text:errorMsg}])
+speakText(errorMsg)
 }
 
 setLoading(false)
-}
-
-/* 🎤 VOICE */
-const startVoice=()=>{
-if(!isVoiceSupported) return
-
-const SpeechRecognition=window.webkitSpeechRecognition
-const recognition=new SpeechRecognition()
-
-recognition.lang="en-IN"
-recognition.continuous=false
-recognition.interimResults=false
-
-recognition.onstart=()=>{
-setListening(true)
-}
-
-recognition.onend=()=>{
-setListening(false)
-}
-
-recognition.onresult=(e)=>{
-const text=e.results[0][0].transcript
-setQuestion(text)
-askAI(text)
-}
-
-recognition.onerror=()=>{
-setListening(false)
-}
-
-recognition.start()
 }
 
 return(
@@ -188,8 +216,6 @@ return(
 
 <div className="sectionTitle">📰 Latest Cricket News</div>
 
-{!feed && <p style={{padding:"20px"}}>Loading news...</p>}
-
 {feed && (
 <div className="feedCards">
 {feed.cards.map((c,i)=>(
@@ -228,17 +254,13 @@ return(
 
 {messages.map((m,i)=>(
 <div key={i} className={`bubbleRow ${m.role}`}>
-<div className={`bubble ${m.role}`}>{m.text}</div>
+<div className={`bubble ${m.role} ${speaking && m.role==="ai" ? "speaking" : ""}`}>
+{m.text}
+</div>
 </div>
 ))}
 
-{loading && (
-<div className="bubbleRow ai">
-<div className="bubble ai typingDots">
-<span></span><span></span><span></span>
-</div>
-</div>
-)}
+{loading && <div className="bubble ai">Analyzing...</div>}
 
 <div ref={chatEndRef}></div>
 
@@ -256,17 +278,26 @@ return(
 
 <input
 value={question}
-placeholder={listening ? "Listening... speak now" : "Ask SportsFan360..."}
+placeholder={listening ? "Listening..." : "Ask SportsFan360..."}
 onChange={(e)=>setQuestion(e.target.value)}
 onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 />
 
 {isVoiceSupported && (
-<button 
-className={`micBtn ${listening ? "listening" : ""}`} 
-onClick={startVoice}
->
+<button className={`micBtn ${listening?"listening":""}`} onClick={startVoice}>
 {listening ? "🔴 Listening..." : "🎤"}
+</button>
+)}
+
+{speaking && (
+<button 
+className="stopSpeakBtn"
+onClick={()=>{
+window.speechSynthesis.cancel()
+setSpeaking(false)
+}}
+>
+🔊 Stop
 </button>
 )}
 
@@ -285,15 +316,7 @@ onClick={startVoice}
 {activeTab==="trivia" && <Trivia />}
 
 {/* BATTLE */}
-{activeTab==="battle" && (
-<div className="battlePage">
-<div className="battleHero">
-<h2>⚔️ Player Intelligence Battle</h2>
-<p>Compare players using real data insights.</p>
-</div>
-<PlayerBattle API_URL={API_URL}/>
-</div>
-)}
+{activeTab==="battle" && <PlayerBattle API_URL={API_URL}/>}
 
 </div>
 )

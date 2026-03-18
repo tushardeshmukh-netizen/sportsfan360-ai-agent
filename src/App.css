@@ -1505,6 +1505,48 @@ animation:pulse 1s infinite;
 100%{transform:scale(1);}
 }
 
+.stopSpeakBtn{
+background:#2563eb;
+border:none;
+color:#fff;
+padding:8px 12px;
+border-radius:8px;
+cursor:pointer;
+margin:0 6px;
+transition:0.2s;
+font-size:14px;
+}
+
+.stopSpeakBtn:hover{
+background:#1d4ed8;
+}
+
+/* speaking indicator */
+.bubble.ai.speaking{
+border:1px solid #2563eb;
+box-shadow:0 0 10px rgba(37,99,235,0.6);
+}
+
+.stopSpeakBtn{
+background:#2563eb;
+border:none;
+color:#fff;
+padding:8px 12px;
+border-radius:8px;
+cursor:pointer;
+margin:0 6px;
+font-size:14px;
+}
+
+.stopSpeakBtn:hover{
+background:#1d4ed8;
+}
+
+.bubble.ai.speaking{
+border:1px solid #2563eb;
+box-shadow:0 0 10px rgba(37,99,235,0.6);
+}
+
 
 .chatContainer{
 display:flex;
