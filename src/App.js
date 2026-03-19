@@ -3,6 +3,7 @@ import "./App.css";
 import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
 import PlayerBattle from "./PlayerBattle";
+import DailyChallenge from "./DailyChallenge";
 
 const statsPool=[
 
@@ -282,6 +283,12 @@ return (
 );
 
 })()}
+
+<div className="sectionTitle">🔥 Daily IPL Challenge</div>
+
+{matches && matches.length > 0 && (
+  <DailyChallenge match={matches[0]} API_URL={API_URL} />
+)}
 
 
 <div className="sectionTitle">📰 Latest Cricket News</div>

@@ -1653,4 +1653,43 @@ position:sticky;
 bottom:0;
 background:#0b1220;
 }
+.challengeCard {
+  background: #111;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  color: #fff;
+}
 
+.questionBlock {
+  margin-bottom: 15px;
+}
+
+.options button {
+  margin: 5px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #222;
+  color: #fff;
+  cursor: pointer;
+}
+
+.options button.selected {
+  background: orange;
+  color: #000;
+}
+
+.submitBtn {
+  margin-top: 10px;
+  padding: 10px;
+  background: #ff9800;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.submittedMsg {
+  margin-top: 10px;
+  color: #4caf50;
+}

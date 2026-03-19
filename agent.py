@@ -20,6 +20,8 @@ from teams_engine import get_teams
 from players_engine import get_players
 from matches_engine import get_matches
 from standings_engine import get_standings
+from daily_challenge import daily_challenge
+app.register_blueprint(daily_challenge)
 
 
 DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
