@@ -1693,3 +1693,56 @@ background:#0b1220;
   margin-top: 10px;
   color: #4caf50;
 }
+
+
+.challengeCard {
+  background: #0f172a;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 0 25px rgba(255, 115, 0, 0.15);
+  transition: 0.3s;
+}
+
+.challengeCard:hover {
+  transform: translateY(-2px);
+}
+
+.questionBlock p {
+  font-weight: 500;
+}
+
+.options button {
+  background: #1e293b;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.options button:hover {
+  background: #334155;
+}
+
+.options button.selected {
+  background: linear-gradient(135deg, #ff6b00, #ff8c00);
+  font-weight: bold;
+}
+
+.submitBtn {
+  background: linear-gradient(135deg, #ff6b00, #ff8c00);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.submittedMsg {
+  color: #22c55e;
+  font-weight: bold;
+  margin-top: 10px;
+}

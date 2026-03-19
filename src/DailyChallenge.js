@@ -5,35 +5,76 @@ function DailyChallenge({ match, API_URL }) {
   const [prediction, setPrediction] = useState(null);
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const matchId = match?.id || `${match?.team1}-${match?.team2}`;
 
-  // LOAD CHALLENGE
+  // ---------------- LOAD CHALLENGE ----------------
   useEffect(() => {
+
+    if (!matchId) return;
+
+    setLoading(true);
+
     fetch(`${API_URL}/daily-challenge?matchId=${matchId}`)
       .then(res => res.json())
-      .then(data => setPrediction(data))
-      .catch(() => setPrediction(null));
-  }, [matchId]);
+      .then(data => {
+        setPrediction(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setPrediction(null);
+        setLoading(false);
+      });
 
-  // LOAD USER DATA
+  }, [matchId, API_URL]);
+
+
+
+  // ---------------- LOAD USER DATA ----------------
   useEffect(() => {
+
     const saved = localStorage.getItem("ipl_prediction");
+
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.matchId === matchId) {
-        setAnswers(parsed.answers);
-        setSubmitted(true);
+      try {
+        const parsed = JSON.parse(saved);
+
+        if (parsed.matchId === matchId) {
+          setAnswers(parsed.answers || {});
+          setSubmitted(true);
+        }
+      } catch (e) {
+        console.log("LocalStorage parse error");
       }
     }
+
   }, [matchId]);
 
+
+
+  // ---------------- HANDLE SELECT ----------------
   const handleSelect = (qId, option) => {
+
     if (submitted) return;
-    setAnswers({ ...answers, [qId]: option });
+
+    setAnswers(prev => ({
+      ...prev,
+      [qId]: option
+    }));
   };
 
+
+
+  // ---------------- HANDLE SUBMIT ----------------
   const handleSubmit = () => {
+
+    // ✅ Prevent incomplete submission
+    if (prediction && Object.keys(answers).length !== prediction.questions.length) {
+      alert("Please answer all questions ⚠️");
+      return;
+    }
+
     const data = {
       matchId,
       answers,
@@ -44,29 +85,51 @@ function DailyChallenge({ match, API_URL }) {
     setSubmitted(true);
   };
 
+
+
+  // ---------------- LOADING STATE ----------------
+  if (loading) {
+    return (
+      <div className="challengeCard">
+        <p>Loading Daily Challenge...</p>
+      </div>
+    );
+  }
+
   if (!prediction || !match) return null;
 
+
+
+  // ---------------- UI ----------------
   return (
     <div className="challengeCard">
 
       <h3>🔥 Daily IPL Challenge</h3>
-      <p>{match.team1} vs {match.team2}</p>
+      <p className="matchTitle">
+        {match.team1} <span>vs</span> {match.team2}
+      </p>
 
-      {prediction.questions.map((q, i) => (
-        <div key={i} className="questionBlock">
+      {prediction.questions.map((q) => (
+        <div key={q.id} className="questionBlock">
 
-          <p>{q.question}</p>
+          <p className="questionText">{q.question}</p>
 
           <div className="options">
-            {q.options.map((opt, idx) => (
-              <button
-                key={idx}
-                className={answers[q.id] === opt ? "selected" : ""}
-                onClick={() => handleSelect(q.id, opt)}
-              >
-                {opt}
-              </button>
-            ))}
+            {q.options.map((opt, idx) => {
+
+              const isSelected = answers[q.id] === opt;
+
+              return (
+                <button
+                  key={idx}
+                  className={`optionBtn ${isSelected ? "selected" : ""} ${submitted ? "locked" : ""}`}
+                  onClick={() => handleSelect(q.id, opt)}
+                  disabled={submitted}
+                >
+                  {opt}
+                </button>
+              );
+            })}
           </div>
 
         </div>
@@ -74,7 +137,7 @@ function DailyChallenge({ match, API_URL }) {
 
       {!submitted ? (
         <button className="submitBtn" onClick={handleSubmit}>
-          Submit Predictions
+          Submit Predictions 🚀
         </button>
       ) : (
         <div className="submittedMsg">
