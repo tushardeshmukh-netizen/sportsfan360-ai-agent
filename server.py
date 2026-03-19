@@ -5,7 +5,7 @@ import os
 
 from feed_engine import generate_feed
 from stats_engine import answer_question
-from daily_challenge import daily_challenge   # ✅ NEW
+
 
 app=Flask(__name__)
 
