@@ -26,7 +26,7 @@ from daily_challenge import daily_challenge
 
 DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
 
-app.register_blueprint(daily_challenge)
+#app.register_blueprint(daily_challenge)
 
 app=FastAPI()
 
