@@ -193,6 +193,79 @@ speakText(errorMsg)
 setLoading(false)
 }
 
+/* VOICE SUPPORT */
+const isVoiceSupported =
+  typeof window !== "undefined" && "webkitSpeechRecognition" in window;
+
+const isSpeechOutputSupported =
+  typeof window !== "undefined" && "speechSynthesis" in window;
+
+/* SPEAK */
+const speakText = (text) => {
+  if (!isSpeechOutputSupported) return;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-IN";
+
+  utterance.onstart = () => setSpeaking(true);
+  utterance.onend = () => setSpeaking(false);
+
+  window.speechSynthesis.speak(utterance);
+};
+
+/* CLEAR CHAT */
+const clearChat = () => setMessages([]);
+
+/* VOICE INPUT */
+const startVoice = () => {
+  if (!isVoiceSupported) return;
+
+  const SpeechRecognition = window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "en-IN";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  let finalTranscript = "";
+
+  recognition.onstart = () => setListening(true);
+
+  recognition.onresult = (e) => {
+    let interim = "";
+
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      let transcript = e.results[i][0].transcript;
+
+      if (e.results[i].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interim += transcript;
+      }
+    }
+
+    setQuestion(finalTranscript + interim);
+  };
+
+  recognition.onend = () => {
+    setListening(false);
+
+    if (finalTranscript.trim()) {
+      askAI(finalTranscript);
+    }
+  };
+
+  recognition.onerror = () => setListening(false);
+
+  recognition.start();
+
+  setTimeout(() => recognition.stop(), 6000);
+};
+
+
+
 return(
 
 <Routes>
@@ -462,7 +535,7 @@ return(
 <div className="chatBottom">
 
 <div className="suggestions">
-{suggestions.map((s,i)=>(
+{suggestionList.map((s,i)=>(
 <button key={i} onClick={()=>askAI(s)}>{s}</button>
 ))}
 </div>
