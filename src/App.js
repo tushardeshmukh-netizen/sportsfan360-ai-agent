@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
 
+
 const statsPool=[
 
 {label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
@@ -55,7 +56,7 @@ const statsPool=[
 ]
 
 function App(){
-
+const [open, setOpen] = useState(false);
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
 const navigate = useNavigate();
@@ -306,51 +307,77 @@ return(
   {/* CENTER: SEARCH */}
   <div className="headerSearch">
 
-  <div className="searchWrapper">
+    <div className="searchWrapper">
 
-    <div className="searchInputWrapper">
-      <span className="searchIcon">🔍</span>
+      <div className="searchInputWrapper">
+        <span className="searchIcon">🔍</span>
 
-      <input
-        value={search}
-        placeholder="Search players, teams..."
-        onChange={(e)=>handleSearchChange(e.target.value)}
-        onFocus={()=>setShowDropdown(true)}
-      />
+        <input
+          value={search}
+          placeholder="Search players, teams..."
+          onChange={(e)=>handleSearchChange(e.target.value)}
+          onFocus={()=>setShowDropdown(true)}
+        />
 
-      <button className="searchBtn" onClick={handleSearch}>
-        Go
-      </button>
+        <button className="searchBtn" onClick={handleSearch}>
+          Go
+        </button>
+      </div>
+
+      {/* 🔽 DROPDOWN */}
+      {showDropdown && suggestions.length > 0 && (
+        <div className="searchDropdown">
+          {suggestions.map((item,i)=>(
+            <div
+              key={i}
+              className="dropdownItem"
+              onClick={()=>handleSelect(item)}
+            >
+              <span className="type">
+                {item.type==="player" ? "🏏" : "🏆"}
+              </span>
+              {item.name}
+            </div>
+          ))}
+        </div>
+      )}
+
     </div>
 
-    {/* 🔽 DROPDOWN */}
-    {showDropdown && suggestions.length > 0 && (
-      <div className="searchDropdown">
-        {suggestions.map((item,i)=>(
-          <div
-            key={i}
-            className="dropdownItem"
-            onClick={()=>handleSelect(item)}
-          >
-            <span className="type">
-              {item.type==="player" ? "🏏" : "🏆"}
-            </span>
-            {item.name}
-          </div>
-        ))}
-      </div>
-    )}
-
   </div>
-
-</div>
 
   {/* RIGHT: LOGIN */}
- <div className="headerRight">
-  <div className="avatar">
-    T
+  <div className="headerRight">
+    <div 
+      className="avatar"
+      onClick={() => setOpen(!open)}   /* ✅ ADDED */
+    >
+      T
+    </div>
+
+    {open && (   /* ✅ ADDED */
+      <div className="userDropdown">
+        
+        <div className="userInfo">
+          <div className="userAvatar">T</div>
+          <div>
+            <div className="userName">Tushar</div>
+            <div className="userEmail">tushar@email.com</div>
+          </div>
+        </div>
+
+        <div className="dropdownDivider"></div>
+
+        <div className="dropdownItem">Profile</div>
+        <div className="dropdownItem">Settings</div>
+
+        <div className="dropdownDivider"></div>
+
+        <div className="dropdownItem logout">Logout</div>
+
+      </div>
+    )}
   </div>
-</div>
 
 </header>
 
