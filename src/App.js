@@ -8,7 +8,7 @@ import Leaderboard from "./Leaderboard";
 import { useNavigate } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
-const [search,setSearch]=useState("");
+
 const [suggestions,setSuggestions]=useState([]);
 const [showDropdown,setShowDropdown]=useState(false);
 
@@ -61,6 +61,10 @@ function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
+  const [search,setSearch]=useState("");
+  const [suggestions,setSuggestions]=useState([]);
+  const [showDropdown,setShowDropdown]=useState(false);
+  
 const players = [
   "Virat Kohli","Rohit Sharma","MS Dhoni","AB de Villiers",
   "Chris Gayle","KL Rahul","Hardik Pandya","Jasprit Bumrah",
