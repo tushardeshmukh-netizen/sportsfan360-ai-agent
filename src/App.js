@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
 
-
 const statsPool=[
 
 {label:"Most IPL Runs",value:"Virat Kohli",num:"8671"},
@@ -59,7 +58,30 @@ function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
-  
+const navigate = useNavigate();
+
+// ✅ STATES (ONLY ONCE)
+const [search,setSearch]=useState("");
+const [suggestions,setSuggestions]=useState([]);
+const [showDropdown,setShowDropdown]=useState(false);
+
+const [activeTab,setActiveTab]=useState("home")
+const [feed,setFeed]=useState(null)
+
+const [question,setQuestion]=useState("")
+const [messages,setMessages]=useState([])
+const [loading,setLoading]=useState(false)
+
+const chatEndRef=useRef()
+const [stats,setStats]=useState(statsPool.slice(0,3))
+
+const [speaking,setSpeaking]=useState(false)
+const [listening,setListening]=useState(false)
+const [challengeTab, setChallengeTab] = useState("challenge");
+
+const [matches,setMatches]=useState([])
+
+// 🔍 SEARCH DATA
 const players = [
   "Virat Kohli","Rohit Sharma","MS Dhoni","AB de Villiers",
   "Chris Gayle","KL Rahul","Hardik Pandya","Jasprit Bumrah",
@@ -68,6 +90,7 @@ const players = [
 
 const teams = ["MI","CSK","RCB","KKR","SRH","DC","RR","GT","LSG","PBKS"];
 
+// 🔍 LIVE SEARCH
 const handleSearchChange = (value) => {
   setSearch(value);
 
@@ -91,7 +114,6 @@ const handleSearchChange = (value) => {
   setShowDropdown(true);
 };
 
-
 const handleSelect = (item) => {
   setSearch(item.name);
   setShowDropdown(false);
@@ -103,47 +125,19 @@ const handleSelect = (item) => {
   }
 };
 
-
-const navigate = useNavigate();
-
-// ✅ ALL STATES HERE (ONLY ONCE)
-const [search,setSearch]=useState("");
-const [suggestions,setSuggestions]=useState([]);
-const [showDropdown,setShowDropdown]=useState(false);
-
-const [activeTab,setActiveTab]=useState("home")
-const [feed,setFeed]=useState(null)
-
-const [question,setQuestion]=useState("")
-const [messages,setMessages]=useState([])
-const [loading,setLoading]=useState(false)
-
-const chatEndRef=useRef()
-const [stats,setStats]=useState(statsPool.slice(0,3))
-
-const [speaking,setSpeaking]=useState(false)
-const [listening,setListening]=useState(false)
-const [challengeTab, setChallengeTab] = useState("challenge");
-
-const navigate = useNavigate();
-const [search,setSearch]=useState("");
+// 🔍 SEARCH BUTTON
 const handleSearch = () => {
-
   const q = search.trim().toLowerCase();
-
   if(!q) return;
 
-  // 🔥 JERSEY NUMBERS
   const jerseyMap = {
     "45": "rohit sharma",
     "18": "virat kohli",
     "7": "ms dhoni"
   };
 
-  // 🔥 TEAMS
-  const teams = ["mi","csk","rcb","kkr","srh","dc","rr","gt","lsg","pbks"];
+  const teamList = ["mi","csk","rcb","kkr","srh","dc","rr","gt","lsg","pbks"];
 
-  // 👉 NUMBER SEARCH
   if(/^\d+$/.test(q)){
     const player = jerseyMap[q];
     if(player){
@@ -152,119 +146,16 @@ const handleSearch = () => {
     }
   }
 
-  // 👉 TEAM SEARCH
-  if(teams.includes(q)){
+  if(teamList.includes(q)){
     navigate(`/profile/team/${q}`);
     return;
   }
 
-  // 👉 DEFAULT PLAYER SEARCH
   navigate(`/profile/player/${q}`);
 };
 
-
-/* VOICE SUPPORT */
-const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
-const isSpeechOutputSupported = typeof window !== "undefined" && "speechSynthesis" in window
-
-/* SPEAK */
-const speakText=(text)=>{
-if(!isSpeechOutputSupported) return
-
-window.speechSynthesis.cancel()
-
-const utterance=new SpeechSynthesisUtterance(text)
-utterance.lang="en-IN"
-
-utterance.onstart=()=>setSpeaking(true)
-utterance.onend=()=>setSpeaking(false)
-
-window.speechSynthesis.speak(utterance)
-}
-
-
-/* matches*/
-const [matches,setMatches]=useState([])
-
-/* VOICE INPUT */
-const startVoice=()=>{
-if(!isVoiceSupported) return
-
-const SpeechRecognition=window.webkitSpeechRecognition
-const recognition=new SpeechRecognition()
-
-recognition.lang="en-IN"
-recognition.continuous=true
-recognition.interimResults=true
-
-let finalTranscript=""
-
-recognition.onstart=()=>setListening(true)
-
-recognition.onresult=(e)=>{
-let interim=""
-for(let i=e.resultIndex;i<e.results.length;i++){
-let transcript=e.results[i][0].transcript
-if(e.results[i].isFinal){
-finalTranscript+=transcript
-}else{
-interim+=transcript
-}
-}
-setQuestion(finalTranscript + interim)
-}
-
-recognition.onend=()=>{
-setListening(false)
-if(finalTranscript.trim()){
-askAI(finalTranscript)
-}
-}
-
-recognition.onerror=()=>setListening(false)
-
-recognition.start()
-setTimeout(()=>recognition.stop(),6000)
-}
-
-/* ROTATING STATS */
-useEffect(()=>{
-const interval=setInterval(()=>{
-const shuffled=[...statsPool].sort(()=>0.5-Math.random())
-setStats(shuffled.slice(0,3))
-},8000)
-return ()=>clearInterval(interval)
-},[])
-
-/* LOAD FEED */
-useEffect(()=>{
-if(activeTab==="home"){
-
-// 🔥 MATCHES
-fetch(`${API_URL}/matches`)
-.then(res=>res.json())
-.then(data=>setMatches(data))
-.catch(()=>setMatches([]))
-
-// FEED
-fetch(`${API_URL}/feed`)
-.then(res=>res.json())
-.then(data=>setFeed(data))
-.catch(()=>setFeed(null))
-
-
-
-}
-},[activeTab])
-
-/* AUTO SCROLL */
-useEffect(()=>{
-chatEndRef.current?.scrollIntoView({behavior:"smooth"})
-},[messages])
-
-const clearChat=()=>setMessages([])
-
-const suggestions=[
+// ⚠️ RENAMED (IMPORTANT)
+const suggestionList=[
 "Most IPL runs",
 "Most IPL wickets",
 "Most IPL sixes",
@@ -272,7 +163,7 @@ const suggestions=[
 "Highest IPL score",
 "Compare Kohli vs Rohit",
 "Why is IPL popular"
-]
+];
 
 /* ASK */
 const askAI=async(q=question)=>{
