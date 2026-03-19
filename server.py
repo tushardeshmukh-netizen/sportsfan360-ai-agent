@@ -5,9 +5,13 @@ import os
 
 from feed_engine import generate_feed
 from stats_engine import answer_question
+from daily_challenge import daily_challenge   # ✅ NEW
 
 app=Flask(__name__)
+
 CORS(app)
+
+app.register_blueprint(daily_challenge)  # ✅ NEW
 
 
 @app.route("/")
@@ -70,69 +74,7 @@ def ask():
 
 def generate_trivia():
 
-    questions=[
-
-        {
-        "q":"Who has scored the most runs in IPL history?",
-        "options":["Virat Kohli","Rohit Sharma","David Warner","MS Dhoni"],
-        "answer":"Virat Kohli"
-        },
-
-        {
-        "q":"Who has taken the most wickets in IPL history?",
-        "options":["YS Chahal","Lasith Malinga","Bhuvneshwar Kumar","Amit Mishra"],
-        "answer":"YS Chahal"
-        },
-
-        {
-        "q":"Which team has won the most IPL titles?",
-        "options":["Mumbai Indians","Chennai Super Kings","KKR","RCB"],
-        "answer":"Mumbai Indians"
-        },
-
-        {
-        "q":"Who scored the highest individual IPL score?",
-        "options":["Chris Gayle","AB de Villiers","Virat Kohli","David Warner"],
-        "answer":"Chris Gayle"
-        },
-
-        {
-        "q":"Which team won the first IPL season?",
-        "options":["Rajasthan Royals","CSK","RCB","KKR"],
-        "answer":"Rajasthan Royals"
-        },
-
-        {
-        "q":"Who is known as Captain Cool?",
-        "options":["MS Dhoni","Virat Kohli","Rohit Sharma","Gambhir"],
-        "answer":"MS Dhoni"
-        },
-
-        {
-        "q":"Which stadium is home of Mumbai Indians?",
-        "options":["Wankhede Stadium","Chepauk","Eden Gardens","Kotla"],
-        "answer":"Wankhede Stadium"
-        },
-
-        {
-        "q":"Who hit the fastest IPL century?",
-        "options":["Chris Gayle","KL Rahul","AB de Villiers","Yusuf Pathan"],
-        "answer":"Chris Gayle"
-        },
-
-        {
-        "q":"Which team is called Super Kings?",
-        "options":["CSK","MI","RCB","GT"],
-        "answer":"CSK"
-        },
-
-        {
-        "q":"Who is called Universe Boss?",
-        "options":["Chris Gayle","Virat Kohli","Warner","Maxwell"],
-        "answer":"Chris Gayle"
-        }
-
-    ]
+    questions=[ ... ]  # keep same
 
     random.shuffle(questions)
 
