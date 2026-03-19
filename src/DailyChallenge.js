@@ -30,7 +30,6 @@ function DailyChallenge({ match, API_URL }) {
   }, [matchId, API_URL]);
 
 
-
   // ---------------- LOAD USER DATA ----------------
   useEffect(() => {
 
@@ -52,7 +51,6 @@ function DailyChallenge({ match, API_URL }) {
   }, [matchId]);
 
 
-
   // ---------------- HANDLE SELECT ----------------
   const handleSelect = (qId, option) => {
 
@@ -65,11 +63,9 @@ function DailyChallenge({ match, API_URL }) {
   };
 
 
-
   // ---------------- HANDLE SUBMIT ----------------
   const handleSubmit = () => {
 
-    // ✅ Prevent incomplete submission
     if (prediction && Object.keys(answers).length !== prediction.questions.length) {
       alert("Please answer all questions ⚠️");
       return;
@@ -82,9 +78,24 @@ function DailyChallenge({ match, API_URL }) {
     };
 
     localStorage.setItem("ipl_prediction", JSON.stringify(data));
+
+    // 🔥 UPDATE LEADERBOARD
+    let leaderboard = JSON.parse(localStorage.getItem("ipl_leaderboard")) || [];
+
+    let user = leaderboard.find(l => l.name === "You");
+
+    if (user) {
+      user.score += 10;
+    } else {
+      leaderboard.push({ name: "You", score: 10 });
+    }
+
+    leaderboard.sort((a, b) => b.score - a.score);
+
+    localStorage.setItem("ipl_leaderboard", JSON.stringify(leaderboard));
+
     setSubmitted(true);
   };
-
 
 
   // ---------------- LOADING STATE ----------------
@@ -97,7 +108,6 @@ function DailyChallenge({ match, API_URL }) {
   }
 
   if (!prediction || !match) return null;
-
 
 
   // ---------------- UI ----------------

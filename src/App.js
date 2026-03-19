@@ -4,6 +4,7 @@ import logo from "./assets/logo.png";
 import Trivia from "./Trivia";
 import PlayerBattle from "./PlayerBattle";
 import DailyChallenge from "./DailyChallenge";
+import Leaderboard from "./Leaderboard";
 
 const statsPool=[
 
@@ -284,12 +285,33 @@ return (
 
 })()}
 
+{/* Daily Challenge */}
 <div className="sectionTitle">🔥 Daily IPL Challenge</div>
 
-{matches && matches.length > 0 && (
-  <DailyChallenge match={matches[0]} API_URL={API_URL} />
-)}
+{(() => {
 
+  const matchList = Array.isArray(matches)
+    ? matches
+    : (matches?.matches || []);
+
+  if (matchList.length === 0) {
+    return (
+      <div className="noMatches">
+        No matches available for challenge
+      </div>
+    );
+  }
+
+  return (
+    <DailyChallenge
+      match={matchList[0]}
+      API_URL={API_URL}
+    />
+  );
+
+})()}
+<div className="sectionTitle">🏆 Top Fans</div>
+<Leaderboard />
 
 <div className="sectionTitle">📰 Latest Cricket News</div>
 
