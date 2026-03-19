@@ -8,6 +8,9 @@ import Leaderboard from "./Leaderboard";
 import { useNavigate } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
+const [search,setSearch]=useState("");
+const [suggestions,setSuggestions]=useState([]);
+const [showDropdown,setShowDropdown]=useState(false);
 
 const statsPool=[
 
@@ -57,6 +60,50 @@ const statsPool=[
 function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
+
+const players = [
+  "Virat Kohli","Rohit Sharma","MS Dhoni","AB de Villiers",
+  "Chris Gayle","KL Rahul","Hardik Pandya","Jasprit Bumrah",
+  "Ravindra Jadeja","Suresh Raina"
+];
+
+const teams = ["MI","CSK","RCB","KKR","SRH","DC","RR","GT","LSG","PBKS"];
+
+const handleSearchChange = (value) => {
+  setSearch(value);
+
+  if(!value){
+    setSuggestions([]);
+    setShowDropdown(false);
+    return;
+  }
+
+  const q = value.toLowerCase();
+
+  const playerMatches = players.filter(p => p.toLowerCase().includes(q));
+  const teamMatches = teams.filter(t => t.toLowerCase().includes(q));
+
+  const combined = [
+    ...playerMatches.map(p => ({type:"player", name:p})),
+    ...teamMatches.map(t => ({type:"team", name:t}))
+  ];
+
+  setSuggestions(combined.slice(0,5));
+  setShowDropdown(true);
+};
+
+
+const handleSelect = (item) => {
+  setSearch(item.name);
+  setShowDropdown(false);
+
+  if(item.type==="team"){
+    navigate(`/profile/team/${item.name.toLowerCase()}`);
+  }else{
+    navigate(`/profile/player/${item.name.toLowerCase()}`);
+  }
+};
+
 
 const [activeTab,setActiveTab]=useState("home")
 const [feed,setFeed]=useState(null)
@@ -272,14 +319,16 @@ return(
   {/* CENTER: SEARCH */}
   <div className="headerSearch">
 
+  <div className="searchWrapper">
+
     <div className="searchInputWrapper">
       <span className="searchIcon">🔍</span>
 
       <input
         value={search}
         placeholder="Search players, teams..."
-        onChange={(e)=>setSearch(e.target.value)}
-        onKeyDown={(e)=>{if(e.key==="Enter")handleSearch()}}
+        onChange={(e)=>handleSearchChange(e.target.value)}
+        onFocus={()=>setShowDropdown(true)}
       />
 
       <button className="searchBtn" onClick={handleSearch}>
@@ -287,12 +336,34 @@ return(
       </button>
     </div>
 
+    {/* 🔽 DROPDOWN */}
+    {showDropdown && suggestions.length > 0 && (
+      <div className="searchDropdown">
+        {suggestions.map((item,i)=>(
+          <div
+            key={i}
+            className="dropdownItem"
+            onClick={()=>handleSelect(item)}
+          >
+            <span className="type">
+              {item.type==="player" ? "🏏" : "🏆"}
+            </span>
+            {item.name}
+          </div>
+        ))}
+      </div>
+    )}
+
   </div>
 
+</div>
+
   {/* RIGHT: LOGIN */}
-  <div className="headerRight">
-    <button className="loginBtn">Login</button>
+ <div className="headerRight">
+  <div className="avatar">
+    T
   </div>
+</div>
 
 </header>
 

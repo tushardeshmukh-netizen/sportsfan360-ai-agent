@@ -2381,3 +2381,52 @@ background:#0b1220;
   color:white;
 }
 
+
+.searchWrapper{
+  position:relative;
+  width:100%;
+  max-width:500px;
+}
+
+/* DROPDOWN */
+.searchDropdown{
+  position:absolute;
+  top:50px;
+  width:100%;
+  background:#111;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
+  overflow:hidden;
+  z-index:999;
+}
+
+.dropdownItem{
+  padding:10px 14px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#ddd;
+}
+
+.dropdownItem:hover{
+  background:rgba(255,60,120,0.1);
+}
+
+.type{
+  font-size:14px;
+}
+
+/* AVATAR */
+.avatar{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff3c78,#ff6a00);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  cursor:pointer;
+}
+
