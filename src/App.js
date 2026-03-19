@@ -279,34 +279,33 @@ return(
 {/* HOME */}
 {activeTab==="home" && (
 <div className="home">
+<div className="searchBox">
 
+    <div className="searchInputWrapper">
+      <span className="searchIcon">🔍</span>
+
+      <input
+        value={search}
+        placeholder="Search players, teams, stats..."
+        onChange={(e)=>setSearch(e.target.value)}
+        onKeyDown={(e)=>{if(e.key==="Enter")handleSearch()}}
+      />
+
+      <button className="searchBtn" onClick={handleSearch}>
+        Go
+      </button>
+    </div>
+
+    <div className="searchHint">
+      💡 Try searching: "45", "Rohit", "Virat" or Clubs "MI", "CSK"
+    </div>
+
+  </div>
 <div className="hero">
 <h2>Cricket Intelligence Hub</h2>
 <p>Player insights, stats, AI powered cricket knowledge.</p>
 
-<div className="searchBox">
-
-  <div className="searchInputWrapper">
-    <span className="searchIcon">🔍</span>
-
-    <input
-      value={search}
-      placeholder="Search players, teams, stats..."
-      onChange={(e)=>setSearch(e.target.value)}
-      onKeyDown={(e)=>{if(e.key==="Enter")handleSearch()}}
-    />
-
-    <button className="searchBtn" onClick={handleSearch}>
-      Go
-    </button>
-  </div>
-
-  <div className="searchHint">
-    💡 Try searching: "45", "Rohit", "Virat" or Clubs "MI", "CSK"
-  </div>
-
 </div>
-
 </div>
 
 <div className="sectionTitle">🔥 IPL Quick Stats</div>
