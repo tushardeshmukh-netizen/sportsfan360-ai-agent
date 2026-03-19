@@ -366,150 +366,138 @@ return(
 {activeTab==="home" && (
 <div className="home">
 
-    {/* 🎯 HERO */}
+  {/* 🎯 HERO */}
   <div className="hero">
     <h2>Cricket Intelligence Hub</h2>
     <p>Player insights, stats, AI powered cricket knowledge.</p>
   </div>
 
-
   {/* 🔥 IPL Quick Stats */}
   <div className="sectionTitle">🔥 IPL Quick Stats</div>
 
   <div className="quickStats">
-  {stats.map((s,i)=>(
-  <div key={i} className="statCard">
-  <span className="statLabel">{s.label}</span>
-  <div className="statRow">
-  <strong>{s.value}</strong>
-  <span className="statNum">{s.num}</span>
+    {stats.map((s,i)=>(
+      <div key={i} className="statCard">
+        <span className="statLabel">{s.label}</span>
+        <div className="statRow">
+          <strong>{s.value}</strong>
+          <span className="statNum">{s.num}</span>
+        </div>
+      </div>
+    ))}
   </div>
-  </div>
-  ))}
-  </div>
-
 
   {/* 🏏 MATCHES */}
   <div className="sectionTitle">🏏 Live & Upcoming Matches</div>
 
   {(() => {
+    const matchList = Array.isArray(matches)
+      ? matches
+      : (matches?.matches || []);
 
-  const matchList = Array.isArray(matches)
-    ? matches
-    : (matches?.matches || []);
+    if(matchList.length === 0){
+      return (
+        <div className="noMatches">
+          No live or upcoming matches available
+        </div>
+      );
+    }
 
-  if(matchList.length === 0){
     return (
-      <div className="noMatches">
-        No live or upcoming matches available
+      <div className="matchCards">
+        {matchList.map((m,i)=>(
+          <div key={i} className="matchCard">
+
+            <div className={`matchBadge ${
+              (m.status || "").toLowerCase().includes("live") ? "live" : "upcoming"
+            }`}>
+              {m.status || "Upcoming"}
+            </div>
+
+            <div className="matchTeams">
+              <div className="team">{m.team1 || "TBD"}</div>
+              <div className="vs">vs</div>
+              <div className="team">{m.team2 || "TBD"}</div>
+            </div>
+
+            <div className="matchScore">
+              {m.score && m.score !== "" ? m.score : "No score available"}
+            </div>
+
+            <div className="matchMeta">
+              <span>{m.venue || "Unknown venue"}</span>
+              <span>{m.date || ""}</span>
+            </div>
+
+          </div>
+        ))}
       </div>
     );
-  }
-
-  return (
-    <div className="matchCards">
-
-      {matchList.map((m,i)=>(
-        <div key={i} className="matchCard">
-
-          <div className={`matchBadge ${
-            (m.status || "").toLowerCase().includes("live") ? "live" : "upcoming"
-          }`}>
-            {m.status || "Upcoming"}
-          </div>
-
-          <div className="matchTeams">
-            <div className="team">{m.team1 || "TBD"}</div>
-            <div className="vs">vs</div>
-            <div className="team">{m.team2 || "TBD"}</div>
-          </div>
-
-          <div className="matchScore">
-            {m.score && m.score !== "" ? m.score : "No score available"}
-          </div>
-
-          <div className="matchMeta">
-            <span>{m.venue || "Unknown venue"}</span>
-            <span>{m.date || ""}</span>
-          </div>
-
-        </div>
-      ))}
-
-    </div>
-  );
-
   })()}
-
 
   {/* 🔥 DAILY + LEADERBOARD */}
   <div className="challengeTabsWrapper">
-  <h2>🔥 | 🏆 Daily Predications</h2>
+    <h2>🔥 | 🏆 Daily Predications</h2>
 
-  <div className="challengeTabs">
-  <button
-  className={challengeTab === "challenge" ? "active" : ""}
-  onClick={() => setChallengeTab("challenge")}
-  >
-  🔥 Daily Predications
-  </button>
+    <div className="challengeTabs">
+      <button
+        className={challengeTab === "challenge" ? "active" : ""}
+        onClick={() => setChallengeTab("challenge")}
+      >
+        🔥 Daily Predications
+      </button>
 
-  <button
-  className={challengeTab === "leaderboard" ? "active" : ""}
-  onClick={() => setChallengeTab("leaderboard")}
-  >
-  🏆 Leaderboard
-  </button>
+      <button
+        className={challengeTab === "leaderboard" ? "active" : ""}
+        onClick={() => setChallengeTab("leaderboard")}
+      >
+        🏆 Leaderboard
+      </button>
+    </div>
+
+    <div className="challengeContent">
+      {(() => {
+        const matchList = Array.isArray(matches)
+          ? matches
+          : (matches?.matches || []);
+
+        if (challengeTab === "challenge") {
+          if (matchList.length === 0) {
+            return <div className="noMatches">No matches available</div>;
+          }
+
+          return (
+            <DailyChallenge
+              match={matchList[0]}
+              API_URL={API_URL}
+            />
+          );
+        }
+
+        if (challengeTab === "leaderboard") {
+          return <Leaderboard />;
+        }
+
+        return null;
+      })()}
+    </div>
   </div>
-
-  <div className="challengeContent">
-
-  {(() => {
-
-  const matchList = Array.isArray(matches)
-  ? matches
-  : (matches?.matches || []);
-
-  if (challengeTab === "challenge") {
-
-  if (matchList.length === 0) {
-  return <div className="noMatches">No matches available</div>;
-  }
-
-  return (
-  <DailyChallenge
-  match={matchList[0]}
-  API_URL={API_URL}
-  />
-  );
-  }
-
-  if (challengeTab === "leaderboard") {
-  return <Leaderboard />;
-  }
-
-  })()}
-
-  </div>
-
-  </div>
-
 
   {/* 📰 NEWS */}
   <div className="sectionTitle">📰 Latest Cricket News</div>
 
   {feed && (
-  <div className="feedCards">
-  {feed.cards.map((c,i)=>(
-  <a key={i} href={c.link} target="_blank" rel="noreferrer" className="feedCard">
-  {c.image && <img src={c.image} className="feedImage" alt="news"/>}
-  <div className="feedContent">
-  <h3>{c.title}</h3>
-  <p>{c.text}</p>
-  </div>
-  </a>
-  ))}
-  </div>
+    <div className="feedCards">
+      {feed.cards.map((c,i)=>(
+        <a key={i} href={c.link} target="_blank" rel="noreferrer" className="feedCard">
+          {c.image && <img src={c.image} className="feedImage" alt="news"/>}
+          <div className="feedContent">
+            <h3>{c.title}</h3>
+            <p>{c.text}</p>
+          </div>
+        </a>
+      ))}
+    </div>
   )}
 
 </div>
