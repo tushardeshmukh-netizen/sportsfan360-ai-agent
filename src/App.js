@@ -44,6 +44,7 @@ const [stats,setStats]=useState(statsPool.slice(0,3))
 
 const [speaking,setSpeaking]=useState(false)
 const [listening,setListening]=useState(false)
+const [challengeTab, setChallengeTab] = useState("challenge");
 
 /* VOICE SUPPORT */
 const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
@@ -285,33 +286,52 @@ return (
 
 })()}
 
-{/* Daily Challenge */}
-<div className="sectionTitle">🔥 Daily IPL Challenge</div>
+/* Daily Challenge + Leaderboard Tabs */
+<div className="challengeTabsWrapper">
 
-{(() => {
+  <div className="challengeTabs">
+    <button
+      className={challengeTab === "challenge" ? "active" : ""}
+      onClick={() => setChallengeTab("challenge")}
+    >
+      🔥 Daily Challenge
+    </button>
 
-  const matchList = Array.isArray(matches)
-    ? matches
-    : (matches?.matches || []);
+    <button
+      className={challengeTab === "leaderboard" ? "active" : ""}
+      onClick={() => setChallengeTab("leaderboard")}
+    >
+      🏆 Leaderboard
+    </button>
+  </div>
 
-  if (matchList.length === 0) {
-    return (
-      <div className="noMatches">
-        No matches available for challenge
-      </div>
-    );
-  }
+  {(() => {
 
-  return (
-    <DailyChallenge
-      match={matchList[0]}
-      API_URL={API_URL}
-    />
-  );
+    const matchList = Array.isArray(matches)
+      ? matches
+      : (matches?.matches || []);
 
-})()}
-<div className="sectionTitle">🏆 Top Fans</div>
-<Leaderboard />
+    if (challengeTab === "challenge") {
+
+      if (matchList.length === 0) {
+        return <div className="noMatches">No matches available</div>;
+      }
+
+      return (
+        <DailyChallenge
+          match={matchList[0]}
+          API_URL={API_URL}
+        />
+      );
+    }
+
+    if (challengeTab === "leaderboard") {
+      return <Leaderboard />;
+    }
+
+  })()}
+
+</div>
 
 <div className="sectionTitle">📰 Latest Cricket News</div>
 
