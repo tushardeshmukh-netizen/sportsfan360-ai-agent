@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { BrowserRouter } from "react-router-dom";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -11,11 +12,8 @@ window.onerror = function (msg, url, line, col, error) {
   </div>`;
 };
 
-import { BrowserRouter } from "react-router-dom";
-
-<BrowserRouter>
-  <App />
-</BrowserRouter>
-
-
-root.render(<App />);
+root.render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+);
