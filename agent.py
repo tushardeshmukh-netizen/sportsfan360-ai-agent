@@ -1,26 +1,25 @@
-    import requests
-    import json
-    import zipfile
-    import io
-    import os
-    import random
+import requests
+import json
+import zipfile
+import io
+import os
+import random
 
-    from fastapi import FastAPI
-    from fastapi.middleware.cors import CORSMiddleware
-    from groq import Groq
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from groq import Groq
 
-    from stats_engine import *
-    from intent_router import detect_intent
-    from memory_store import save_context,get_context
-    from knowledge_base import get_player_info
-    from cricinfo_scraper import get_ipl_points_table
-    from cricket_api import get_live_matches
-    from feed_engine import get_feed
-    from teams_engine import get_teams
-    from players_engine import get_players
-    from matches_engine import get_matches
-    from standings_engine import get_standings
-    from daily_challenge import daily_challenge
+from stats_engine import *
+from intent_router import detect_intent
+from memory_store import save_context, get_context
+from knowledge_base import get_player_info
+from cricinfo_scraper import get_ipl_points_table
+from cricket_api import get_live_matches
+from feed_engine import get_feed
+from teams_engine import get_teams
+from players_engine import get_players
+from matches_engine import get_matches
+from standings_engine import get_standings
 
 
 
