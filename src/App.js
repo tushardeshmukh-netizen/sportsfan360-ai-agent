@@ -279,7 +279,9 @@ return(
 {/* HOME */}
 {activeTab==="home" && (
 <div className="home">
-<div className="searchBox">
+
+  {/* 🔍 SEARCH */}
+  <div className="searchBox">
 
     <div className="searchInputWrapper">
       <span className="searchIcon">🔍</span>
@@ -301,147 +303,155 @@ return(
     </div>
 
   </div>
-<div className="hero">
-<h2>Cricket Intelligence Hub</h2>
-<p>Player insights, stats, AI powered cricket knowledge.</p>
 
-</div>
-</div>
+  {/* 🎯 HERO */}
+  <div className="hero">
+    <h2>Cricket Intelligence Hub</h2>
+    <p>Player insights, stats, AI powered cricket knowledge.</p>
+  </div>
 
-<div className="sectionTitle">🔥 IPL Quick Stats</div>
 
-<div className="quickStats">
-{stats.map((s,i)=>(
-<div key={i} className="statCard">
-<span className="statLabel">{s.label}</span>
-<div className="statRow">
-<strong>{s.value}</strong>
-<span className="statNum">{s.num}</span>
-</div>
-</div>
-))}
-</div>
+  {/* 🔥 IPL Quick Stats */}
+  <div className="sectionTitle">🔥 IPL Quick Stats</div>
 
-{/* Match */}
-<div className="sectionTitle">🏏 Live & Upcoming Matches</div>
+  <div className="quickStats">
+  {stats.map((s,i)=>(
+  <div key={i} className="statCard">
+  <span className="statLabel">{s.label}</span>
+  <div className="statRow">
+  <strong>{s.value}</strong>
+  <span className="statNum">{s.num}</span>
+  </div>
+  </div>
+  ))}
+  </div>
 
-{(() => {
 
-const matchList = Array.isArray(matches)
+  {/* 🏏 MATCHES */}
+  <div className="sectionTitle">🏏 Live & Upcoming Matches</div>
+
+  {(() => {
+
+  const matchList = Array.isArray(matches)
+    ? matches
+    : (matches?.matches || []);
+
+  if(matchList.length === 0){
+    return (
+      <div className="noMatches">
+        No live or upcoming matches available
+      </div>
+    );
+  }
+
+  return (
+    <div className="matchCards">
+
+      {matchList.map((m,i)=>(
+        <div key={i} className="matchCard">
+
+          <div className={`matchBadge ${
+            (m.status || "").toLowerCase().includes("live") ? "live" : "upcoming"
+          }`}>
+            {m.status || "Upcoming"}
+          </div>
+
+          <div className="matchTeams">
+            <div className="team">{m.team1 || "TBD"}</div>
+            <div className="vs">vs</div>
+            <div className="team">{m.team2 || "TBD"}</div>
+          </div>
+
+          <div className="matchScore">
+            {m.score && m.score !== "" ? m.score : "No score available"}
+          </div>
+
+          <div className="matchMeta">
+            <span>{m.venue || "Unknown venue"}</span>
+            <span>{m.date || ""}</span>
+          </div>
+
+        </div>
+      ))}
+
+    </div>
+  );
+
+  })()}
+
+
+  {/* 🔥 DAILY + LEADERBOARD */}
+  <div className="challengeTabsWrapper">
+  <h2>🔥 | 🏆 Daily Predications</h2>
+
+  <div className="challengeTabs">
+  <button
+  className={challengeTab === "challenge" ? "active" : ""}
+  onClick={() => setChallengeTab("challenge")}
+  >
+  🔥 Daily Predications
+  </button>
+
+  <button
+  className={challengeTab === "leaderboard" ? "active" : ""}
+  onClick={() => setChallengeTab("leaderboard")}
+  >
+  🏆 Leaderboard
+  </button>
+  </div>
+
+  <div className="challengeContent">
+
+  {(() => {
+
+  const matchList = Array.isArray(matches)
   ? matches
   : (matches?.matches || []);
 
-if(matchList.length === 0){
+  if (challengeTab === "challenge") {
+
+  if (matchList.length === 0) {
+  return <div className="noMatches">No matches available</div>;
+  }
+
   return (
-    <div className="noMatches">
-      No live or upcoming matches available
-    </div>
+  <DailyChallenge
+  match={matchList[0]}
+  API_URL={API_URL}
+  />
   );
-}
+  }
 
-return (
-  <div className="matchCards">
+  if (challengeTab === "leaderboard") {
+  return <Leaderboard />;
+  }
 
-    {matchList.map((m,i)=>(
-      <div key={i} className="matchCard">
-
-        <div className={`matchBadge ${
-          (m.status || "").toLowerCase().includes("live") ? "live" : "upcoming"
-        }`}>
-          {m.status || "Upcoming"}
-        </div>
-
-        <div className="matchTeams">
-          <div className="team">{m.team1 || "TBD"}</div>
-          <div className="vs">vs</div>
-          <div className="team">{m.team2 || "TBD"}</div>
-        </div>
-
-        <div className="matchScore">
-          {m.score && m.score !== "" ? m.score : "No score available"}
-        </div>
-
-        <div className="matchMeta">
-          <span>{m.venue || "Unknown venue"}</span>
-          <span>{m.date || ""}</span>
-        </div>
-
-      </div>
-    ))}
+  })()}
 
   </div>
-);
 
-})()}
+  </div>
 
-<div className="challengeTabsWrapper">
-<h2>🔥 | 🏆 Daily Predications</h2>
 
-<div className="challengeTabs">
-<button
-className={challengeTab === "challenge" ? "active" : ""}
-onClick={() => setChallengeTab("challenge")}
->
-🔥 Daily Predications
-</button>
+  {/* 📰 NEWS */}
+  <div className="sectionTitle">📰 Latest Cricket News</div>
 
-<button
-className={challengeTab === "leaderboard" ? "active" : ""}
-onClick={() => setChallengeTab("leaderboard")}
->
-🏆 Leaderboard
-</button>
-</div>
+  {feed && (
+  <div className="feedCards">
+  {feed.cards.map((c,i)=>(
+  <a key={i} href={c.link} target="_blank" rel="noreferrer" className="feedCard">
+  {c.image && <img src={c.image} className="feedImage" alt="news"/>}
+  <div className="feedContent">
+  <h3>{c.title}</h3>
+  <p>{c.text}</p>
+  </div>
+  </a>
+  ))}
+  </div>
+  )}
 
-<div className="challengeContent">
-
-{(() => {
-
-const matchList = Array.isArray(matches)
-? matches
-: (matches?.matches || []);
-
-if (challengeTab === "challenge") {
-
-if (matchList.length === 0) {
-return <div className="noMatches">No matches available</div>;
-}
-
-return (
-<DailyChallenge
-match={matchList[0]}
-API_URL={API_URL}
-/>
-);
-}
-
-if (challengeTab === "leaderboard") {
-return <Leaderboard />;
-}
-
-})()}
-
-</div>
-
-</div>
-
-<div className="sectionTitle">📰 Latest Cricket News</div>
-
-{feed && (
-<div className="feedCards">
-{feed.cards.map((c,i)=>(
-<a key={i} href={c.link} target="_blank" rel="noreferrer" className="feedCard">
-{c.image && <img src={c.image} className="feedImage" alt="news"/>}
-<div className="feedContent">
-<h3>{c.title}</h3>
-<p>{c.text}</p>
-</div>
-</a>
-))}
 </div>
 )}
-
-</div>
 )}
 
 {/* ASK */}
