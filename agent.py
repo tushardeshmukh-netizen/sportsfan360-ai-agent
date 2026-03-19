@@ -21,23 +21,21 @@ from players_engine import get_players
 from matches_engine import get_matches
 from standings_engine import get_standings
 
+# ✅ NO SPACE BEFORE THIS
+DATA_URL = "https://cricsheet.org/downloads/ipl_json.zip"
 
+# ✅ APP STARTS HERE
+app = FastAPI()
 
-    DATA_URL="https://cricsheet.org/downloads/ipl_json.zip"
-
-
-
-    app=FastAPI()
-
-    app.add_middleware(
+app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    )
+)
 
-    groq=Groq(api_key=os.getenv("GROQ_API_KEY"))
+groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     dataset_loaded=False
 
