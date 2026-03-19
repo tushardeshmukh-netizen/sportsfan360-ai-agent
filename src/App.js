@@ -286,7 +286,7 @@ return (
 
 })()}
 
-/* Daily Challenge + Leaderboard Tabs */
+{/* Daily Challenge + Leaderboard Tabs */}
 <div className="challengeTabsWrapper">
 
   <div className="challengeTabs">
@@ -305,31 +305,35 @@ return (
     </button>
   </div>
 
-  {(() => {
+  <div className="challengeContent">
 
-    const matchList = Array.isArray(matches)
-      ? matches
-      : (matches?.matches || []);
+    {(() => {
 
-    if (challengeTab === "challenge") {
+      const matchList = Array.isArray(matches)
+        ? matches
+        : (matches?.matches || []);
 
-      if (matchList.length === 0) {
-        return <div className="noMatches">No matches available</div>;
+      if (challengeTab === "challenge") {
+
+        if (matchList.length === 0) {
+          return <div className="noMatches">No matches available</div>;
+        }
+
+        return (
+          <DailyChallenge
+            match={matchList[0]}
+            API_URL={API_URL}
+          />
+        );
       }
 
-      return (
-        <DailyChallenge
-          match={matchList[0]}
-          API_URL={API_URL}
-        />
-      );
-    }
+      if (challengeTab === "leaderboard") {
+        return <Leaderboard />;
+      }
 
-    if (challengeTab === "leaderboard") {
-      return <Leaderboard />;
-    }
+    })()}
 
-  })()}
+  </div>
 
 </div>
 

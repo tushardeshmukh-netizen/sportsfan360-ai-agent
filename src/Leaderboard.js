@@ -11,7 +11,6 @@ function Leaderboard() {
     if (data) {
       setLeaders(JSON.parse(data));
     } else {
-      // 🔥 Default demo leaderboard
       const demo = [
         { name: "You", score: 50 },
         { name: "Player123", score: 40 },
@@ -24,19 +23,42 @@ function Leaderboard() {
   }, []);
 
   return (
-    <div className="leaderboardCard">
+    <div className="leaderboardCard fadeSlide">
 
-      <h3>🏆 Leaderboard</h3>
+      <div className="leaderHeader">
+        <h3>🏆 Top Fans</h3>
+        <p className="leaderHint">Climb the leaderboard with accurate predictions 🔥</p>
+      </div>
 
-      {leaders.map((l, i) => (
-        <div key={i} className={`leaderRow ${l.name === "You" ? "you" : ""}`}>
+      <div className="leaderList">
 
-          <span className="rank">#{i + 1}</span>
-          <span className="name">{l.name}</span>
-          <span className="score">{l.score} pts</span>
+        {leaders.map((l, i) => {
 
-        </div>
-      ))}
+          const isYou = l.name === "You";
+
+          return (
+            <div
+              key={i}
+              className={`leaderItem rank-${i + 1} ${isYou ? "youCard" : ""}`}
+            >
+
+              <div className="leaderLeft">
+                <span className="rankBadge">#{i + 1}</span>
+                <span className="leaderName">{l.name}</span>
+              </div>
+
+              <div className="leaderRight">
+                {i === 0 && <span className="medal">🥇</span>}
+                {i === 1 && <span className="medal">🥈</span>}
+                {i === 2 && <span className="medal">🥉</span>}
+                <span className="leaderScore">{l.score} pts</span>
+              </div>
+
+            </div>
+          );
+        })}
+
+      </div>
 
     </div>
   );

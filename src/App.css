@@ -1916,3 +1916,179 @@ background:#0b1220;
     transform: translateY(0);
   }
 }
+
+.challengeHint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+
+/* STEP CARD */
+.stepCard {
+  background: linear-gradient(145deg, #0f172a, #020617);
+  padding: 20px;
+  border-radius: 16px;
+  margin-top: 10px;
+  box-shadow: 0 0 30px rgba(255, 115, 0, 0.1);
+}
+
+/* PROGRESS */
+.progressBar {
+  height: 6px;
+  background: #1e293b;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6a00, #ffb347);
+  border-radius: 10px;
+  transition: 0.4s;
+}
+
+/* OPTIONS */
+.optionBtn {
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: #1e293b;
+  color: #ccc;
+  border: none;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.optionBtn:hover {
+  transform: scale(1.05);
+}
+
+.optionBtn.selected {
+  background: linear-gradient(90deg, #ff6a00, #ffb347);
+  color: #000;
+  font-weight: bold;
+}
+
+/* SUCCESS */
+.successCard {
+  text-align: center;
+  padding: 30px;
+}
+
+.successCard h4 {
+  color: #22c55e;
+}
+
+.subText {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* ANIMATION */
+.fadeSlide {
+  animation: fadeSlide 0.4s ease;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.leaderboardCard {
+  background: linear-gradient(145deg, #0f172a, #020617);
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: 0 0 25px rgba(255, 115, 0, 0.1);
+}
+
+.leaderHeader h3 {
+  margin-bottom: 5px;
+}
+
+.leaderHint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 15px;
+}
+
+/* LIST */
+.leaderList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ITEM */
+.leaderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: #1e293b;
+  transition: 0.3s;
+}
+
+.leaderItem:hover {
+  transform: scale(1.02);
+}
+
+/* LEFT */
+.leaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rankBadge {
+  background: #0f172a;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.leaderName {
+  font-weight: 500;
+}
+
+/* RIGHT */
+.leaderRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaderScore {
+  font-weight: bold;
+  color: #facc15;
+}
+
+/* YOU HIGHLIGHT */
+.youCard {
+  border: 1px solid #facc15;
+  background: linear-gradient(90deg, #1e293b, #334155);
+}
+
+/* TOP 3 SPECIAL */
+.rank-1 {
+  background: linear-gradient(90deg, #ff6a00, #ffb347);
+  color: #000;
+  font-weight: bold;
+}
+
+.rank-2 {
+  background: #334155;
+}
+
+.rank-3 {
+  background: #1e293b;
+}
+
+/* MEDALS */
+.medal {
+  font-size: 18px;
+}
