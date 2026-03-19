@@ -11,4 +11,11 @@ window.onerror = function (msg, url, line, col, error) {
   </div>`;
 };
 
+import { BrowserRouter } from "react-router-dom";
+
+<BrowserRouter>
+  <App />
+</BrowserRouter>
+
+
 root.render(<App />);

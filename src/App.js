@@ -5,6 +5,9 @@ import Trivia from "./Trivia";
 import PlayerBattle from "./PlayerBattle";
 import DailyChallenge from "./DailyChallenge";
 import Leaderboard from "./Leaderboard";
+import { useNavigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import ProfilePage from "./ProfilePage";
 
 const statsPool=[
 
@@ -24,8 +27,31 @@ const statsPool=[
 {label:"Most Hat-tricks",value:"Amit Mishra",num:"3"},
 {label:"Most Catches",value:"Suresh Raina",num:"109"},
 {label:"Highest Team Total",value:"RCB",num:"263"},
-{label:"Lowest Team Total",value:"RCB",num:"49"}
+{label:"Lowest Team Total",value:"RCB",num:"49"},
 
+{label:"Most Fours", value:"Shikhar Dhawan", num:"750+"},
+{label:"Most Runs in a Season", value:"Virat Kohli", num:"973"},
+{label:"Most Wickets in a Season", value:"Dwayne Bravo", num:"32"},
+{label:"Most Consecutive Wins", value:"KKR", num:"10"},
+{label:"Most Player of Match Awards", value:"AB de Villiers", num:"25+"},
+
+{label:"Most Runs in Powerplay", value:"David Warner", num:"3000+"},
+{label:"Most Sixes in a Season", value:"Chris Gayle", num:"59"},
+{label:"Best Strike Rate (min 1000 runs)", value:"Andre Russell", num:"170+"},
+{label:"Most Runs Against One Team", value:"Virat Kohli vs CSK", num:"1000+"},
+{label:"Most Finals Played", value:"MS Dhoni", num:"10+"},
+
+{label:"Most Runs in Death Overs", value:"MS Dhoni", num:"2500+"},
+{label:"Best Economy (min 500 overs)", value:"Rashid Khan", num:"6.5"},
+{label:"Most Runs in Chases", value:"Virat Kohli", num:"4000+"},
+{label:"Most Super Over Appearances", value:"MI", num:"10+"},
+{label:"Most Wins as Captain", value:"MS Dhoni", num:"130+"},
+
+{label:"Most Runs by Overseas Player", value:"David Warner", num:"6500+"},
+{label:"Most Wickets by Spinner", value:"Amit Mishra", num:"170+"},
+{label:"Most Wickets by Pacer", value:"Lasith Malinga", num:"170+"},
+{label:"Most Ducks", value:"Rohit Sharma", num:"15+"},
+{label:"Most Man of Series Awards", value:"Sunil Narine", num:"3"},
 ]
 
 function App(){
@@ -45,6 +71,44 @@ const [stats,setStats]=useState(statsPool.slice(0,3))
 const [speaking,setSpeaking]=useState(false)
 const [listening,setListening]=useState(false)
 const [challengeTab, setChallengeTab] = useState("challenge");
+
+const navigate = useNavigate();
+const [search,setSearch]=useState("");
+const handleSearch = () => {
+
+  const q = search.trim().toLowerCase();
+
+  if(!q) return;
+
+  // 🔥 JERSEY NUMBERS
+  const jerseyMap = {
+    "45": "rohit sharma",
+    "18": "virat kohli",
+    "7": "ms dhoni"
+  };
+
+  // 🔥 TEAMS
+  const teams = ["mi","csk","rcb","kkr","srh","dc","rr","gt","lsg","pbks"];
+
+  // 👉 NUMBER SEARCH
+  if(/^\d+$/.test(q)){
+    const player = jerseyMap[q];
+    if(player){
+      navigate(`/profile/player/${player}`);
+      return;
+    }
+  }
+
+  // 👉 TEAM SEARCH
+  if(teams.includes(q)){
+    navigate(`/profile/team/${q}`);
+    return;
+  }
+
+  // 👉 DEFAULT PLAYER SEARCH
+  navigate(`/profile/player/${q}`);
+};
+
 
 /* VOICE SUPPORT */
 const isVoiceSupported = typeof window !== "undefined" && "webkitSpeechRecognition" in window
@@ -187,7 +251,12 @@ setLoading(false)
 
 return(
 
-<div className="app">
+<Routes>
+
+  {/* MAIN APP */}
+  <Route path="/" element={
+
+    <div className="app">
 
 <header className="header">
 <div className="brand">
@@ -214,6 +283,30 @@ return(
 <div className="hero">
 <h2>Cricket Intelligence Hub</h2>
 <p>Player insights, stats, AI powered cricket knowledge.</p>
+
+<div className="searchBox">
+
+  <div className="searchInputWrapper">
+    <span className="searchIcon">🔍</span>
+
+    <input
+      value={search}
+      placeholder="Search players, teams, stats..."
+      onChange={(e)=>setSearch(e.target.value)}
+      onKeyDown={(e)=>{if(e.key==="Enter")handleSearch()}}
+    />
+
+    <button className="searchBtn" onClick={handleSearch}>
+      Go
+    </button>
+  </div>
+
+  <div className="searchHint">
+    💡 Try searching: "45", "Rohit", "Virat" or Clubs "MI", "CSK"
+  </div>
+
+</div>
+
 </div>
 
 <div className="sectionTitle">🔥 IPL Quick Stats</div>
@@ -253,26 +346,22 @@ return (
     {matchList.map((m,i)=>(
       <div key={i} className="matchCard">
 
-        {/* 🔴 STATUS BADGE */}
         <div className={`matchBadge ${
           (m.status || "").toLowerCase().includes("live") ? "live" : "upcoming"
         }`}>
           {m.status || "Upcoming"}
         </div>
 
-        {/* 🏏 TEAMS */}
         <div className="matchTeams">
           <div className="team">{m.team1 || "TBD"}</div>
           <div className="vs">vs</div>
           <div className="team">{m.team2 || "TBD"}</div>
         </div>
 
-        {/* 📊 SCORE */}
         <div className="matchScore">
           {m.score && m.score !== "" ? m.score : "No score available"}
         </div>
 
-        {/* 📍 META */}
         <div className="matchMeta">
           <span>{m.venue || "Unknown venue"}</span>
           <span>{m.date || ""}</span>
@@ -286,54 +375,54 @@ return (
 
 })()}
 
-{/* Daily Challenge + Leaderboard Tabs */}
 <div className="challengeTabsWrapper">
+<h2>🔥 | 🏆 Daily Predications</h2>
 
-  <div className="challengeTabs">
-    <button
-      className={challengeTab === "challenge" ? "active" : ""}
-      onClick={() => setChallengeTab("challenge")}
-    >
-      🔥 Daily Challenge
-    </button>
+<div className="challengeTabs">
+<button
+className={challengeTab === "challenge" ? "active" : ""}
+onClick={() => setChallengeTab("challenge")}
+>
+🔥 Daily Predications
+</button>
 
-    <button
-      className={challengeTab === "leaderboard" ? "active" : ""}
-      onClick={() => setChallengeTab("leaderboard")}
-    >
-      🏆 Leaderboard
-    </button>
-  </div>
+<button
+className={challengeTab === "leaderboard" ? "active" : ""}
+onClick={() => setChallengeTab("leaderboard")}
+>
+🏆 Leaderboard
+</button>
+</div>
 
-  <div className="challengeContent">
+<div className="challengeContent">
 
-    {(() => {
+{(() => {
 
-      const matchList = Array.isArray(matches)
-        ? matches
-        : (matches?.matches || []);
+const matchList = Array.isArray(matches)
+? matches
+: (matches?.matches || []);
 
-      if (challengeTab === "challenge") {
+if (challengeTab === "challenge") {
 
-        if (matchList.length === 0) {
-          return <div className="noMatches">No matches available</div>;
-        }
+if (matchList.length === 0) {
+return <div className="noMatches">No matches available</div>;
+}
 
-        return (
-          <DailyChallenge
-            match={matchList[0]}
-            API_URL={API_URL}
-          />
-        );
-      }
+return (
+<DailyChallenge
+match={matchList[0]}
+API_URL={API_URL}
+/>
+);
+}
 
-      if (challengeTab === "leaderboard") {
-        return <Leaderboard />;
-      }
+if (challengeTab === "leaderboard") {
+return <Leaderboard />;
+}
 
-    })()}
+})()}
 
-  </div>
+</div>
 
 </div>
 
@@ -426,7 +515,15 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 {activeTab==="trivia" && <Trivia />}
 {activeTab==="battle" && <PlayerBattle API_URL={API_URL}/>}
 
-</div>
+    </div>
+
+  } />
+
+  {/* PROFILE PAGE */}
+  <Route path="/profile/:type/:name" element={<ProfilePage />} />
+
+</Routes>
+
 )
 
 }
