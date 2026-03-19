@@ -259,13 +259,41 @@ return(
     <div className="app">
 
 <header className="header">
-<div className="brand">
-<img src={logo} className="logo" alt="logo"/>
-<div className="title">
-<h1>SportsFan360</h1>
-<p>AI Cricket Analyst</p>
-</div>
-</div>
+
+  {/* LEFT: BRAND */}
+  <div className="brand">
+    <img src={logo} className="logo" alt="logo"/>
+    <div className="title">
+      <h1>SportsFan360</h1>
+      <p>AI Cricket Analyst</p>
+    </div>
+  </div>
+
+  {/* CENTER: SEARCH */}
+  <div className="headerSearch">
+
+    <div className="searchInputWrapper">
+      <span className="searchIcon">🔍</span>
+
+      <input
+        value={search}
+        placeholder="Search players, teams..."
+        onChange={(e)=>setSearch(e.target.value)}
+        onKeyDown={(e)=>{if(e.key==="Enter")handleSearch()}}
+      />
+
+      <button className="searchBtn" onClick={handleSearch}>
+        Go
+      </button>
+    </div>
+
+  </div>
+
+  {/* RIGHT: LOGIN */}
+  <div className="headerRight">
+    <button className="loginBtn">Login</button>
+  </div>
+
 </header>
 
 {/* NAV */}
@@ -280,31 +308,7 @@ return(
 {activeTab==="home" && (
 <div className="home">
 
-  {/* 🔍 SEARCH */}
-  <div className="searchBox">
-
-    <div className="searchInputWrapper">
-      <span className="searchIcon">🔍</span>
-
-      <input
-        value={search}
-        placeholder="Search players, teams, stats..."
-        onChange={(e)=>setSearch(e.target.value)}
-        onKeyDown={(e)=>{if(e.key==="Enter")handleSearch()}}
-      />
-
-      <button className="searchBtn" onClick={handleSearch}>
-        Go
-      </button>
-    </div>
-
-    <div className="searchHint">
-      💡 Try searching: "45", "Rohit", "Virat" or Clubs "MI", "CSK"
-    </div>
-
-  </div>
-
-  {/* 🎯 HERO */}
+    {/* 🎯 HERO */}
   <div className="hero">
     <h2>Cricket Intelligence Hub</h2>
     <p>Player insights, stats, AI powered cricket knowledge.</p>
