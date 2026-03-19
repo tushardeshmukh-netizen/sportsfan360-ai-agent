@@ -264,7 +264,24 @@ const startVoice = () => {
   setTimeout(() => recognition.stop(), 6000);
 };
 
+/* LOAD DATA */
+useEffect(()=>{
+if(activeTab==="home"){
 
+// MATCHES
+fetch(`${API_URL}/matches`)
+.then(res=>res.json())
+.then(data=>setMatches(data))
+.catch(()=>setMatches([]))
+
+// NEWS FEED
+fetch(`${API_URL}/feed`)
+.then(res=>res.json())
+.then(data=>setFeed(data))
+.catch(()=>setFeed(null))
+
+}
+},[activeTab])
 
 return(
 
