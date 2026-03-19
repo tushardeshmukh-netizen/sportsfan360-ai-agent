@@ -9,8 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
 
-const [suggestions,setSuggestions]=useState([]);
-const [showDropdown,setShowDropdown]=useState(false);
 
 const statsPool=[
 
@@ -61,9 +59,6 @@ function App(){
 
 const API_URL="https://sportsfan360-ai-agent-1.onrender.com"
 
-  const [search,setSearch]=useState("");
-  const [suggestions,setSuggestions]=useState([]);
-  const [showDropdown,setShowDropdown]=useState(false);
   
 const players = [
   "Virat Kohli","Rohit Sharma","MS Dhoni","AB de Villiers",
@@ -108,6 +103,13 @@ const handleSelect = (item) => {
   }
 };
 
+
+const navigate = useNavigate();
+
+// ✅ ALL STATES HERE (ONLY ONCE)
+const [search,setSearch]=useState("");
+const [suggestions,setSuggestions]=useState([]);
+const [showDropdown,setShowDropdown]=useState(false);
 
 const [activeTab,setActiveTab]=useState("home")
 const [feed,setFeed]=useState(null)
