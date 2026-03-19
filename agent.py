@@ -577,8 +577,38 @@ def match_commentary(team1: str, team2: str, status: str):
 @app.get("/daily-challenge")
 def daily_challenge(matchId: str = "default"):
 
-    team1 = "MI"
-    team2 = "CSK"
+    # 🔥 Extract teams dynamically
+    try:
+        if "-" in matchId:
+            parts = matchId.split("-")
+            team1 = parts[0]
+            team2 = parts[1]
+        else:
+            team1 = "MI"
+            team2 = "CSK"
+    except:
+        team1 = "MI"
+        team2 = "CSK"
+
+    # 🔥 Player pools
+    batsmen_pool = [
+        "Rohit Sharma", "Suryakumar Yadav", "MS Dhoni",
+        "Ruturaj Gaikwad", "Virat Kohli", "Faf du Plessis",
+        "KL Rahul", "Shubman Gill"
+    ]
+
+    bowlers_pool = [
+        "Bumrah", "Jadeja", "Pathirana",
+        "Chahar", "Siraj", "Rashid Khan",
+        "Kuldeep Yadav"
+    ]
+
+    # 🔥 Random selection (makes it daily feel)
+    batsmen = random.sample(batsmen_pool, 4)
+    bowlers = random.sample(bowlers_pool, 4)
+
+    teams = [team1, team2]
+    random.shuffle(teams)
 
     return {
         "matchId": matchId,
@@ -586,17 +616,17 @@ def daily_challenge(matchId: str = "default"):
             {
                 "id": "winner",
                 "question": "🏆 Who will win?",
-                "options": [team1, team2]
+                "options": teams
             },
             {
                 "id": "top_batsman",
                 "question": "🔥 Top Batsman?",
-                "options": ["Rohit Sharma", "Suryakumar Yadav", "MS Dhoni", "Ruturaj Gaikwad"]
+                "options": batsmen
             },
             {
                 "id": "top_bowler",
                 "question": "🎯 Top Bowler?",
-                "options": ["Bumrah", "Jadeja", "Pathirana", "Chahar"]
+                "options": bowlers
             },
             {
                 "id": "total_runs",
@@ -606,7 +636,7 @@ def daily_challenge(matchId: str = "default"):
             {
                 "id": "toss",
                 "question": "⚡ Toss Winner?",
-                "options": [team1, team2]
+                "options": teams
             },
             {
                 "id": "powerplay",
@@ -615,7 +645,6 @@ def daily_challenge(matchId: str = "default"):
             }
         ]
     }
-
 
 # 🔥 SAFE LOAD
 try:
