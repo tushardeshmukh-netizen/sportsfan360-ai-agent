@@ -8,6 +8,7 @@ import Leaderboard from "./Leaderboard";
 import { useNavigate } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
+import DataPage from "./DataPage";
 
 
 const statsPool=[
@@ -607,6 +608,7 @@ onKeyDown={(e)=>{if(e.key==="Enter")askAI()}}
 
   {/* PROFILE PAGE */}
   <Route path="/profile/:type/:name" element={<ProfilePage />} />
+  <Route path="/data" element={<DataPage />} />
 
 </Routes>
 
